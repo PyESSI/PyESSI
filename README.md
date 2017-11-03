@@ -1,7 +1,7 @@
 # PyESSI
 Python in Distributed Hydrological Model (ESSI)
 ---
-Developer: 
+Developer:
 
 + Hao Chen
 + Huiran Gao
