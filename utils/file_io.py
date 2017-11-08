@@ -1,4 +1,3 @@
-# ! /usr/bin/env python
 # coding=utf-8
 ## @Utility functions
 
@@ -38,7 +37,6 @@ def ReadRaster(rasterFile):
     ysize = band.YSize
     noDataValue = band.GetNoDataValue()
     geotrans = ds.GetGeoTransform()
-
     srs = osr.SpatialReference()
     srs.ImportFromWkt(ds.GetProjection())
     # print srs.ExportToProj4()

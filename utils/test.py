@@ -1,5 +1,4 @@
 #test scripts
-#
 
 import os, os.path
 from utils.file_io import *
