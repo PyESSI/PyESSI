@@ -6,4 +6,5 @@
 
 
 def fill_pits(in_dem):
+    print("test")
 
