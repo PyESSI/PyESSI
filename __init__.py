@@ -15,5 +15,3 @@
 # Beijing 100094, China
 ######################### END LICENSE BLOCK #########################
 
-__all_ = ['SoilPara', 'VegetationPara']
-
