@@ -140,7 +140,7 @@ class SoilInfo:
             acumudepth = self.SL_Z[i]
 
         self.SP_Por = sumpor / self.SL_Z[self.iLayer - 1]
-        self.SP_BD = 2.65 * (1. - SP_Por)
+        self.SP_BD = 2.65 * (1. - self.SP_Por)
         self.SP_Stable_Fc = suminfil / self.SL_Z[self.iLayer - 1]
         self.SP_Init_F0 = suminit / self.SL_Z[self.iLayer - 1]
         self.SP_Sat_K = sumsat_k / self.SL_Z[self.iLayer - 1]

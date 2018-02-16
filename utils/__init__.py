@@ -15,4 +15,4 @@
 # Beijing 100094, China
 ######################### END LICENSE BLOCK #########################
 
-__all__ = ['fileIO', 'config','dateTime']
+__all__ = ['fileIO', 'config','dateTime','utils']
