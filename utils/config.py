@@ -11,13 +11,15 @@ Functions:
 
 #pyESSI Project Setup
 #[ProjectSetup]
-workSpace = 'D:\GaohrWS\DoctorWorks\DoctorWork\PyESSI\PyESSI\DCBAM'
+workSpace = r'D:\GaohrWS\DoctorWorks\DoctorWork\PyESSI\DCBAM'
+tauDir = r'D:\GaohrWS\DoctorWorks\DoctorWork\PyESSI\DCBAM\TauDEM_test'
 startTime = 19960101
 endTime = 20001231
 
 #pyESSI GridIO File
 #[GridIO]
-DEMFileName = 'YLXDem240.tif'
+# DEMFileName = 'YLXDem240.tif'
+DEMFileName = 'dem.tif'
 LULCFileName = 'YLXLulc240.tif'
 SoilFileName = 'YLXSoil240.tif'
 
@@ -91,3 +93,45 @@ iProfileSoilWater = 0
 iAvgSoilWater = 0
 
 
+#[PREPROCESS PARAMETERS]
+isTauDEMD8 = True
+CPP_PROGRAM_DIR = None
+MPIEXEC_DIR = None
+D8AccThreshold = 1000
+threshold = 0   # threshold for stream extraction from D8-flow accumulation weighted Peuker-Douglas stream sources
+                # if threshold is 0, then Drop Analysis is used to select the optimal value.
+np = 4
+D8DownMethod = "Surface"
+dorm_hr = -1.
+T_base = 0.
+imperviousPercInUrbanCell = 0.3
+default_reach_depth = 5.
+defaultLanduse = 33
+defaultNodata = -9999.
+
+## Conventional Spatial Raster Data File Names
+filledDem = "tauDemFilled.tif"
+flowDir = "tauD8FlowDir.tif"
+slope = "tauSlope.tif"
+acc = "tauD8Acc.tif"
+streamRaster = "tauStreamRaster.tif"
+outlet = "outlet.shp"
+
+flowDirDinf = "flowDirDinfTau.tif"
+# dirCodeDinf = "dirCodeDinfTau.tif"
+# weightDinf = "weightDinfTau.tif"
+slopeDinf = "slopeDinfTau.tif"
+cellLat = "cellLatOrg.tif"
+daylMin = "dayLenMinOrg.tif"
+dormhr = "dormhrOrg.tif"
+
+modifiedOutlet = "outletM.shp"
+streamSkeleton = "streamSkeleton.tif"
+flowPath = "flowPath.tif"
+tLenFlowPath = "tlenFlowPath.tif"
+streamOrder = "tauStreamOrder.tif"
+chNetwork = "chNetwork.txt"
+chCoord = "chCoord.txt"
+streamNet = "streamNet.shp"
+subbasin = "tauSubbasin.tif"
+mask_to_ext = "mask.tif"
