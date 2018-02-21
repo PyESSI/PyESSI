@@ -13,6 +13,7 @@ Functions:
 #[ProjectSetup]
 workSpace = r'D:\GaohrWS\DoctorWorks\DoctorWork\PyESSI\DCBAM'
 tauDir = r'D:\GaohrWS\DoctorWorks\DoctorWork\PyESSI\DCBAM\TauDEM_test'
+srDir = r'D:\GaohrWS\DoctorWorks\DoctorWork\PyESSI\DCBAM\RunoffParam_test'
 startTime = 19960101
 endTime = 20001231
 
@@ -135,3 +136,10 @@ chCoord = "chCoord.txt"
 streamNet = "streamNet.shp"
 subbasin = "tauSubbasin.tif"
 mask_to_ext = "mask.tif"
+routingCode = "routingCode.tif"
+routingSequ = "routingSequ.tif"
+routingOdr = "routingOdr.tif"
+gridUD = "gridUpDown.txt"
+gridFlowLength = "gridFlowLength.tif"
+gridMeanSlp = "gridMeanSlp.tif"
+routingTime = "routingTime.tif"

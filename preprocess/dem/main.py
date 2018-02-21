@@ -15,6 +15,7 @@ from utils.utils import GetRasterStat
 if __name__ == "__main__":
     d = DEMRiverNet()
     d.workDir = tauDir
+    # d.workDir = workSpace
     d.dem = DEMFileName
     d.np = np
     d.defaultNodata = defaultNodata
@@ -90,6 +91,9 @@ if __name__ == "__main__":
     d.streamNet = streamNet
     d.subbasin = subbasin
     d.StreamNet()
+
+
+
 
 
 

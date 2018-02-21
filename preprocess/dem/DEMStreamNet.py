@@ -61,7 +61,7 @@ class DEMRiverNet:
         else:
             exe = "PitRemove"
         if self.np == 0:
-            raise ("np must larger than zero")
+            raise Exception("np must larger than zero.", self.np)
         strCmd = "mpiexec -n %d %s -z %s -fel %s" % (self.np, exe, self.dem, self.filledDem)
         if mpiexeDir is not None:
             strCmd = mpiexeDir + os.sep + strCmd
@@ -73,6 +73,11 @@ class DEMRiverNet:
     # +                                                                                   +
     # +                Function：Calculating D8 and Dinf flow direction                   +
     # +                                                                                   +
+    # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    # +                          TauDEM D8算法栅格水流流向定义                                +
+    # +		                           4   3   2                                          +
+    # +		                           5   X   1	                                      +
+    # +		                           6   7   8                                          +
     # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     def FlowDirD8(self, mpiexeDir=None, exeDir=None):
         os.chdir(self.workDir)
@@ -81,7 +86,7 @@ class DEMRiverNet:
         else:
             exe = "D8FlowDir"
         if self.np == 0:
-            raise ("np must larger than zero")
+            raise Exception("np must larger than zero.", self.np)
         strCmd = "mpiexec -n %d %s -fel %s -p %s  -sd8 %s" % (self.np, exe, self.filledDem, self.flowDir, self.slope)
         if mpiexeDir is not None:
             strCmd = mpiexeDir + os.sep + strCmd
@@ -102,9 +107,9 @@ class DEMRiverNet:
         else:
             exe = "DinfFlowDir"
         if self.np == 0:
-            raise ("np must larger than zero")
+            raise (Exception("np must larger than zero.", self.np))
         strCmd = "mpiexec -n %d %s -fel %s -ang %s -slp %s" % (
-        self.np, exe, self.filledDem, self.flowDirDinf, self.slopeDinf)
+            self.np, exe, self.filledDem, self.flowDirDinf, self.slopeDinf)
         if mpiexeDir is not None:
             strCmd = mpiexeDir + os.sep + strCmd
         print(strCmd)
@@ -142,7 +147,7 @@ class DEMRiverNet:
             else:
                 strCmd = "mpiexec -n %d %s -p %s -ad8 %s -nc" % (self.np, exe, self.flowDir, self.acc)
         if self.np == 0:
-            raise ("np must larger than zero")
+            raise Exception("np must larger than zero.", self.np)
         # -nc means donot consider edge contaimination
         if mpiexeDir is not None:
             strCmd = mpiexeDir + os.sep + strCmd
@@ -171,11 +176,11 @@ class DEMRiverNet:
         else:
             exe = "GridNet"
         strCmd = "mpiexec -n %d %s -p %s -plen %s -tlen %s -gord %s" % (
-        self.np, exe, self.flowDir, self.flowPath, self.tLenFlowPath, self.streamOrder)
+            self.np, exe, self.flowDir, self.flowPath, self.tLenFlowPath, self.streamOrder)
         if mpiexeDir is not None:
             strCmd = mpiexeDir + os.sep + strCmd
         if self.np == 0:
-            raise ("np must larger than zero")
+            raise Exception("np must larger than zero.", self.np)
         print(strCmd)
         process = subprocess.Popen(strCmd, shell=True, stdout=subprocess.PIPE)
         print(process.stdout.readlines())
@@ -201,11 +206,10 @@ class DEMRiverNet:
         if mpiexeDir is not None:
             strCmd = mpiexeDir + os.sep + strCmd
         if self.np == 0:
-            raise ("np must larger than zero")
+            raise Exception("np must larger than zero.", self.np)
         print(strCmd)
         process = subprocess.Popen(strCmd, shell=True, stdout=subprocess.PIPE)
         print(process.stdout.readlines())
-
 
     # / *++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +                                                                                   +
@@ -239,7 +243,7 @@ class DEMRiverNet:
         if mpiexeDir is not None:
             strCmd = mpiexeDir + os.sep + strCmd
         if self.np == 0:
-            raise ("np must larger than zero")
+            raise Exception("np must larger than zero.", self.np)
         print(strCmd)
         process = subprocess.Popen(strCmd, shell=True, stdout=subprocess.PIPE)
         print(process.stdout.readlines())
@@ -266,7 +270,7 @@ class DEMRiverNet:
         if mpiexeDir is not None:
             strCmd = mpiexeDir + os.sep + strCmd
         if self.np == 0:
-            raise ("np must larger than zero")
+            raise Exception("np must larger than zero.", self.np)
         print(strCmd)
         process = subprocess.Popen(strCmd, shell=True, stdout=subprocess.PIPE)
         print(process.stdout.readlines())
@@ -293,11 +297,10 @@ class DEMRiverNet:
         if mpiexeDir is not None:
             strCmd = mpiexeDir + os.sep + strCmd
         if self.np == 0:
-            raise ("np must larger than zero")
+            raise Exception("np must larger than zero.", self.np)
         print(strCmd)
         process = subprocess.Popen(strCmd, shell=True, stdout=subprocess.PIPE)
         print(process.stdout.readlines())
-
 
     # / *++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +                                                                                   +
@@ -322,14 +325,7 @@ class DEMRiverNet:
         if mpiexeDir is not None:
             strCmd = mpiexeDir + os.sep + strCmd
         if self.np == 0:
-            raise ("np must larger than zero")
+            raise Exception("np must larger than zero.", self.np)
         print(strCmd)
         process = subprocess.Popen(strCmd, shell=True, stdout=subprocess.PIPE)
         print(process.stdout.readlines())
-
-
-
-
-
-
-

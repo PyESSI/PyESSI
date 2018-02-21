@@ -1,1 +1,1 @@
-__all__ = ['DEMRiverNet', 'main']
+__all__ = ['DEMRiverNet', 'RunoffParam', 'main']
