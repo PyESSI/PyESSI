@@ -5,36 +5,35 @@ from utils.config import *
 
 if __name__ == "__main__":
     r = RunoffParam()
-    r.workDir = tauDir
+    # r.workDir = tauDir
+    r.workDir = workSpace
     r.flowDir = flowDir
     r.streamOrd = streamOrder
+    r.watershed = watershed
     r.dem = DEMFileName
     r.SetInfo()
 
-    r.outX = 230
-    r.outY = 72
-
-    r.watershedMask = mask_to_ext
-    # r.WatershedBound()
+    r.outX = 154
+    r.outY = 579
 
     r.routingCode = routingCode
-    # r.RoutingGridCode()
+    r.RoutingGridCode()
 
     r.routingOdr = routingOdr
     r.routingSequ = routingSequ
-    # r.RoutingOptimalOrder()
+    r.RoutingOptimalOrder()
     # r.RoutingOptimalSequ()
 
-    r.gridUD = gridUD
+    # r.gridUD = gridUD
     # r.RoutingUDNode()
 
     r.subbasinsNum = 1
     r.gridFlowLength = gridFlowLength
-    # r.RouteLength()
+    r.RouteLength()
 
     r.gridMeanSlp = gridMeanSlp
-    # r.RouteMeanSlp()
+    r.RouteMeanSlp()
 
     r.routingTime = routingTime
-    r.dKV = 0.5
+    r.dKV = 2000
     r.RouteTime()

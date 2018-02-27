@@ -28,10 +28,11 @@ from preprocess.dem.utils_dem import *
 
 class RunoffParam:
     def __init__(self):
-        self.workDir = ""  # working direction
-        self.dem = ""  # Input dem (GeoTIFF file)
-        self.flowDir = ""  # Input flow direction (GeoTIFF file)
+        self.workDir = ""    # working direction
+        self.dem = ""        # Input dem (GeoTIFF file)
+        self.flowDir = ""    # Input flow direction (GeoTIFF file)
         self.streamOrd = ""  # Input stream order (GeoTIFF file)
+        self.watershed = ""  # Input watershed raster (GeoTIFF file)
         self.d8 = [1, 8, 7, 6, 5, 4, 3, 2]  # d8算法的8个流向(流出) TauDEM
         self.fd8 = [5, 4, 3, 2, 1, 8, 7, 6]  # d8算法的8个流向(流进) TauDEM
         self.subbasinsNum = 0
@@ -43,6 +44,7 @@ class RunoffParam:
         self.demData = None
         self.flowDirData = None
         self.streamOrdData = None
+        self.watershedData = None
         self.rows = 0
         self.cols = 0
         self.geotrans = None
@@ -56,7 +58,6 @@ class RunoffParam:
         self.jj = []  # 栅格数据队列,存放有入流关系的相邻栅格的坐标
 
         # Output
-        self.watershedMask = None
         self.routingCode = None
         self.routingSequ = None
         self.routingOdr = None
@@ -90,58 +91,47 @@ class RunoffParam:
         demFile = self.workDir + os.sep + self.dem
         flowDirFile = self.workDir + os.sep + self.flowDir
         streamOrdFile = self.workDir + os.sep + self.streamOrd
+        watershedFile = self.workDir + os.sep + self.watershed
         self.demData = ReadRaster(demFile).data
         self.flowDirData = ReadRaster(flowDirFile).data
         self.streamOrdData = ReadRaster(streamOrdFile).data
-        self.rows = ReadRaster(flowDirFile).nRows
-        self.cols = ReadRaster(flowDirFile).nCols
-        self.geotrans = ReadRaster(flowDirFile).geotrans
-        self.srs = ReadRaster(flowDirFile).srs
+        self.watershedData = ReadRaster(watershedFile).data
+        self.rows = ReadRaster(watershedFile).nRows
+        self.cols = ReadRaster(watershedFile).nCols
+        self.geotrans = ReadRaster(watershedFile).geotrans
+        self.srs = ReadRaster(watershedFile).srs
         self.noDataValue = ReadRaster(flowDirFile).noDataValue
+        self.noDataValue_ws = ReadRaster(watershedFile).noDataValue
+        # print(self.noDataValue)
 
-    # / *++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    # +                                                                                   +
-    # +                      Function：Extract watershed bound                            +
-    # +                                                                                   +
-    # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
-    def WatershedBound(self):
-        '''
-        提取流域边界
-        :return:
-        '''
-        if self.rows != 0 and self.cols != 0:
-            self.wsm = numpy.zeros((self.rows, self.cols))
-        else:
-            raise Exception("rows and cols can not be zero.", self.rows, self.cols)
-        for m in range(self.rows):
-            for n in range(self.cols):
-                if self.flowDirData[m][n] != self.noDataValue:
-                    self.wsm[m][n] = 1
+        ## Clip data(temporal) by watershed
+        for i in range(self.rows):
+            for j in range(self.cols):
+                if self.watershedData[i][j] == self.noDataValue_ws:
+                    self.demData[i][j] = self.noDataValue
+                    self.flowDirData[i][j] = self.noDataValue
+                    self.streamOrdData[i][j] = self.noDataValue
                 else:
-                    self.wsm[m][n] = self.noDataValue
-
-        WriteGTiffFile(self.workDir + os.sep + self.watershedMask, self.rows, self.cols, self.wsm, self.geotrans,
-                       self.srs, self.noDataValue, gdal.GDT_Float32)
-        return 0
+                    continue
 
     # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +                                                                      +
     # +                      Function：Routing code                          +
     # +                                                                      +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
-    def RoutingGridCode(self, w=True):
+    def RoutingGridCode(self):
         '''
         流域汇流栅格编码，先行后列顺序编码
         :return:
         '''
-        if self.watershedMask == None:
-            raise Exception("watershedMask can not be empty.", self.watershedMask)
+        if self.watershed == None:
+            raise Exception("watershedMask can not be empty.", self.watershed)
 
         self.rtc = numpy.zeros((self.rows, self.cols))
         k = 1
         for m in range(self.rows):
             for n in range(self.cols):
-                if self.wsm[m][n] == 1:
+                if self.watershedData[m][n] != self.noDataValue_ws:
                     self.rtc[m][n] = k
                     k += 1
                 else:
@@ -161,7 +151,7 @@ class RunoffParam:
         计算栅格汇流最优次序等级矩阵
         :return:
         '''
-        print("Calculate routing order")
+        print("Calculating routing order")
         if self.routingCode == None:
             raise Exception("routingCode can not be empty.", self.routingCode)
         else:
@@ -232,7 +222,7 @@ class RunoffParam:
         计算栅格汇流最优次序矩阵
         :return:
         '''
-        print("Calculate routing sequence")
+        print("Calculating routing sequence")
         if self.routingOdr == None:
             raise Exception("routingOdr can not be empty.", self.routingOdr)
         else:
@@ -244,6 +234,8 @@ class RunoffParam:
         dMax = self.ror[self.outX][self.outY]
         # print("dMax: %d" % dMax)
         for dk in range(1, int(dMax + 1)):
+            if int(dMax / dk) % 10 == 0:
+                print()
             for i in range(self.rows):
                 for j in range(self.cols):
                     if self.rtc[i][j] != self.noDataValue:
@@ -268,7 +260,7 @@ class RunoffParam:
         计算汇流栅格上下游节点
         :return:
         '''
-        print("Calculate upslope and downslope node of routing grid")
+        print("Calculating upslope and downslope node of routing grid")
         if self.routingSequ == None:
             raise Exception("routingSequ can not be empty.", self.routingSequ)
         else:
@@ -284,6 +276,7 @@ class RunoffParam:
         UDArr = []
         dMax = numpy.max(self.rtc)
         dMin = numpy.min(self.rsq)
+        gridNum = self.rows * self.cols
         n = 0
         nSize = int(dMax)
         # print("dMax: %d" % dMax)
@@ -295,6 +288,7 @@ class RunoffParam:
 
         for i in range(self.rows):
             for j in range(self.cols):
+
                 if self.rtc[i][j] == self.noDataValue:
                     continue
                 else:
@@ -375,7 +369,7 @@ class RunoffParam:
         计算栅格水流路径长度
         :return:
         '''
-        print("Calculate flow route length...")
+        print("Calculating flow route length...")
         if self.flowDir == None or self.routingCode == None:
             raise Exception("flowDir or routingCode can not be empty.", self.flowDir, self.routingCode)
         else:
@@ -437,7 +431,7 @@ class RunoffParam:
         计算栅格水流路径平均坡度
         :return:
         '''
-        print("Calculate mean slope of route")
+        print("Calculating mean slope of route")
         if self.routingCode == None:
             raise Exception("routingCode can not be empty.", self.routingCode)
         else:
@@ -524,7 +518,7 @@ class RunoffParam:
         计算栅格汇流时间
         :return:
         '''
-        print("Calculate route time")
+        print("Calculating route time")
         if self.gridFlowLength == None or self.gridMeanSlp == None:
             raise Exception("gridFlowLength or gridMeanSlp can not be empty.", self.gridFlowLength, self.gridMeanSlp)
         else:

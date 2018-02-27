@@ -12,15 +12,17 @@ Functions:
 #pyESSI Project Setup
 #[ProjectSetup]
 workSpace = r'D:\GaohrWS\DoctorWorks\DoctorWork\PyESSI\DCBAM'
-tauDir = r'D:\GaohrWS\DoctorWorks\DoctorWork\PyESSI\DCBAM\TauDEM_test'
+# tauDir = r'D:\GaohrWS\DoctorWorks\DoctorWork\PyESSI\DCBAM\TauDEM_test'
 srDir = r'D:\GaohrWS\DoctorWorks\DoctorWork\PyESSI\DCBAM\RunoffParam_test'
+mpiexeDir = r'"D:\Program Files\Microsoft MPI\Bin"'
+exeDir = None
 startTime = 19960101
 endTime = 20001231
 
 #pyESSI GridIO File
 #[GridIO]
-# DEMFileName = 'YLXDem240.tif'
-DEMFileName = 'dem.tif'
+DEMFileName = 'YLXDem240.tif'
+# DEMFileName = 'dem.tif'
 LULCFileName = 'YLXLulc240.tif'
 SoilFileName = 'YLXSoil240.tif'
 
@@ -125,6 +127,7 @@ slopeDinf = "slopeDinfTau.tif"
 cellLat = "cellLatOrg.tif"
 daylMin = "dayLenMinOrg.tif"
 dormhr = "dormhrOrg.tif"
+watershed = "watershed.tif"
 
 modifiedOutlet = "outletM.shp"
 streamSkeleton = "streamSkeleton.tif"
@@ -135,7 +138,6 @@ chNetwork = "chNetwork.txt"
 chCoord = "chCoord.txt"
 streamNet = "streamNet.shp"
 subbasin = "tauSubbasin.tif"
-mask_to_ext = "mask.tif"
 routingCode = "routingCode.tif"
 routingSequ = "routingSequ.tif"
 routingOdr = "routingOdr.tif"

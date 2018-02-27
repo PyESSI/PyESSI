@@ -14,8 +14,8 @@ from utils.utils import GetRasterStat
 
 if __name__ == "__main__":
     d = DEMRiverNet()
-    d.workDir = tauDir
-    # d.workDir = workSpace
+    # d.workDir = tauDir
+    d.workDir = workSpace
     d.dem = DEMFileName
     d.np = np
     d.defaultNodata = defaultNodata
@@ -23,7 +23,7 @@ if __name__ == "__main__":
     # Step 1 Remove Pits
     print("Fill DEM...")
     d.filledDem = filledDem
-    d.Fill()
+    d.Fill(mpiexeDir=mpiexeDir)
 
     # Step 2 Flow Directions
     print("Calculating D8 and Dinf flow direction...")
@@ -31,42 +31,42 @@ if __name__ == "__main__":
     d.slopeDinf = slopeDinf
     d.flowDir = flowDir
     d.flowDirDinf = flowDirDinf
-    d.FlowDirD8()
-    d.FlowDirDinf()
+    d.FlowDirD8(mpiexeDir=mpiexeDir)
+    d.FlowDirDinf(mpiexeDir=mpiexeDir)
 
     # Step 3 Contributing area
     print("D8 flow accumulation...")
     d.acc = acc
-    d.FlowAccD8()
+    d.FlowAccD8(mpiexeDir=mpiexeDir)
 
     # Step 4 Grid net
     print("Generating stream grid net...")
     d.flowPath = flowPath
     d.tLenFlowPath = tLenFlowPath
     d.streamOrder = streamOrder
-    d.GridNet()
+    d.GridNet(mpiexeDir=mpiexeDir)
 
     # Step 5 Stream skeleton
     print("Generating stream skeleton...")
     d.streamSkeleton = streamSkeleton
-    d.StreamSkeleton()
+    d.StreamSkeleton(mpiexeDir=mpiexeDir)
 
     # Step 6 Stream delineation
     print("Stream delineation initially...")
     d.outlet = outlet
-    d.FlowAccD8()
+    # d.FlowAccD8()
     d.modifiedOutlet = modifiedOutlet
     d.streamRaster = streamRaster
     if threshold != 0:
-        d.StreamRaster()
+        d.StreamRaster(mpiexeDir=mpiexeDir)
     else:
         accD8 = d.workDir + os.sep + d.acc
         maxAccum, minAccum, meanAccum, STDAccum = GetRasterStat(accD8)
         d.threshold = meanAccum
         print(d.threshold)
-        d.StreamRaster()
+        d.StreamRaster(mpiexeDir=mpiexeDir)
 
-    d.MoveOutlet()
+    d.MoveOutlet(mpiexeDir=mpiexeDir)
 
     # d.threshold = threshold
     # if d.threshold == 0:
@@ -90,7 +90,12 @@ if __name__ == "__main__":
     d.chCoord = chCoord
     d.streamNet = streamNet
     d.subbasin = subbasin
-    d.StreamNet()
+    d.StreamNet(mpiexeDir=mpiexeDir)
+
+    # Step 8 Watershed delineation
+    print("Watershed delineation...")
+    d.watershed = watershed
+    d.Watershed()
 
 
 

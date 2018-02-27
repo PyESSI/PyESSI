@@ -48,6 +48,7 @@ class DEMRiverNet:
         self.chCoord = ""
         self.streamNet = ""
         self.subbasin = ""
+        self.watershed = ""
 
     # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +                                                        +
@@ -62,7 +63,8 @@ class DEMRiverNet:
             exe = "PitRemove"
         if self.np == 0:
             raise Exception("np must larger than zero.", self.np)
-        strCmd = "mpiexec -n %d %s -z %s -fel %s" % (self.np, exe, self.dem, self.filledDem)
+        strCmd = "mpiexec -n %d %s -z %s -fel %s" % (
+        self.np, exe, self.workDir + os.sep + self.dem, self.workDir + os.sep + self.filledDem)
         if mpiexeDir is not None:
             strCmd = mpiexeDir + os.sep + strCmd
         print(strCmd)
@@ -87,7 +89,9 @@ class DEMRiverNet:
             exe = "D8FlowDir"
         if self.np == 0:
             raise Exception("np must larger than zero.", self.np)
-        strCmd = "mpiexec -n %d %s -fel %s -p %s  -sd8 %s" % (self.np, exe, self.filledDem, self.flowDir, self.slope)
+        strCmd = "mpiexec -n %d %s -fel %s -p %s  -sd8 %s" % (
+        self.np, exe, self.workDir + os.sep + self.filledDem, self.workDir + os.sep + self.flowDir,
+        self.workDir + os.sep + self.slope)
         if mpiexeDir is not None:
             strCmd = mpiexeDir + os.sep + strCmd
         print(strCmd)
@@ -109,7 +113,8 @@ class DEMRiverNet:
         if self.np == 0:
             raise (Exception("np must larger than zero.", self.np))
         strCmd = "mpiexec -n %d %s -fel %s -ang %s -slp %s" % (
-            self.np, exe, self.filledDem, self.flowDirDinf, self.slopeDinf)
+            self.np, exe, self.workDir + os.sep + self.filledDem, self.workDir + os.sep + self.flowDirDinf,
+            self.workDir + os.sep + self.slopeDinf)
         if mpiexeDir is not None:
             strCmd = mpiexeDir + os.sep + strCmd
         print(strCmd)
@@ -136,16 +141,20 @@ class DEMRiverNet:
         if self.outlet is not None:
             if self.streamSkeleton is not None:
                 strCmd = "mpiexec -n %d %s -p %s -o %s -wg %s -ad8 %s -nc" % (
-                    self.np, exe, self.flowDir, self.outlet, self.streamSkeleton, self.acc)
+                    self.np, exe, self.workDir + os.sep + self.flowDir, self.workDir + os.sep + self.outlet,
+                    self.workDir + os.sep + self.streamSkeleton, self.workDir + os.sep + self.acc)
             else:
                 strCmd = "mpiexec -n %d %s -p %s -o %s -ad8 %s -nc" % (
-                    self.np, exe, self.flowDir, self.outlet, self.acc)
+                    self.np, exe, self.workDir + os.sep + self.flowDir, self.workDir + os.sep + self.outlet,
+                    self.workDir + os.sep + self.acc)
         else:
             if self.streamSkeleton is not None:
                 strCmd = "mpiexec -n %d %s -p %s -wg %s -ad8 %s -nc" % (
-                    self.np, exe, self.flowDir, self.streamSkeleton, self.acc)
+                    self.np, exe, self.workDir + os.sep + self.flowDir, self.workDir + os.sep + self.streamSkeleton,
+                    self.workDir + os.sep + self.acc)
             else:
-                strCmd = "mpiexec -n %d %s -p %s -ad8 %s -nc" % (self.np, exe, self.flowDir, self.acc)
+                strCmd = "mpiexec -n %d %s -p %s -ad8 %s -nc" % (
+                self.np, exe, self.workDir + os.sep + self.flowDir, self.workDir + os.sep + self.acc)
         if self.np == 0:
             raise Exception("np must larger than zero.", self.np)
         # -nc means donot consider edge contaimination
@@ -176,7 +185,8 @@ class DEMRiverNet:
         else:
             exe = "GridNet"
         strCmd = "mpiexec -n %d %s -p %s -plen %s -tlen %s -gord %s" % (
-            self.np, exe, self.flowDir, self.flowPath, self.tLenFlowPath, self.streamOrder)
+            self.np, exe, self.workDir + os.sep + self.flowDir, self.workDir + os.sep + self.flowPath,
+            self.workDir + os.sep + self.tLenFlowPath, self.workDir + os.sep + self.streamOrder)
         if mpiexeDir is not None:
             strCmd = mpiexeDir + os.sep + strCmd
         if self.np == 0:
@@ -202,7 +212,8 @@ class DEMRiverNet:
             exe = exeDir + os.sep + "PeukerDouglas"
         else:
             exe = "PeukerDouglas"
-        strCmd = "mpiexec -n %d %s -fel %s -ss %s" % (self.np, exe, self.filledDem, self.streamSkeleton)
+        strCmd = "mpiexec -n %d %s -fel %s -ss %s" % (
+        self.np, exe, self.workDir + os.sep + self.filledDem, self.workDir + os.sep + self.streamSkeleton)
         if mpiexeDir is not None:
             strCmd = mpiexeDir + os.sep + strCmd
         if self.np == 0:
@@ -234,7 +245,9 @@ class DEMRiverNet:
         else:
             exe = "DropAnalysis"
         strCmd = "mpiexec -n %d %s -fel %s -p %s -ad8 %s -ssa %s -o %s -drp %s -par %f %f %f" % (
-            self.np, exe, self.filledDem, self.flowDir, self.acc, self.acc, self.modifiedOutlet, drpfile, minthresh,
+            self.np, exe, self.workDir + os.sep + self.filledDem, self.workDir + os.sep + self.flowDir,
+            self.workDir + os.sep + self.acc, self.workDir + os.sep + self.acc,
+            self.workDir + os.sep + self.modifiedOutlet, drpfile, minthresh,
             maxthresh, numthresh)
         if logspace == 'false':
             strCmd = strCmd + ' 1'
@@ -266,7 +279,8 @@ class DEMRiverNet:
         else:
             exe = "Threshold"
         strCmd = "mpiexec -n %d %s -ssa %s -thresh %s  -src %s" % (
-            self.np, exe, self.acc, str(self.threshold), self.streamRaster)
+            self.np, exe, self.workDir + os.sep + self.acc, str(self.threshold),
+            self.workDir + os.sep + self.streamRaster)
         if mpiexeDir is not None:
             strCmd = mpiexeDir + os.sep + strCmd
         if self.np == 0:
@@ -293,7 +307,8 @@ class DEMRiverNet:
         else:
             exe = "MoveOutletsToStreams"
         strCmd = "mpiexec -n %d %s -p %s -src %s -o %s -om %s" % (
-            self.np, exe, self.flowDir, self.streamRaster, self.outlet, self.modifiedOutlet)
+            self.np, exe, self.workDir + os.sep + self.flowDir, self.workDir + os.sep + self.streamRaster,
+            self.workDir + os.sep + self.outlet, self.workDir + os.sep + self.modifiedOutlet)
         if mpiexeDir is not None:
             strCmd = mpiexeDir + os.sep + strCmd
         if self.np == 0:
@@ -320,10 +335,40 @@ class DEMRiverNet:
         else:
             exe = "StreamNet"
         strCmd = "mpiexec -n %d %s -fel %s -p %s -ad8 %s -src %s -o %s  -ord %s -tree %s -coord %s -net %s -w %s" % (
-            self.np, exe, self.filledDem, self.flowDir, self.acc, self.streamRaster, self.modifiedOutlet,
-            self.streamOrder, self.chNetwork, self.chCoord, self.streamNet, self.subbasin)
+            self.np, exe, self.workDir + os.sep + self.filledDem, self.workDir + os.sep + self.flowDir,
+            self.workDir + os.sep + self.acc, self.workDir + os.sep + self.streamRaster,
+            self.workDir + os.sep + self.modifiedOutlet,
+            self.workDir + os.sep + self.streamOrder, self.workDir + os.sep + self.chNetwork,
+            self.workDir + os.sep + self.chCoord, self.workDir + os.sep + self.streamNet,
+            self.workDir + os.sep + self.subbasin)
         if mpiexeDir is not None:
             strCmd = mpiexeDir + os.sep + strCmd
+        if self.np == 0:
+            raise Exception("np must larger than zero.", self.np)
+        print(strCmd)
+        process = subprocess.Popen(strCmd, shell=True, stdout=subprocess.PIPE)
+        print(process.stdout.readlines())
+
+    # / *++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    # +                                                                                   +
+    # +                Function：Watershed delineation                                    +
+    # +                                                                                   +
+    # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
+    def Watershed(self, exeDir=None):
+        '''
+        Watershed delineation
+        :param mpiexeDir:
+        :param exeDir:
+        :return:
+        '''
+        os.chdir(self.workDir)
+        if exeDir is not None:
+            exe = exeDir + os.sep + "GageWatershed"
+        else:
+            exe = "GageWatershed"
+        strCmd = "%s -p %s -o %s -gw %s" % (
+        exe, self.workDir + os.sep + self.flowDir, self.workDir + os.sep + self.modifiedOutlet,
+        self.workDir + os.sep + self.watershed)
         if self.np == 0:
             raise Exception("np must larger than zero.", self.np)
         print(strCmd)
