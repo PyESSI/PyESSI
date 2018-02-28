@@ -55,7 +55,7 @@ class CGreenAmptInfil:
         self.m_dSoilw = 0.
         self.m_dSurfQ = 0.
 
-        soilTemp = readRaster(utils.config + os.sep + 'DEM' + os.sep +  utils.config.SoilFileName)
+        soilTemp = readRaster(utils.config.workSpace + os.sep + 'DEM' + os.sep +  utils.config.SoilFileName)
         pGridSoilInfo =  SoilInfo()
         pGridSoilInfo.ReadSoilFile(GetSoilTypeName(soilTemp.data[self.m_row][self.m_col]) + '.sol')
         dthet = pGridSoilInfo.SoilWaterDeficitPercent()
@@ -127,7 +127,7 @@ class CGreenAmptInfil:
 
 
     def EffHydroConductivity(self,Cp):
-        soilTemp = readRaster(utils.config + os.sep + 'DEM' + os.sep + utils.config.SoilFileName)
+        soilTemp = readRaster(utils.config.workSpace + os.sep + 'DEM' + os.sep + utils.config.SoilFileName)
         pGridSoilInfo = SoilInfo()
         pGridSoilInfo.ReadSoilFile(GetSoilTypeName(soilTemp.data[self.m_row][self.m_col]) + '.sol')
 
