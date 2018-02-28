@@ -22,11 +22,11 @@ if __name__ == "__main__":
 
     r.routingOdr = routingOdr
     r.routingSequ = routingSequ
-    # r.RoutingOptimalOrder()
-    # r.RoutingOptimalSequ()
+    r.RoutingOptimalOrder()
+    r.RoutingOptimalSequ()
 
-    # r.gridUD = gridUD
-    # r.RoutingUDNode()
+    r.gridUD = gridUD
+    r.RoutingUDNode()
 
     r.subbasinsNum = 1
     r.gridFlowLength = gridFlowLength

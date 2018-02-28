@@ -6,7 +6,7 @@ Created Jan 2018
 
 Functions:
     class: SoilInfo
-
+    GetSoilTypeName(SoilTypeID)
 
 
 """
@@ -64,8 +64,8 @@ class SoilInfo:
 
     #从文件中加载每一种指定土壤类型的主要输入物理参数（固有参数）
     def ReadSoilFile(self,soilFilename):
-        if os.path.exists(utils.config.workSpace + '//Soil//' + soilFilename):
-            soilInfos = open(utils.config.workSpace + '//Soil//' + soilFilename, 'r').readlines()
+        if os.path.exists(utils.config.workSpace + os.sep +'Soil'+ os.sep + soilFilename):
+            soilInfos = open(utils.config.workSpace + os.sep +'Soil'+ os.sep + soilFilename, 'r').readlines()
             self.Soil_Name = soilInfos[0].split('\n')[0].strip().split()[1]
             self.iLayer = int(soilInfos[1].split('\n')[0].strip().split()[1])
             self.rootdepth = float(soilInfos[2].split('\n')[0].strip().split()[1])
@@ -178,7 +178,7 @@ class SoilInfo:
     #+                                                        +
     #+++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     # 土壤水赤字比例
-    def SoilWaterDeficitPercen(self):
+    def SoilWaterDeficitPercent(self):
         dthet = (1.0 - self.SP_Sw / self.SP_Fc) * self.SP_Por
         return dthet
 
@@ -195,8 +195,8 @@ class SoilInfo:
 
 
 def GetSoilTypeName(SoilTypeID):
-    if os.path.exists(utils.config.workSpace+'//LookupTable//SoilType.txt'):
-        soilTypeInfos = open(utils.config.workSpace+'//LookupTable//SoilType.txt','r').readlines()
+    if os.path.exists(utils.config.workSpace + os.sep + 'LookupTable' + os.sep + 'SoilType.txt'):
+        soilTypeInfos = open(utils.config.workSpace + os.sep + 'LookupTable' + os.sep + 'SoilType.txt','r').readlines()
         soilIdName = []
         for i in range(len(soilTypeInfos)):
             soilIdName.append((soilTypeInfos[i].split('\n')[0].split('\t')[0].strip(),soilTypeInfos[i].split('\n')[0].split('\t')[1].strip()))
