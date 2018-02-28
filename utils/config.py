@@ -11,8 +11,8 @@ Functions:
 
 #pyESSI Project Setup
 #[ProjectSetup]
-workSpace = r'D:\pyESSITest\DCBAM'
-mpiexeDir = r'"C:\Program Files\Microsoft MPI\Bin"'
+workSpace = r'D:\GaohrWS\DoctorWorks\DoctorWork\PyESSI\DCBAM'
+mpiexeDir = r'"D:\Program Files\Microsoft MPI\Bin"'
 exeDir = None
 startTime = 19960101      #模拟起始日期
 endTime = 20001231      #模拟结束日期
@@ -168,9 +168,6 @@ iAvgSoilWater = 0      #土层平均含水量
 
 
 #[PREPROCESS PARAMETERS]
-isTauDEMD8 = True
-CPP_PROGRAM_DIR = None
-MPIEXEC_DIR = None
 D8AccThreshold = 1000
 threshold = 0   # threshold for stream extraction from D8-flow accumulation weighted Peuker-Douglas stream sources
                 # if threshold is 0, then Drop Analysis is used to select the optimal value.
