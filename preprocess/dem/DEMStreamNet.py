@@ -20,7 +20,7 @@ Revised:
 import os
 import subprocess
 from osgeo import gdal
-from utils.utils import ReadRaster, WriteGTiffFile
+from utils.fileIO import readRaster, writeRaster
 
 
 class DEMRiverNet:
@@ -391,12 +391,12 @@ class DEMRiverNet:
 
         watershedFile = self.workDir + os.sep + self.watershed
         print(watershedFile)
-        wsd = ReadRaster(watershedFile).data
-        rows = ReadRaster(watershedFile).nRows
-        cols = ReadRaster(watershedFile).nCols
-        geotrans = ReadRaster(watershedFile).geotrans
-        srs = ReadRaster(watershedFile).srs
-        noDataValue_ws = ReadRaster(watershedFile).noDataValue
+        wsd = readRaster(watershedFile).data
+        rows = readRaster(watershedFile).nRows
+        cols = readRaster(watershedFile).nCols
+        geotrans = readRaster(watershedFile).geotrans
+        srs = readRaster(watershedFile).srs
+        noDataValue_ws = readRaster(watershedFile).noDataValue
 
         filledDemFile = self.workDir + os.sep + self.filledDem
         flowDirFile = self.workDir + os.sep + self.flowDir
@@ -409,16 +409,16 @@ class DEMRiverNet:
         tLenFlowPathFile = self.workDir + os.sep + self.tLenFlowPath
         streamOrderFile = self.workDir + os.sep + self.streamOrder
 
-        fil = ReadRaster(filledDemFile).data
-        fld = ReadRaster(flowDirFile).data
-        slp = ReadRaster(slopeFile).data
-        acm = ReadRaster(accFile).data
-        stm = ReadRaster(streamRasterFile).data
-        fdd = ReadRaster(flowDirDinfFile).data
-        spd = ReadRaster(slopeDinfFile).data
-        flp = ReadRaster(flowPathFile).data
-        tlf = ReadRaster(tLenFlowPathFile).data
-        sto = ReadRaster(streamOrderFile).data
+        fil = readRaster(filledDemFile).data
+        fld = readRaster(flowDirFile).data
+        slp = readRaster(slopeFile).data
+        acm = readRaster(accFile).data
+        stm = readRaster(streamRasterFile).data
+        fdd = readRaster(flowDirDinfFile).data
+        spd = readRaster(slopeDinfFile).data
+        flp = readRaster(flowPathFile).data
+        tlf = readRaster(tLenFlowPathFile).data
+        sto = readRaster(streamOrderFile).data
 
         for i in range(rows):
             for j in range(cols):
@@ -436,14 +436,14 @@ class DEMRiverNet:
                 else:
                     continue
 
-        WriteGTiffFile(filledDemFile, rows, cols, fil, geotrans, srs, self.noDataValue, gdal.GDT_Float32)
-        WriteGTiffFile(flowDirFile, rows, cols, fld, geotrans, srs, self.noDataValue, gdal.GDT_Float32)
-        WriteGTiffFile(slopeFile, rows, cols, slp, geotrans, srs, self.noDataValue, gdal.GDT_Float32)
-        WriteGTiffFile(accFile, rows, cols, acm, geotrans, srs, self.noDataValue, gdal.GDT_Float32)
-        WriteGTiffFile(streamRasterFile, rows, cols, stm, geotrans, srs, self.noDataValue, gdal.GDT_Float32)
-        WriteGTiffFile(flowDirDinfFile, rows, cols, fdd, geotrans, srs, self.noDataValue, gdal.GDT_Float32)
-        WriteGTiffFile(slopeDinfFile, rows, cols, spd, geotrans, srs, self.noDataValue, gdal.GDT_Float32)
-        WriteGTiffFile(flowPathFile, rows, cols, flp, geotrans, srs, self.noDataValue, gdal.GDT_Float32)
-        WriteGTiffFile(tLenFlowPathFile, rows, cols, tlf, geotrans, srs, self.noDataValue, gdal.GDT_Float32)
-        WriteGTiffFile(streamOrderFile, rows, cols, sto, geotrans, srs, self.noDataValue, gdal.GDT_Float32)
+        writeRaster(filledDemFile, rows, cols, fil, geotrans, srs, self.noDataValue, gdal.GDT_Float32)
+        writeRaster(flowDirFile, rows, cols, fld, geotrans, srs, self.noDataValue, gdal.GDT_Float32)
+        writeRaster(slopeFile, rows, cols, slp, geotrans, srs, self.noDataValue, gdal.GDT_Float32)
+        writeRaster(accFile, rows, cols, acm, geotrans, srs, self.noDataValue, gdal.GDT_Float32)
+        writeRaster(streamRasterFile, rows, cols, stm, geotrans, srs, self.noDataValue, gdal.GDT_Float32)
+        writeRaster(flowDirDinfFile, rows, cols, fdd, geotrans, srs, self.noDataValue, gdal.GDT_Float32)
+        writeRaster(slopeDinfFile, rows, cols, spd, geotrans, srs, self.noDataValue, gdal.GDT_Float32)
+        writeRaster(flowPathFile, rows, cols, flp, geotrans, srs, self.noDataValue, gdal.GDT_Float32)
+        writeRaster(tLenFlowPathFile, rows, cols, tlf, geotrans, srs, self.noDataValue, gdal.GDT_Float32)
+        writeRaster(streamOrderFile, rows, cols, sto, geotrans, srs, self.noDataValue, gdal.GDT_Float32)
 

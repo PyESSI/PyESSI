@@ -23,7 +23,7 @@ import os
 import sys
 import math
 import numpy
-from utils.utils import *
+from utils.fileIO import *
 from preprocess.dem.utils_dem import *
 
 
@@ -90,15 +90,15 @@ class RunoffParam:
         demFile = self.workDir + os.sep + self.dem
         flowDirFile = self.workDir + os.sep + self.flowDir
         streamOrdFile = self.workDir + os.sep + self.streamOrd
-        self.demData = ReadRaster(demFile).data
-        self.flowDirData = ReadRaster(flowDirFile).data
-        self.streamOrdData = ReadRaster(streamOrdFile).data
-        self.watershedData = ReadRaster(flowDirFile).data
-        self.rows = ReadRaster(flowDirFile).nRows
-        self.cols = ReadRaster(flowDirFile).nCols
-        self.geotrans = ReadRaster(flowDirFile).geotrans
-        self.srs = ReadRaster(flowDirFile).srs
-        self.noDataValue = ReadRaster(flowDirFile).noDataValue
+        self.demData = readRaster(demFile).data
+        self.flowDirData = readRaster(flowDirFile).data
+        self.streamOrdData = readRaster(streamOrdFile).data
+        self.watershedData = readRaster(flowDirFile).data
+        self.rows = readRaster(flowDirFile).nRows
+        self.cols = readRaster(flowDirFile).nCols
+        self.geotrans = readRaster(flowDirFile).geotrans
+        self.srs = readRaster(flowDirFile).srs
+        self.noDataValue = readRaster(flowDirFile).noDataValue
         print(self.noDataValue)
 
 
@@ -130,7 +130,7 @@ class RunoffParam:
                     self.rtc[m][n] = self.noDataValue
 
         print()
-        WriteGTiffFile(self.workDir + os.sep + self.routingCode, self.rows, self.cols, self.rtc, self.geotrans,
+        writeRaster(self.workDir + os.sep + self.routingCode, self.rows, self.cols, self.rtc, self.geotrans,
                        self.srs, self.noDataValue, gdal.GDT_Float32)
         return 0
 
@@ -148,7 +148,7 @@ class RunoffParam:
         if self.routingCode == None:
             raise Exception("routingCode can not be empty.", self.routingCode)
         else:
-            self.rtc = ReadRaster(self.workDir + os.sep + self.routingCode).data
+            self.rtc = readRaster(self.workDir + os.sep + self.routingCode).data
 
         self.ror = numpy.zeros((self.rows, self.cols))
         dMax = numpy.max(self.rtc)
@@ -212,7 +212,7 @@ class RunoffParam:
                     continue
 
         print()
-        WriteGTiffFile(self.workDir + os.sep + self.routingOdr, self.rows, self.cols, self.ror, self.geotrans,
+        writeRaster(self.workDir + os.sep + self.routingOdr, self.rows, self.cols, self.ror, self.geotrans,
                        self.srs, self.noDataValue, gdal.GDT_Float32)
         return 0
 
@@ -230,7 +230,7 @@ class RunoffParam:
         if self.routingOdr == None:
             raise Exception("routingOdr can not be empty.", self.routingOdr)
         else:
-            self.ror = ReadRaster(self.workDir + os.sep + self.routingOdr).data
+            self.ror = readRaster(self.workDir + os.sep + self.routingOdr).data
 
         self.rsq = numpy.zeros((self.rows, self.cols))
 
@@ -251,7 +251,7 @@ class RunoffParam:
                         self.rsq[i][j] = self.noDataValue
 
         print()
-        WriteGTiffFile(self.workDir + os.sep + self.routingSequ, self.rows, self.cols, self.rsq, self.geotrans,
+        writeRaster(self.workDir + os.sep + self.routingSequ, self.rows, self.cols, self.rsq, self.geotrans,
                        self.srs, self.noDataValue, gdal.GDT_Float32)
         return 0
 
@@ -269,8 +269,8 @@ class RunoffParam:
         if self.routingSequ == None:
             raise Exception("routingSequ can not be empty.", self.routingSequ)
         else:
-            self.rsq = ReadRaster(self.workDir + os.sep + self.routingSequ).data
-            self.rtc = ReadRaster(self.workDir + os.sep + self.routingCode).data
+            self.rsq = readRaster(self.workDir + os.sep + self.routingSequ).data
+            self.rtc = readRaster(self.workDir + os.sep + self.routingCode).data
         if self.gridUD == None:
             raise Exception("gridUD can not be empty.", self.gridUD)
 
@@ -379,7 +379,7 @@ class RunoffParam:
         if self.flowDir == None or self.routingCode == None:
             raise Exception("flowDir or routingCode can not be empty.", self.flowDir, self.routingCode)
         else:
-            self.rtc = ReadRaster(self.workDir + os.sep + self.routingCode).data
+            self.rtc = readRaster(self.workDir + os.sep + self.routingCode).data
         if self.subbasinsNum == 0:
             raise Exception("subbasinsNum can not be zero.", self.subbasinsNum)
 
@@ -426,7 +426,7 @@ class RunoffParam:
                     continue
 
         print()
-        WriteGTiffFile(self.workDir + os.sep + self.gridFlowLength, self.rows, self.cols, self.gfl, self.geotrans,
+        writeRaster(self.workDir + os.sep + self.gridFlowLength, self.rows, self.cols, self.gfl, self.geotrans,
                        self.srs, self.noDataValue, gdal.GDT_Float32)
         return 0
 
@@ -444,7 +444,7 @@ class RunoffParam:
         if self.routingCode == None:
             raise Exception("routingCode can not be empty.", self.routingCode)
         else:
-            self.rtc = ReadRaster(self.workDir + os.sep + self.routingCode).data
+            self.rtc = readRaster(self.workDir + os.sep + self.routingCode).data
         if self.subbasinsNum == 0:
             raise Exception("subbasinsNum can not be zero.", self.subbasinsNum)
 
@@ -507,7 +507,7 @@ class RunoffParam:
                     continue
 
         print()
-        WriteGTiffFile(self.workDir + os.sep + self.gridMeanSlp, self.rows, self.cols, self.gms, self.geotrans,
+        writeRaster(self.workDir + os.sep + self.gridMeanSlp, self.rows, self.cols, self.gms, self.geotrans,
                        self.srs, self.noDataValue, gdal.GDT_Float32)
         return 0
 
@@ -534,8 +534,8 @@ class RunoffParam:
         if self.gridFlowLength == None or self.gridMeanSlp == None:
             raise Exception("gridFlowLength or gridMeanSlp can not be empty.", self.gridFlowLength, self.gridMeanSlp)
         else:
-            self.gfl = ReadRaster(self.workDir + os.sep + self.gridFlowLength).data
-            self.gms = ReadRaster(self.workDir + os.sep + self.gridMeanSlp).data
+            self.gfl = readRaster(self.workDir + os.sep + self.gridFlowLength).data
+            self.gms = readRaster(self.workDir + os.sep + self.gridMeanSlp).data
         if self.dKV == 0:
             raise Exception("dKV can not be empty.", self.dKV)
 
@@ -555,7 +555,7 @@ class RunoffParam:
                     self.rtt[i][j] = self.noDataValue
 
         print()
-        WriteGTiffFile(self.workDir + os.sep + self.routingTime, self.rows, self.cols, self.rtt, self.geotrans,
+        writeRaster(self.workDir + os.sep + self.routingTime, self.rows, self.cols, self.rtt, self.geotrans,
                        self.srs, self.noDataValue, gdal.GDT_Float32)
 
         return 0
