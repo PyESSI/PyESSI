@@ -14,8 +14,7 @@ from utils.utils import GetRasterStat
 
 if __name__ == "__main__":
     d = DEMRiverNet()
-    # d.workDir = tauDir
-    d.workDir = workSpace
+    d.workDir = workSpace + os.sep + "test"
     d.dem = DEMFileName
     d.np = np
     d.noDataValue = defaultNodata
