@@ -240,6 +240,7 @@ class RunoffParam:
         for dk in range(1, int(dMax + 1)):
             if dk % int(dMax / 100) == 0:
                 print("▋", end='')
+                sys.stdout.flush()
             for i in range(self.rows):
                 for j in range(self.cols):
                     if self.rtc[i][j] != self.noDataValue:
@@ -293,6 +294,7 @@ class RunoffParam:
             for j in range(self.cols):
                 if (i * self.rows + j) % int(self.rows * self.cols / 100) == 0:
                     print("▋", end='')
+                    sys.stdout.flush()
                 if self.rtc[i][j] == self.noDataValue:
                     continue
                 else:

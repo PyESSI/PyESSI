@@ -5,8 +5,7 @@ from utils.config import *
 
 if __name__ == "__main__":
     r = RunoffParam()
-    # r.workDir = tauDir
-    r.workDir = workSpace
+    r.workDir = workSpace + os.sep + "test"
     r.flowDir = flowDir
     r.streamOrd = streamOrder
     r.dem = DEMFileName
