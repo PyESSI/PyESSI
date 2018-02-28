@@ -11,8 +11,8 @@ Functions:
 
 #pyESSI Project Setup
 #[ProjectSetup]
-workSpace = r'D:\GaohrWS\DoctorWorks\DoctorWork\PyESSI\DCBAM'
-mpiexeDir = r'"D:\Program Files\Microsoft MPI\Bin"'
+workSpace = r'D:\pyESSITest\DCBAM'
+mpiexeDir = r'"C:\Program Files\Microsoft MPI\Bin"'
 exeDir = None
 startTime = 19960101      #模拟起始日期
 endTime = 20001231      #模拟结束日期
@@ -99,6 +99,18 @@ RiverRouteMethod = 1
 #------2－格林－安普特下渗曲线 INFILTRATION_GREEN_AMPT
 #------3－菲利普下渗曲线 INFILTRATION_PHILIP
 InfilCurveType = 1
+
+#水力学计算河道类型
+M_RIVER_SECTION_TRIANGLE = 1      #曼宁 -- 三角形河道断面
+M_RIVER_SECTION_RECTANGLE = 2      #曼宁 -- 宽浅矩形河道断面
+M_RIVER_SECTION_PARABOLA = 3      #曼宁 -- 宽浅抛物线形河道断面
+M_RIVER_SECTION_HILLSIDE = 4      #曼宁 -- 坡地（用于坡面运动波汇流）
+C_RIVER_SECTION_TRIANGLE = 5      #谢才 -- 三角形河道断面
+C_RIVER_SECTION_RECTANGLE = 6      #谢才 -- 宽浅矩形河道断面
+C_RIVER_SECTION_PARABOLA = 7      #谢才 -- 宽浅抛物线形河道断面
+C_RIVER_SECTION_HILLSIDE = 8      #谢才 -- 坡地（用于坡面运动波汇流）
+
+
 
 #PyESSI Model Input Parameters
 #[InputPara]
@@ -190,7 +202,7 @@ slopeDinf = demName + "_spd.tif"                # Slope with Dinf
 acc = demName + "_acu.tif"                      # Accumulation
 streamRaster = demName + "_snk.tif"             # Stream network
 watershed = demName + "_wby.tif"                # Watershed boundary
-modifiedOutlet = "outletM.shp"                  # Nodified outlet shp
+modifiedOutlet = "outletM.shp"                  # Modified outlet shp
 streamSkeleton = demName + "_stk.tif"           # Stream skeleton
 flowPath = demName + "_mln.tif"                 # Maximum flow length
 tLenFlowPath = demName + "_tln.tif"             # Totle length of flow

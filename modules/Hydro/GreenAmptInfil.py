@@ -55,7 +55,7 @@ class CGreenAmptInfil:
         self.m_dSoilw = 0.
         self.m_dSurfQ = 0.
 
-        soilTemp = readRaster(utils.config + os.sep + 'DEM' + os.sep +  utils.config.SoilFileName)
+        soilTemp = readRaster(utils.config.workSpace + os.sep + 'DEM' + os.sep +  utils.config.SoilFileName)
         pGridSoilInfo =  SoilInfo()
         pGridSoilInfo.ReadSoilFile(GetSoilTypeName(soilTemp.data[self.m_row][self.m_col]) + '.sol')
         dthet = pGridSoilInfo.SoilWaterDeficitPercent()
@@ -97,6 +97,23 @@ class CGreenAmptInfil:
         else:
             dtmp = 0.
             bExistLoop = False
+
+            #do while
+            df = 0.
+            df = self.m_dPrecuminf + self.m_dEhc * dt + psidt * math.log((dtmp + psidt) / (self.m_dPrecuminf + psidt));
+            if math.fabs(df - dtmp) <= 0.001:
+                dcuminf = df
+                dexcum = dcumr - dcuminf
+                if dexcum <= 0:
+                    dexcum = 0.
+                    dexinc = dexcum - self.m_dPreexcum
+                if dexinc < 0.:
+                    dexinc = 0.
+                    self.m_dSurfQ = self.m_dSurfQ + dexinc
+                    bExistLoop = True
+            else:
+                dtmp = df
+
             while not bExistLoop:
                 df = 0.
                 df = self.m_dPrecuminf + self.m_dEhc * dt + psidt * math.log((dtmp + psidt) / (self.m_dPrecuminf + psidt));
@@ -127,7 +144,7 @@ class CGreenAmptInfil:
 
 
     def EffHydroConductivity(self,Cp):
-        soilTemp = readRaster(utils.config + os.sep + 'DEM' + os.sep + utils.config.SoilFileName)
+        soilTemp = readRaster(utils.config.workSpace + os.sep + 'DEM' + os.sep + utils.config.SoilFileName)
         pGridSoilInfo = SoilInfo()
         pGridSoilInfo.ReadSoilFile(GetSoilTypeName(soilTemp.data[self.m_row][self.m_col]) + '.sol')
 
