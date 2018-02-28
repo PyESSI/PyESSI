@@ -9,19 +9,20 @@ if __name__ == "__main__":
     r.workDir = workSpace
     r.flowDir = flowDir
     r.streamOrd = streamOrder
-    r.watershed = watershed
     r.dem = DEMFileName
     r.SetInfo()
 
     r.outX = 154
     r.outY = 579
+    # r.outX = 230
+    # r.outY = 72
 
     r.routingCode = routingCode
     r.RoutingGridCode()
 
     r.routingOdr = routingOdr
     r.routingSequ = routingSequ
-    r.RoutingOptimalOrder()
+    # r.RoutingOptimalOrder()
     # r.RoutingOptimalSequ()
 
     # r.gridUD = gridUD
@@ -34,6 +35,14 @@ if __name__ == "__main__":
     r.gridMeanSlp = gridMeanSlp
     r.RouteMeanSlp()
 
-    r.routingTime = routingTime
-    r.dKV = 2000
+    r.routingTime = routingTime_GST
+    r.dKV = GSKv
+    r.RouteTime()
+
+    r.routingTime = routingTime_GLT
+    r.dKV = GLKv
+    r.RouteTime()
+
+    r.routingTime = routingTime_GBT
+    r.dKV = GBKv
     r.RouteTime()

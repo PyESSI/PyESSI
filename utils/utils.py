@@ -281,6 +281,7 @@ def WriteGTiffFile(filename, nRows, nCols, data, geotransform, srs, noDataValue,
     ds.GetRasterBand(1).WriteArray(data)
     
     ds = None
+    print("\tSave as: %s" % filename)
 
 def WriteGTiffFileByMask(filename, data, mask, gdalType):
     format = "GTiff"

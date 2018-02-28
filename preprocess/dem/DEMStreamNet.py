@@ -19,6 +19,8 @@ Revised:
 
 import os
 import subprocess
+from osgeo import gdal
+from utils.utils import ReadRaster, WriteGTiffFile
 
 
 class DEMRiverNet:
@@ -29,6 +31,7 @@ class DEMRiverNet:
         self.threshold = 0
         self.outlet = None
         self.streamSkeleton = None
+        self.noDataValue = None
 
         # Output
         self.filledDem = ""
@@ -40,8 +43,6 @@ class DEMRiverNet:
         self.slopeDinf = ""
         self.flowPath = ""
         self.tLenFlowPath = ""
-        # self.weightDinf = ""
-        # self.dirCodeDinf = ""
         self.modifiedOutlet = ""
         self.streamOrder = ""
         self.chNetwork = ""
@@ -64,7 +65,7 @@ class DEMRiverNet:
         if self.np == 0:
             raise Exception("np must larger than zero.", self.np)
         strCmd = "mpiexec -n %d %s -z %s -fel %s" % (
-        self.np, exe, self.workDir + os.sep + self.dem, self.workDir + os.sep + self.filledDem)
+            self.np, exe, self.workDir + os.sep + self.dem, self.workDir + os.sep + self.filledDem)
         if mpiexeDir is not None:
             strCmd = mpiexeDir + os.sep + strCmd
         print(strCmd)
@@ -90,8 +91,8 @@ class DEMRiverNet:
         if self.np == 0:
             raise Exception("np must larger than zero.", self.np)
         strCmd = "mpiexec -n %d %s -fel %s -p %s  -sd8 %s" % (
-        self.np, exe, self.workDir + os.sep + self.filledDem, self.workDir + os.sep + self.flowDir,
-        self.workDir + os.sep + self.slope)
+            self.np, exe, self.workDir + os.sep + self.filledDem, self.workDir + os.sep + self.flowDir,
+            self.workDir + os.sep + self.slope)
         if mpiexeDir is not None:
             strCmd = mpiexeDir + os.sep + strCmd
         print(strCmd)
@@ -154,7 +155,7 @@ class DEMRiverNet:
                     self.workDir + os.sep + self.acc)
             else:
                 strCmd = "mpiexec -n %d %s -p %s -ad8 %s -nc" % (
-                self.np, exe, self.workDir + os.sep + self.flowDir, self.workDir + os.sep + self.acc)
+                    self.np, exe, self.workDir + os.sep + self.flowDir, self.workDir + os.sep + self.acc)
         if self.np == 0:
             raise Exception("np must larger than zero.", self.np)
         # -nc means donot consider edge contaimination
@@ -213,7 +214,7 @@ class DEMRiverNet:
         else:
             exe = "PeukerDouglas"
         strCmd = "mpiexec -n %d %s -fel %s -ss %s" % (
-        self.np, exe, self.workDir + os.sep + self.filledDem, self.workDir + os.sep + self.streamSkeleton)
+            self.np, exe, self.workDir + os.sep + self.filledDem, self.workDir + os.sep + self.streamSkeleton)
         if mpiexeDir is not None:
             strCmd = mpiexeDir + os.sep + strCmd
         if self.np == 0:
@@ -367,10 +368,82 @@ class DEMRiverNet:
         else:
             exe = "GageWatershed"
         strCmd = "%s -p %s -o %s -gw %s" % (
-        exe, self.workDir + os.sep + self.flowDir, self.workDir + os.sep + self.modifiedOutlet,
-        self.workDir + os.sep + self.watershed)
+            exe, self.workDir + os.sep + self.flowDir, self.workDir + os.sep + self.modifiedOutlet,
+            self.workDir + os.sep + self.watershed)
         if self.np == 0:
             raise Exception("np must larger than zero.", self.np)
         print(strCmd)
         process = subprocess.Popen(strCmd, shell=True, stdout=subprocess.PIPE)
         print(process.stdout.readlines())
+
+    # / *++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    # +                                                                                   +
+    # +                Function：lip raster by watershed boundary                         +
+    # +                                                                                   +
+    # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
+    def ClipRasterByWatershed(self):
+        '''
+        Clip raster by watershed boundary
+        :return:
+        '''
+        if self.noDataValue is None:
+            raise Exception("noDataValue must not be None.", self.noDataValue)
+
+        watershedFile = self.workDir + os.sep + self.watershed
+        print(watershedFile)
+        wsd = ReadRaster(watershedFile).data
+        rows = ReadRaster(watershedFile).nRows
+        cols = ReadRaster(watershedFile).nCols
+        geotrans = ReadRaster(watershedFile).geotrans
+        srs = ReadRaster(watershedFile).srs
+        noDataValue_ws = ReadRaster(watershedFile).noDataValue
+
+        filledDemFile = self.workDir + os.sep + self.filledDem
+        flowDirFile = self.workDir + os.sep + self.flowDir
+        slopeFile = self.workDir + os.sep + self.slope
+        accFile = self.workDir + os.sep + self.acc
+        streamRasterFile = self.workDir + os.sep + self.streamRaster
+        flowDirDinfFile = self.workDir + os.sep + self.flowDirDinf
+        slopeDinfFile = self.workDir + os.sep + self.slopeDinf
+        flowPathFile = self.workDir + os.sep + self.flowPath
+        tLenFlowPathFile = self.workDir + os.sep + self.tLenFlowPath
+        streamOrderFile = self.workDir + os.sep + self.streamOrder
+
+        fil = ReadRaster(filledDemFile).data
+        fld = ReadRaster(flowDirFile).data
+        slp = ReadRaster(slopeFile).data
+        acm = ReadRaster(accFile).data
+        stm = ReadRaster(streamRasterFile).data
+        fdd = ReadRaster(flowDirDinfFile).data
+        spd = ReadRaster(slopeDinfFile).data
+        flp = ReadRaster(flowPathFile).data
+        tlf = ReadRaster(tLenFlowPathFile).data
+        sto = ReadRaster(streamOrderFile).data
+
+        for i in range(rows):
+            for j in range(cols):
+                if wsd[i][j] == noDataValue_ws:
+                    fil[i][j] = self.noDataValue
+                    fld[i][j] = self.noDataValue
+                    slp[i][j] = self.noDataValue
+                    acm[i][j] = self.noDataValue
+                    stm[i][j] = self.noDataValue
+                    fdd[i][j] = self.noDataValue
+                    spd[i][j] = self.noDataValue
+                    flp[i][j] = self.noDataValue
+                    tlf[i][j] = self.noDataValue
+                    sto[i][j] = self.noDataValue
+                else:
+                    continue
+
+        WriteGTiffFile(filledDemFile, rows, cols, fil, geotrans, srs, self.noDataValue, gdal.GDT_Float32)
+        WriteGTiffFile(flowDirFile, rows, cols, fld, geotrans, srs, self.noDataValue, gdal.GDT_Float32)
+        WriteGTiffFile(slopeFile, rows, cols, slp, geotrans, srs, self.noDataValue, gdal.GDT_Float32)
+        WriteGTiffFile(accFile, rows, cols, acm, geotrans, srs, self.noDataValue, gdal.GDT_Float32)
+        WriteGTiffFile(streamRasterFile, rows, cols, stm, geotrans, srs, self.noDataValue, gdal.GDT_Float32)
+        WriteGTiffFile(flowDirDinfFile, rows, cols, fdd, geotrans, srs, self.noDataValue, gdal.GDT_Float32)
+        WriteGTiffFile(slopeDinfFile, rows, cols, spd, geotrans, srs, self.noDataValue, gdal.GDT_Float32)
+        WriteGTiffFile(flowPathFile, rows, cols, flp, geotrans, srs, self.noDataValue, gdal.GDT_Float32)
+        WriteGTiffFile(tLenFlowPathFile, rows, cols, tlf, geotrans, srs, self.noDataValue, gdal.GDT_Float32)
+        WriteGTiffFile(streamOrderFile, rows, cols, sto, geotrans, srs, self.noDataValue, gdal.GDT_Float32)
+

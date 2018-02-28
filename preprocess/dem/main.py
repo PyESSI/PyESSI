@@ -18,7 +18,7 @@ if __name__ == "__main__":
     d.workDir = workSpace
     d.dem = DEMFileName
     d.np = np
-    d.defaultNodata = defaultNodata
+    d.noDataValue = defaultNodata
 
     # Step 1 Remove Pits
     print("Fill DEM...")
@@ -54,7 +54,7 @@ if __name__ == "__main__":
     # Step 6 Stream delineation
     print("Stream delineation initially...")
     d.outlet = outlet
-    # d.FlowAccD8()
+    d.FlowAccD8()
     d.modifiedOutlet = modifiedOutlet
     d.streamRaster = streamRaster
     if threshold != 0:
@@ -96,6 +96,10 @@ if __name__ == "__main__":
     print("Watershed delineation...")
     d.watershed = watershed
     d.Watershed()
+
+    # Clip raster
+    d.ClipRasterByWatershed()
+
 
 
 

@@ -11,9 +11,7 @@ Functions:
 
 #pyESSI Project Setup
 #[ProjectSetup]
-workSpace = r'D:\GaohrWS\DoctorWorks\DoctorWork\PyESSI\DCBAM'
-# tauDir = r'D:\GaohrWS\DoctorWorks\DoctorWork\PyESSI\DCBAM\TauDEM_test'
-srDir = r'D:\GaohrWS\DoctorWorks\DoctorWork\PyESSI\DCBAM\RunoffParam_test'
+workSpace = r'D:\GaohrWS\DoctorWorks\DoctorWork\PyESSI\DCBAM\test'
 mpiexeDir = r'"D:\Program Files\Microsoft MPI\Bin"'
 exeDir = None
 startTime = 19960101
@@ -25,6 +23,7 @@ DEMFileName = 'YLXDem240.tif'
 # DEMFileName = 'dem.tif'
 LULCFileName = 'YLXLulc240.tif'
 SoilFileName = 'YLXSoil240.tif'
+outlet = "outlet.shp"
 
 #PyESSI Model Running Parameters
 #[RunPara]
@@ -113,35 +112,30 @@ defaultLanduse = 33
 defaultNodata = -9999.
 
 ## Conventional Spatial Raster Data File Names
-filledDem = "tauDemFilled.tif"
-flowDir = "tauD8FlowDir.tif"
-slope = "tauSlope.tif"
-acc = "tauD8Acc.tif"
-streamRaster = "tauStreamRaster.tif"
-outlet = "outlet.shp"
-
-flowDirDinf = "flowDirDinfTau.tif"
-# dirCodeDinf = "dirCodeDinfTau.tif"
-# weightDinf = "weightDinfTau.tif"
-slopeDinf = "slopeDinfTau.tif"
-cellLat = "cellLatOrg.tif"
-daylMin = "dayLenMinOrg.tif"
-dormhr = "dormhrOrg.tif"
-watershed = "watershed.tif"
-
-modifiedOutlet = "outletM.shp"
-streamSkeleton = "streamSkeleton.tif"
-flowPath = "flowPath.tif"
-tLenFlowPath = "tlenFlowPath.tif"
-streamOrder = "tauStreamOrder.tif"
-chNetwork = "chNetwork.txt"
-chCoord = "chCoord.txt"
-streamNet = "streamNet.shp"
-subbasin = "tauSubbasin.tif"
-routingCode = "routingCode.tif"
-routingSequ = "routingSequ.tif"
-routingOdr = "routingOdr.tif"
-gridUD = "gridUpDown.txt"
-gridFlowLength = "gridFlowLength.tif"
-gridMeanSlp = "gridMeanSlp.tif"
-routingTime = "routingTime.tif"
+demName = DEMFileName.split(".")[0]
+filledDem = demName + "_fip.tif"                # Fill pits
+flowDir = demName + "_fld.tif"                  # Flow direction with D8
+flowDirDinf = demName + "_fdd.tif"              # Flow direction with Dinf
+slope = demName + "_slp.tif"                    # Slope
+slopeDinf = demName + "_spd.tif"                # Slope with Dinf
+acc = demName + "_acu.tif"                      # Accumulation
+streamRaster = demName + "_snk.tif"             # Stream network
+watershed = demName + "_wby.tif"                # Watershed boundary
+modifiedOutlet = "outletM.shp"                  # Nodified outlet shp
+streamSkeleton = demName + "_stk.tif"           # Stream skeleton
+flowPath = demName + "_mln.tif"                 # Maximum flow length
+tLenFlowPath = demName + "_tln.tif"             # Totle length of flow
+streamOrder = demName + "_sor.tif"              # Strahler order
+chNetwork = "chNetwork.txt"                     # Network txt
+chCoord = "chCoord.txt"                         # Coord txt
+streamNet = demName + "streamNet.shp"           # Stream net shp
+subbasin = demName + "_sws.tif"                 # Sub watershed
+routingCode = demName + "_rtc.tif"              # Routing code
+routingSequ = demName + "_ros.tif"              # Routing Optional Sequence
+routingOdr = demName + "_ror.tif"               # Routing Optional Rank
+gridUD = demName + "_gud.txt"                   # Grid upslope and downslope
+gridFlowLength = demName + "_grl.tif"           # Grid river length
+gridMeanSlp = demName + "_grs.tif"              # Grid river slope
+routingTime_GST = demName + "_gst.tif"          # Grid surface runoff route Time
+routingTime_GLT = demName + "_glt.tif"          # Grid lateral route time
+routingTime_GBT = demName + "_gbt.tif"          # Grid base route Time
