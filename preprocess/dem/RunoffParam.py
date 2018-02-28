@@ -20,6 +20,7 @@ Revised:
 """
 
 import os
+import sys
 import math
 import numpy
 from utils.utils import *
@@ -32,7 +33,6 @@ class RunoffParam:
         self.dem = ""        # Input dem (GeoTIFF file)
         self.flowDir = ""    # Input flow direction (GeoTIFF file)
         self.streamOrd = ""  # Input stream order (GeoTIFF file)
-        self.watershed = ""  # Input watershed raster (GeoTIFF file)
         self.d8 = [1, 8, 7, 6, 5, 4, 3, 2]  # d8算法的8个流向(流出) TauDEM
         self.fd8 = [5, 4, 3, 2, 1, 8, 7, 6]  # d8算法的8个流向(流进) TauDEM
         self.subbasinsNum = 0
@@ -44,12 +44,11 @@ class RunoffParam:
         self.demData = None
         self.flowDirData = None
         self.streamOrdData = None
-        self.watershedData = None
         self.rows = 0
         self.cols = 0
         self.geotrans = None
         self.srs = None
-        self.noDataValue = -9999.
+        self.noDataValue = None
 
         # Watershed
         self.outX = None
@@ -91,28 +90,17 @@ class RunoffParam:
         demFile = self.workDir + os.sep + self.dem
         flowDirFile = self.workDir + os.sep + self.flowDir
         streamOrdFile = self.workDir + os.sep + self.streamOrd
-        watershedFile = self.workDir + os.sep + self.watershed
         self.demData = ReadRaster(demFile).data
         self.flowDirData = ReadRaster(flowDirFile).data
         self.streamOrdData = ReadRaster(streamOrdFile).data
-        self.watershedData = ReadRaster(watershedFile).data
-        self.rows = ReadRaster(watershedFile).nRows
-        self.cols = ReadRaster(watershedFile).nCols
-        self.geotrans = ReadRaster(watershedFile).geotrans
-        self.srs = ReadRaster(watershedFile).srs
+        self.watershedData = ReadRaster(flowDirFile).data
+        self.rows = ReadRaster(flowDirFile).nRows
+        self.cols = ReadRaster(flowDirFile).nCols
+        self.geotrans = ReadRaster(flowDirFile).geotrans
+        self.srs = ReadRaster(flowDirFile).srs
         self.noDataValue = ReadRaster(flowDirFile).noDataValue
-        self.noDataValue_ws = ReadRaster(watershedFile).noDataValue
-        # print(self.noDataValue)
+        print(self.noDataValue)
 
-        ## Clip data(temporal) by watershed
-        for i in range(self.rows):
-            for j in range(self.cols):
-                if self.watershedData[i][j] == self.noDataValue_ws:
-                    self.demData[i][j] = self.noDataValue
-                    self.flowDirData[i][j] = self.noDataValue
-                    self.streamOrdData[i][j] = self.noDataValue
-                else:
-                    continue
 
     # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +                                                                      +
@@ -124,19 +112,24 @@ class RunoffParam:
         流域汇流栅格编码，先行后列顺序编码
         :return:
         '''
-        if self.watershed == None:
-            raise Exception("watershedMask can not be empty.", self.watershed)
+        print("Calculating Routing code")
+        if self.flowDirData is None:
+            raise Exception("flowDirData can not be empty.", self.flowDirData)
 
         self.rtc = numpy.zeros((self.rows, self.cols))
         k = 1
         for m in range(self.rows):
             for n in range(self.cols):
-                if self.watershedData[m][n] != self.noDataValue_ws:
+                if (m * self.rows + n) % int(self.rows * self.cols / 100) == 0:
+                    print("▋", end='')
+                    sys.stdout.flush()
+                if self.flowDirData[m][n] != self.noDataValue:
                     self.rtc[m][n] = k
                     k += 1
                 else:
                     self.rtc[m][n] = self.noDataValue
 
+        print()
         WriteGTiffFile(self.workDir + os.sep + self.routingCode, self.rows, self.cols, self.rtc, self.geotrans,
                        self.srs, self.noDataValue, gdal.GDT_Float32)
         return 0
@@ -158,7 +151,6 @@ class RunoffParam:
             self.rtc = ReadRaster(self.workDir + os.sep + self.routingCode).data
 
         self.ror = numpy.zeros((self.rows, self.cols))
-
         dMax = numpy.max(self.rtc)
         dMin = numpy.min(self.rtc)
         totnum = int(dMax)
@@ -173,27 +165,39 @@ class RunoffParam:
         self.jj[0] = self.outY
 
         while inum < totin:
+            if inum % int(dMax / 100) == 0:
+                print("▋", end='')
+                sys.stdout.flush()
             itet, pos = self.PixelFlowIn(int(self.ii[inum]), int(self.jj[inum]), totin, self.ror)
+            # print(inum)
             # totin = pos
             totin += itet
             inum += 1
 
-        # print("inum: %d" % inum)
-        for k in range(inum, -1, -1):
-            dMax = 0
+        print()
+        print("inum: %s" % inum)
+        for k in range(inum - 1, -1, -1):
+            if k % int(inum / 100) == 0:
+                print("▋", end='')
+                sys.stdout.flush()
+            dMax2 = 0
             n8, i8, j8 = self.PixelFlowIn_b(int(self.ii[k]), int(self.jj[k]), b=False)
             # print("n8: %d" % n8)
             for n in range(n8):
-                if dMax <= self.ror[int(i8[n])][int(j8[n])]:
-                    dMax = self.ror[int(i8[n])][int(j8[n])]
+                if dMax2 <= self.ror[int(i8[n])][int(j8[n])]:
+                    dMax2 = self.ror[int(i8[n])][int(j8[n])]
             # print(self.ii[k],self.jj[k],self.ror[int(self.ii[k])][int(self.jj[k])] + dMax + 1)
-            self.ror[int(self.ii[k])][int(self.jj[k])] = self.ror[int(self.ii[k])][int(self.jj[k])] + dMax + 1
+            self.ror[int(self.ii[k])][int(self.jj[k])] = self.ror[int(self.ii[k])][int(self.jj[k])] + dMax2 + 1
 
         inum = 0
         totin = 1
         self.ii[0] = self.outX
         self.jj[0] = self.outY
+        print()
         while inum < totin:
+            if inum % int(dMax / 100) == 0:
+                print("▋", end='')
+                sys.stdout.flush()
             itet, pos, pvalue = self.PixelRouteOrder(int(self.ii[inum]), int(self.jj[inum]), totin, self.ror)
             self.ror = pvalue
             # totin = pos
@@ -207,7 +211,7 @@ class RunoffParam:
                 else:
                     continue
 
-        print("\tSave as: %s" % self.routingOdr)
+        print()
         WriteGTiffFile(self.workDir + os.sep + self.routingOdr, self.rows, self.cols, self.ror, self.geotrans,
                        self.srs, self.noDataValue, gdal.GDT_Float32)
         return 0
@@ -234,8 +238,8 @@ class RunoffParam:
         dMax = self.ror[self.outX][self.outY]
         # print("dMax: %d" % dMax)
         for dk in range(1, int(dMax + 1)):
-            if int(dMax / dk) % 10 == 0:
-                print()
+            if dk % int(dMax / 100) == 0:
+                print("▋", end='')
             for i in range(self.rows):
                 for j in range(self.cols):
                     if self.rtc[i][j] != self.noDataValue:
@@ -245,7 +249,7 @@ class RunoffParam:
                     else:
                         self.rsq[i][j] = self.noDataValue
 
-        print("\tSave as: %s" % self.routingSequ)
+        print()
         WriteGTiffFile(self.workDir + os.sep + self.routingSequ, self.rows, self.cols, self.rsq, self.geotrans,
                        self.srs, self.noDataValue, gdal.GDT_Float32)
         return 0
@@ -276,7 +280,6 @@ class RunoffParam:
         UDArr = []
         dMax = numpy.max(self.rtc)
         dMin = numpy.min(self.rsq)
-        gridNum = self.rows * self.cols
         n = 0
         nSize = int(dMax)
         # print("dMax: %d" % dMax)
@@ -288,7 +291,8 @@ class RunoffParam:
 
         for i in range(self.rows):
             for j in range(self.cols):
-
+                if (i * self.rows + j) % int(self.rows * self.cols / 100) == 0:
+                    print("▋", end='')
                 if self.rtc[i][j] == self.noDataValue:
                     continue
                 else:
@@ -342,14 +346,13 @@ class RunoffParam:
                     strtmpArr.append(strLine)
 
         for i in range(nSize):
-            # print(i)
             for j in range(nSize):
                 if i == RouteSequ[j]:
                     UDArr.append(strtmpArr[j])
                     # print(strtmpArr)
                     break
 
-        print("\tSave as %s" % self.gridUD)
+        print("\n\tSave as %s" % self.gridUD)
         if os.path.isfile(self.workDir + os.sep + self.gridUD):
             os.remove(self.workDir + os.sep + self.gridUD)
         UDFile = open(self.workDir + os.sep + self.gridUD, 'w')
@@ -357,6 +360,7 @@ class RunoffParam:
             UDFile.write(UDArr[ud] + "\n")
         UDFile.close()
 
+        print()
         return 0
 
     # / *++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -394,6 +398,9 @@ class RunoffParam:
             self.jj[0] = self.outY
 
             while inum < totin:
+                if inum % int(dMax / 100) == 0:
+                    print("▋", end='')
+                    sys.stdout.flush()
                 itet, pos = self.PixelFlowIn(int(self.ii[inum]), int(self.jj[inum]), totin, self.gfl)
                 totin += itet
                 inum += 1
@@ -416,7 +423,7 @@ class RunoffParam:
                 else:
                     continue
 
-        print("\tSave as: %s" % self.gridFlowLength)
+        print()
         WriteGTiffFile(self.workDir + os.sep + self.gridFlowLength, self.rows, self.cols, self.gfl, self.geotrans,
                        self.srs, self.noDataValue, gdal.GDT_Float32)
         return 0
@@ -459,6 +466,9 @@ class RunoffParam:
             self.jj[0] = self.outY
 
             while inum < totin:
+                if inum % int(dMax / 100) == 0:
+                    print("▋", end='')
+                    sys.stdout.flush()
                 itet, pos = self.PixelFlowIn(int(self.ii[inum]), int(self.jj[inum]), totin, self.gms)
                 totin += itet
                 inum += 1
@@ -494,7 +504,7 @@ class RunoffParam:
                 else:
                     continue
 
-        print("\tSave as: %s" % self.gridMeanSlp)
+        print()
         WriteGTiffFile(self.workDir + os.sep + self.gridMeanSlp, self.rows, self.cols, self.gms, self.geotrans,
                        self.srs, self.noDataValue, gdal.GDT_Float32)
         return 0
@@ -531,6 +541,9 @@ class RunoffParam:
 
         for i in range(self.rows):
             for j in range(self.cols):
+                if (i * self.rows + j) % int(self.rows * self.cols / 100) == 0:
+                    print("▋", end='')
+                    sys.stdout.flush()
                 if self.gms[i][j] != self.noDataValue and self.gfl[i][j] != self.noDataValue:
                     if self.gms[i][j] == 0:
                         self.rtt[i][j] = 0
@@ -539,7 +552,7 @@ class RunoffParam:
                 else:
                     self.rtt[i][j] = self.noDataValue
 
-        print("\tSave as: %s" % self.routingTime)
+        print()
         WriteGTiffFile(self.workDir + os.sep + self.routingTime, self.rows, self.cols, self.rtt, self.geotrans,
                        self.srs, self.noDataValue, gdal.GDT_Float32)
 
