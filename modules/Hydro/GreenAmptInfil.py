@@ -97,6 +97,23 @@ class CGreenAmptInfil:
         else:
             dtmp = 0.
             bExistLoop = False
+
+            #do while
+            df = 0.
+            df = self.m_dPrecuminf + self.m_dEhc * dt + psidt * math.log((dtmp + psidt) / (self.m_dPrecuminf + psidt));
+            if math.fabs(df - dtmp) <= 0.001:
+                dcuminf = df
+                dexcum = dcumr - dcuminf
+                if dexcum <= 0:
+                    dexcum = 0.
+                    dexinc = dexcum - self.m_dPreexcum
+                if dexinc < 0.:
+                    dexinc = 0.
+                    self.m_dSurfQ = self.m_dSurfQ + dexinc
+                    bExistLoop = True
+            else:
+                dtmp = df
+
             while not bExistLoop:
                 df = 0.
                 df = self.m_dPrecuminf + self.m_dEhc * dt + psidt * math.log((dtmp + psidt) / (self.m_dPrecuminf + psidt));
