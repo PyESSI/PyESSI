@@ -6,8 +6,7 @@ Created Jan 2018
 
 Functions:
     class: VegInfo
-    ReadVegFile
-    GetVegTypeName
+    GetVegTypeName(VegTypeID)
 
 
 """
@@ -32,8 +31,8 @@ class VegInfo:
 
 
     def ReadVegFile(self,vegFilename):
-        if os.path.exists(utils.config.workSpace+'//Vegetation//'+vegFilename):
-            vegInfos = open(utils.config.workSpace+'//Vegetation//'+vegFilename,'r').readlines()
+        if os.path.exists(utils.config.workSpace + os.sep + 'Vegetation' + os.sep + vegFilename):
+            vegInfos = open(utils.config.workSpace + os.sep + 'Vegetation' + os.sep +vegFilename,'r').readlines()
             self.Veg_Name = vegInfos[0].split('\n')[0].split(':')[1].strip()
             self.LAIMAX = float(vegInfos[1].split('\n')[0].split(':')[1].strip())
             self.LAIMIN = float(vegInfos[2].split('\n')[0].split(':')[1].strip())
@@ -52,8 +51,8 @@ class VegInfo:
 
 
 def GetVegTypeName(VegTypeID):
-    if os.path.exists(utils.config.workSpace+'//LookupTable//LulcType.txt'):
-        vegTypeInfos = open(utils.config.workSpace+'//LookupTable//LulcType.txt','r').readlines()
+    if os.path.exists(utils.config.workSpace + os.sep + 'LookupTable' + os.sep + 'LulcType.txt'):
+        vegTypeInfos = open(utils.config.workSpace + os.sep + 'LookupTable' + os.sep + 'LulcType.txt','r').readlines()
         vegIdName = []
         for i in range(len(vegTypeInfos)):
             vegIdName.append((vegTypeInfos[i].split('\n')[0].split('\t')[0].strip(),vegTypeInfos[i].split('\n')[0].split('\t')[1].strip()))
