@@ -10,13 +10,12 @@ Created: 2018-02-28
 Revised:
 """
 
-
 # load needed python modules
-from utils.fileIO import *
-from modules.SoilPara import *
-import utils.config
 import math
 
+import utils.config
+from modules.Hydro.SoilPara import *
+from utils.fileIO import *
 
 
 # /*++++++++++++++++++++++++++++++++++++++++++++++++++++|
@@ -44,8 +43,8 @@ class CGreenAmptInfil:
         self.m_currow = 0
         self.m_curcol = 0
 
-        self.m_dFt = 0      # 土壤水下渗量
-        self.m_dPreSoilW = 0     # 初始土壤含水量
+        self.m_dFt = 0  # 土壤水下渗量
+        self.m_dPreSoilW = 0  # 初始土壤含水量
 
     def SetGridPara(self, currow, curcol, dSoilW, dErr):
         '''
@@ -69,7 +68,6 @@ class CGreenAmptInfil:
         self.m_dFc = pGridSoilInfo.SP_Stable_Fc
 
         return 0
-
 
     def HortonExcessRunoff(self):
         '''
