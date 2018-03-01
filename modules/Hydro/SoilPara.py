@@ -4,18 +4,28 @@ Created Jan 2018
 
 @author: Hao Chen
 
+Class:
+    SoilInfo
+        functions:
+            __init__(self)
+            ReadSoilFile(self, soilFilename)
+            CalcSoilPara(self)
+            CalcAridIndex(self, bConst)
+            SoilWaterDeficitPercent(self)
+            SoilWaterDeficitContent(self)
+            SoilAvgWater(self)
+
 Functions:
-    class: SoilInfo
     GetSoilTypeName(SoilTypeID)
 
 
 """
 
-
 # load needed python modules
 import os
 import utils.config
 import math
+
 
 class SoilInfo:
     def __init__(self):
@@ -32,6 +42,8 @@ class SoilInfo:
         self.SP_Wp = 0.
         self.SP_Arid = 0.
         self.Horton_K = 0.05
+        self.TPercolation = 0.
+        self.SP_Temp = 0.
 
         self.SL_ID = []
         self.SL_Z = []
@@ -57,15 +69,19 @@ class SoilInfo:
         self.SL_WpRatio = []
         self.albedo = 0.23
 
-        #这三个变量是否有需要定义？？
+        # 这三个变量是否有需要定义？？
         self.SL_StaInfil = []
         self.SL_InitInfil = []
         self.SP_WFCS = 0.
 
-    #从文件中加载每一种指定土壤类型的主要输入物理参数（固有参数）
-    def ReadSoilFile(self,soilFilename):
-        if os.path.exists(utils.config.workSpace + os.sep +'Soil'+ os.sep + soilFilename):
-            soilInfos = open(utils.config.workSpace + os.sep +'Soil'+ os.sep + soilFilename, 'r').readlines()
+    def ReadSoilFile(self, soilFilename):
+        '''
+        从文件中加载每一种指定土壤类型的主要输入物理参数（固有参数）
+        :param soilFilename:
+        :return:
+        '''
+        if os.path.exists(utils.config.workSpace + os.sep + 'Soil' + os.sep + soilFilename):
+            soilInfos = open(utils.config.workSpace + os.sep + 'Soil' + os.sep + soilFilename, 'r').readlines()
             self.Soil_Name = soilInfos[0].split('\n')[0].strip().split()[1]
             self.iLayer = int(soilInfos[1].split('\n')[0].strip().split()[1])
             self.rootdepth = float(soilInfos[2].split('\n')[0].strip().split()[1])
@@ -73,8 +89,8 @@ class SoilInfo:
             self.Horton_K = float(soilInfos[4].split('\n')[0].strip().split()[1])
             self.InitSWP = float(soilInfos[5].split('\n')[0].strip().split()[1])
             for i in range(self.iLayer):
-                self.SL_ID.append(i+1)
-                self.SL_Z.append(float(soilInfos[i+8].split('\n')[0].split(':')[1].strip().split()[0]))
+                self.SL_ID.append(i + 1)
+                self.SL_Z.append(float(soilInfos[i + 8].split('\n')[0].split(':')[1].strip().split()[0]))
                 self.SL_BD.append(float(soilInfos[i + 8].split('\n')[0].split(':')[1].strip().split()[1]))
                 self.SL_AWC.append(float(soilInfos[i + 8].split('\n')[0].split(':')[1].strip().split()[2]))
                 self.SL_Sat_K.append(float(soilInfos[i + 8].split('\n')[0].split(':')[1].strip().split()[3]))
@@ -86,15 +102,15 @@ class SoilInfo:
                 self.SL_Rock.append(float(soilInfos[i + 8].split('\n')[0].split(':')[1].strip().split()[9]))
                 self.SL_Init_F.append(float(soilInfos[i + 8].split('\n')[0].split(':')[1].strip().split()[10]))
                 self.SL_bFillOK.append(True)
+            self.TPercolation = (self.SP_Sat - self.SP_Fc) / self.SP_Sat_K
         else:
             print('Soil info File does not exist!')
 
-
-    #/ *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    #+                                                        +
-    #+    功能：利用固有土壤参数计算其它有用的土壤物理参数 +
-    #+                                                        +
-    #+++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
+    # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    # +                                                        +
+    # +    功能：利用固有土壤参数计算其它有用的土壤物理参数 +
+    # +                                                        +
+    # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     def CalcSoilPara(self):
         for i in range(self.iLayer):
             self.SL_StaInfil[i] = self.SL_Stable_F[i] * self.SL_Sat_K[i]
@@ -114,7 +130,7 @@ class SoilInfo:
                     self.SL_FcRatio[i] = self.SL_Por[i] * 0.75
                     self.SL_WpRatio[i] = self.SL_Por[i] * 0.25
 
-        acumudepth, sumpor, lyrdepth, pormm, stainfil, stainit, suminfil, suminit, sumsat_k, sat_k = 0.,0.,0.,0.,0.,0.,0.,0.,0.,0.
+        acumudepth, sumpor, lyrdepth, pormm, stainfil, stainit, suminfil, suminit, sumsat_k, sat_k = 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
 
         for i in range(self.iLayer):
             lyrdepth = self.SL_Z[i] - acumudepth
@@ -158,13 +174,16 @@ class SoilInfo:
 
         self.SP_WFCS = 10. * math.exp(f)
 
-
-    #/ *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    #+                                                        +
-    #+                功能：土壤干湿指标值 +
-    #+                                                        +
-    #+++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
-    def CalcAridIndex(self,bConst):
+    # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    # +                                                        +
+    # +                功能：土壤干湿指标值 +
+    # +                                                        +
+    # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
+    def CalcAridIndex(self, bConst):
+        '''
+        :param bConst:
+        :return:
+        '''
         if (bConst):
             # 用常数计算
             self.SP_Arid = (self.SP_Fc - self.SP_Wp) / self.SP_Fc
@@ -172,16 +191,16 @@ class SoilInfo:
             # 用变量计算
             self.SP_Arid = (self.SP_Sw - self.SP_Wp) / self.SP_Fc
 
-    #/ *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    #+                                                        +
-    #+            功能：计算初始土壤水赤字 +
-    #+                                                        +
-    #+++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
+
+    # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    # +                                                        +
+    # +            功能：计算初始土壤水赤字 +
+    # +                                                        +
+    # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     # 土壤水赤字比例
     def SoilWaterDeficitPercent(self):
         dthet = (1.0 - self.SP_Sw / self.SP_Fc) * self.SP_Por
         return dthet
-
 
     # 土壤水赤字量
     def SoilWaterDeficitContent(self):
@@ -195,10 +214,15 @@ class SoilInfo:
 
 
 def GetSoilTypeName(SoilTypeID):
+    '''
+    :param SoilTypeID:
+    :return:
+    '''
     if os.path.exists(utils.config.workSpace + os.sep + 'LookupTable' + os.sep + 'SoilType.txt'):
-        soilTypeInfos = open(utils.config.workSpace + os.sep + 'LookupTable' + os.sep + 'SoilType.txt','r').readlines()
+        soilTypeInfos = open(utils.config.workSpace + os.sep + 'LookupTable' + os.sep + 'SoilType.txt', 'r').readlines()
         soilIdName = []
         for i in range(len(soilTypeInfos)):
-            soilIdName.append((soilTypeInfos[i].split('\n')[0].split('\t')[0].strip(),soilTypeInfos[i].split('\n')[0].split('\t')[1].strip()))
+            soilIdName.append((soilTypeInfos[i].split('\n')[0].split('\t')[0].strip(),
+                               soilTypeInfos[i].split('\n')[0].split('\t')[1].strip()))
         soilTypeName = dict(soilIdName)
         return soilTypeName[str(SoilTypeID)]

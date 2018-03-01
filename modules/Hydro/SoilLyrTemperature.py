@@ -4,12 +4,14 @@ Created Feb 2018
 
 @author: Hao Chen
 
-Functions:
-    class: CSoilLyrTemperature
+Class:
+    CSoilLyrTemperature
+        functions:
+            SetLyrPara(self, soilbd, soilsw, totaldepth, dBCV, albedo, slr, tmax, tmin, tmean, tprev, tmpan)
+            GetLyrTmpValue(self)
 
 
 """
-
 
 # load needed python modules
 import math
@@ -17,8 +19,21 @@ import numpy as np
 
 
 class CSoilLyrTemperature:
-
     def SetLyrPara(self, soilbd, soilsw, totaldepth, dBCV, albedo, slr, tmax, tmin, tmean, tprev, tmpan):
+        '''
+        :param soilbd:
+        :param soilsw:
+        :param totaldepth:
+        :param dBCV:
+        :param albedo:
+        :param slr:
+        :param tmax:
+        :param tmin:
+        :param tmean:
+        :param tprev:
+        :param tmpan:
+        :return:
+        '''
         self.m_dSoilBD = soilbd
         self.m_dSoilSW = soilsw
         self.m_dSoilLyrDepth = totaldepth
@@ -54,7 +69,7 @@ class CSoilLyrTemperature:
         tbare = 0.
         tcov = 0.
         tmp_srf = 0.
-        st0 = (self.m_dSlr * (1. - self.m_dAlbedo) - 14.)/ 20.
+        st0 = (self.m_dSlr * (1. - self.m_dAlbedo) - 14.) / 20.
         tbare = self.m_dTmpMean + 0.5 * (self.m_dTmpMX - self.m_dTmpMN) * st0
         tcov = self.m_dBCV * self.m_dTmpPrev + (1. - self.m_dBCV) * tbare
 
@@ -68,5 +83,3 @@ class CSoilLyrTemperature:
         df = zd / (zd + math.exp(-.8669 - 2.0775 * zd))
         dret = tlag * self.m_dTmpPrev + (1. - tlag) * (df * (self.m_dTmpAn - tmp_srf) + tmp_srf)
         return dret
-
-

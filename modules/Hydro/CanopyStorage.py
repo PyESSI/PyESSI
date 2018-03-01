@@ -4,12 +4,17 @@ Created Feb 2018
 
 @author: Hao Chen
 
-Functions:
-    class: CCanopyStorage
+Class:
+    CCanopyStorage
+        functions:
+            __init__(self)
+            SetGridValue(self, dLai, dpcp, dCd, pcpcoeff)
+            CanopyStore(self)
+            CrownIC(self)
+            PcpInterCCoeff(self)
 
 
 """
-
 
 # load needed python modules
 import math
@@ -35,15 +40,22 @@ class CCanopyStorage:
         self.m_dPcp = 0.
         self.m_dLAI = 0.
 
-    #功能：设置栅格上林冠截留参数
     def SetGridValue(self, dLai, dpcp, dCd, pcpcoeff):
+        '''
+        功能：设置栅格上林冠截留参数
+        :param dLai:
+        :param dpcp:
+        :param dCd:
+        :param pcpcoeff:
+        :return:
+        '''
         self.m_dPcpCoeff = dLai
         self.m_dCd = dpcp
         self.m_dPcp = dCd
         self.m_dLAI = pcpcoeff
         if self.m_dLAI <= 0:
             self.m_dLAI = 0.001
-        if self.m_dCd <=0:
+        if self.m_dCd <= 0:
             self.m_dCd = 0.001
 
     # 功能：设置栅格上林冠截留参数
@@ -66,7 +78,3 @@ class CCanopyStorage:
     # 功能：降雨截留系数计算
     def PcpInterCCoeff(self):
         return self.m_dPcpCoeff * self.m_dLAI
-
-
-
-

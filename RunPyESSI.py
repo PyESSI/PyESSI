@@ -11,13 +11,14 @@ Functions:
 
 """
 
-
 # load needed python modules
 import utils.config
-from modules.HydroSimulate import *
+from modules.Hydro.HydroSimulate import *
 
 m_HydroSim = CHydroSimulate()
-#水文模拟循环开始
+
+
+# 水文模拟循环开始
 def runpyESSI():
     if utils.config.RunoffSimuType == 1:
         if utils.config.InfilCurveType == 1:
@@ -29,12 +30,5 @@ def runpyESSI():
     else:
         m_HydroSim.LongTermRunoffSimulate()
 
+
 runpyESSI()
-
-
-
-
-
-
-
-

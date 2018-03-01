@@ -37,6 +37,8 @@ def monthlyRange(startYear, endYear):
     return monthly
 
 
+
+
 # main test
 # iniDate =  datetime.date(2008,1,1)
 # endDate = datetime.date(2016,12,31)
