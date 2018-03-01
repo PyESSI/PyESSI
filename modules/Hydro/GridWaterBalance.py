@@ -5,6 +5,21 @@ Created Feb 2018
 @author: Hao Chen
 
 Class:
+    CGridWaterBalance
+     functions:
+        SetGridPara(self, currow, curcol, rint, dFp, year, dn, hr, curForcingFilename)
+        CalcCI(self)
+        CalcPET(self,dalbedo,curForcingFilename)
+        CalcAET(self, dalbedo, curForcingFilename)
+        CompleAET(self,dalbedo =0.23)
+        CalcAI(self)
+        CalcNetRain(self)
+        CalcRunoffElement(self)
+        SWPercolation(self, sw, fc, dt, dtPerco)
+        SWRecharge(self, sw, dt, dInfilRate, dInitInfRate)
+        DailyLai(self)
+        DailyAlbedo(self)
+        DailyCoverDeg(self)
 
 
 """
@@ -65,7 +80,8 @@ class CGridWaterBalance:
         self.m_dFp = dFp
         self.m_dHr = hr
 
-        curPcp = readRaster(utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'pcpdata' + os.sep + curForcingFilename)
+        curPcp = readRaster(
+            utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'pcpdata' + os.sep + curForcingFilename)
         self.m_dPcp = curPcp.data[self.m_row][self.m_col]
 
         curHeight = readRaster(utils.config.workSpace + os.sep + 'DEM' + os.sep + utils.config.DEMFileName)
@@ -76,11 +92,12 @@ class CGridWaterBalance:
         pGridSoilInfo.ReadSoilFile(GetSoilTypeName(soilTemp.data[self.m_row][self.m_col]) + '.sol')
         self.m_dFc = pGridSoilInfo.SP_Stable_Fc
 
-        if utils.config.RunoffSimuType==utils.defines.STORM_RUNOFF_SIMULATION:
+        if utils.config.RunoffSimuType == utils.defines.STORM_RUNOFF_SIMULATION:
             return
 
         if utils.config.petdata == 0:
-            curTav = readRaster(utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmpmeandata' + os.sep + curForcingFilename)
+            curTav = readRaster(
+                utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmpmeandata' + os.sep + curForcingFilename)
             self.m_dTav = curTav.data[self.m_row][self.m_col]
 
         self.m_nMon = int(curForcingFilename[4:6])
@@ -103,12 +120,13 @@ class CGridWaterBalance:
     # +                                                        +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
 
-    #chen 未完成
-    def CalcPET(self,dalbedo,curForcingFilename):
+    # chen 未完成
+    def CalcPET(self, dalbedo, curForcingFilename):
         self.m_dPET = 0.
 
         if utils.config.PETMethod == utils.defines.PET_REAL:
-            curPet = readRaster(utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'petdata' + os.sep + curForcingFilename)
+            curPet = readRaster(
+                utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'petdata' + os.sep + curForcingFilename)
             self.m_dPET = curPet.data[self.m_row][self.m_col]
 
     # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -139,8 +157,8 @@ class CGridWaterBalance:
     # +        功能：互补相关理论法计算实际蒸散发 +
     # +                                                        +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
-    #chen 未完成
-    def CompleAET(self,dalbedo):
+    # chen 未完成
+    def CompleAET(self, dalbedo=0.23):
         print('chen 未完成')
 
     # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -211,7 +229,7 @@ class CGridWaterBalance:
         dIFc = self.m_dRIntensity - self.m_dFc
         dIFp = self.m_dRIntensity - self.m_dFp
 
-        self.m_dTotalQ =0.
+        self.m_dTotalQ = 0.
         self.m_dSurfQ = 0.
         self.m_dLateralQ = 0.
         self.m_dBaseQ = 0.
@@ -220,20 +238,20 @@ class CGridWaterBalance:
 
         if dthet < 0.:
             if dPE < 0.:
-                if dIFc < 0.: # 方案1：不产流
+                if dIFc < 0.:  # 方案1：不产流
                     iret = 1
-                else: # 方案2：超渗产流
+                else:  # 方案2：超渗产流
                     m_dSurfQ = dIFc * self.m_dHr
                     iret = 2
             else:
-                if dIFc < 0.: # 方案3：蓄满产流
+                if dIFc < 0.:  # 方案3：蓄满产流
                     self.m_dBaseQ = self.m_dFc * self.m_dHr
                     self.m_dSurfQ = dPE - self.m_dBaseQ
                     if self.m_dSurfQ < 0:
                         self.m_dSurfQ = dPE * utils.config.SurfQOutFactor
                         self.m_dBaseQ = dPE * (1 - utils.config.SurfQOutFactor)
                     iret = 3
-                else:   #方案4：超渗产流＋蓄满产流
+                else:  # 方案4：超渗产流＋蓄满产流
                     self.m_dSurfQ = dIFc * self.m_dHr
                     self.m_dBaseQ = self.m_dFc * self.m_dHr
                     if self.m_dSurfQ + self.m_dBaseQ > dPE:
@@ -248,20 +266,20 @@ class CGridWaterBalance:
                     iret = 4
         else:
             if dPE < dthet:
-                if dIFp <0.:  #方案5：不产流
+                if dIFp < 0.:  # 方案5：不产流
                     iret = 5
-                else:    #方案6：超渗产流
+                else:  # 方案6：超渗产流
                     self.m_dSurfQ = dIFp * self.m_dHr
                     iret = 6
             else:
-                if dIFp <0.:    #方案7：蓄满产流
+                if dIFp < 0.:  # 方案7：蓄满产流
                     self.m_dBaseQ = self.m_dFp * self.m_dHr
                     self.m_dSurfQ = dPE - dthet - self.m_dBaseQ
                     if self.m_dSurfQ < 0:
                         self.m_dSurfQ = (dPE - dthet) * utils.config.SurfQOutFactor
                         self.m_dBaseQ = (dPE - dthet) * (1 - utils.config.SurfQOutFactor)
                     iret = 7
-                else:    #方案8：超渗产流＋蓄满产流
+                else:  # 方案8：超渗产流＋蓄满产流
                     self.m_dTotalQ = dPE - dthet
                     self.m_dSurfQ = dIFp * self.m_dHr
                     self.m_dBaseQ = self.m_dFp * self.m_dHr
@@ -283,7 +301,8 @@ class CGridWaterBalance:
         pGridSoilInfo.SP_Sw += (dPE - self.m_dBaseQ - self.m_dSurfQ - self.m_dLateralQ)
         if pGridSoilInfo.SP_Sw > pGridSoilInfo.SP_Wp:
             if iret == 3 or iret == 4 or iret == 7 or iret == 8:
-                dPerco = self.SWPercolation(pGridSoilInfo.SP_Sw, pGridSoilInfo.SP_Fc, self.m_dHr,  pGridSoilInfo.TPercolation)
+                dPerco = self.SWPercolation(pGridSoilInfo.SP_Sw, pGridSoilInfo.SP_Fc, self.m_dHr,
+                                            pGridSoilInfo.TPercolation)
                 if dPerco > 0:
                     pGridSoilInfo.SP_Sw -= dPerco
                     self.m_dBaseQ += dPerco
@@ -293,8 +312,8 @@ class CGridWaterBalance:
                     pGridSoilInfo.SP_Sw -= dLatQ
 
             if pGridSoilInfo.SP_Sw > pGridSoilInfo.SP_Wp:
-                dRecharge = self.SWRecharge(pGridSoilInfo.SP_Sw,self.m_dHr,self.m_dFp,pGridSoilInfo.SP_Init_F0)
-                if dRecharge > pGridSoilInfo.SP_Sw -pGridSoilInfo.SP_Wp:
+                dRecharge = self.SWRecharge(pGridSoilInfo.SP_Sw, self.m_dHr, self.m_dFp, pGridSoilInfo.SP_Init_F0)
+                if dRecharge > pGridSoilInfo.SP_Sw - pGridSoilInfo.SP_Wp:
                     dRecharge = pGridSoilInfo.SP_Sw - pGridSoilInfo.SP_Wp
                 self.dBaseQ = dRecharge * (1 - math.exp(-1 * (dRecharge / pGridSoilInfo.SP_Sw)))
                 if self.dBaseQ < 0:
@@ -305,14 +324,13 @@ class CGridWaterBalance:
             pGridSoilInfo.SP_Sw = pGridSoilInfo.SP_Wp * 1.05
 
         if self.m_dBaseQ < 0:
-            print("计算的地下径流分量为负"+ "GridWaterBalance")
+            print("计算的地下径流分量为负" + "GridWaterBalance")
         if self.m_dSurfQ < 0:
             print("计算的地表径流分量为负" + "GridWaterBalance")
         if self.m_dLateralQ < 0:
             print("计算的壤中径流分量为负" + "GridWaterBalance")
 
         return iret
-
 
     def SWPercolation(self, sw, fc, dt, dtPerco):
         '''
@@ -346,7 +364,6 @@ class CGridWaterBalance:
             dret = dInfilRate * dt
         return dret
 
-
     # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +                                                                +
     # +                            栅格公用变量推算 +
@@ -379,7 +396,6 @@ class CGridWaterBalance:
 
         return dLai
 
-
     # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +                                                        +
     # +                功能：计算栅格逐日Albedo +
@@ -393,7 +409,6 @@ class CGridWaterBalance:
         dAlb = pGridVegInfo.Albedo[self.m_nMon - 1]
         return dAlb
 
-
     # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +                                                        +
     # +                功能：计算栅格逐日盖度 +
@@ -406,26 +421,3 @@ class CGridWaterBalance:
         dCovD = 0.
         dCovD = pGridVegInfo.CoverDeg[self.m_nMon - 1]
         return dCovD
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
