@@ -4,21 +4,41 @@ Created Feb 2018
 
 @author: Hao Chen
 
-Functions:
-    class: CMuskingumCunge
+Class:
+    CMuskingumCunge
+        functions:
+            SetRoutingPara(self, Vflow, dSlp, deltaX, deltaT, riverType, Q11, Q12, Q21, dq, dB, x, k)
+            RoutingOutQ(self)
+            CalcMuskRoutingCoeff(self)
+            KinematicWaveV(self, vflow)
+            DiffusiveCoeff(self)
+            GetKWVCoeff(self, rivertype)
 
 
 """
-
 
 # load needed python modules
 import utils.config
 
 
 class CMuskingumCunge:
-
-    # 设置汇流计算参数
-    def SetRoutingPara(self, Vflow, dSlp,deltaX, deltaT, riverType, Q11, Q12, Q21,  dq, dB, x, k):
+    def SetRoutingPara(self, Vflow, dSlp, deltaX, deltaT, riverType, Q11, Q12, Q21, dq, dB, x, k):
+        '''
+        设置汇流计算参数
+        :param Vflow:
+        :param dSlp:
+        :param deltaX:
+        :param deltaT:
+        :param riverType:
+        :param Q11:
+        :param Q12:
+        :param Q21:
+        :param dq:
+        :param dB:
+        :param x:
+        :param k:
+        :return:
+        '''
         self.m_dVflow = Vflow
         self.m_dSlp = dSlp
         self.m_iRriverType = riverType
@@ -57,8 +77,12 @@ class CMuskingumCunge:
         self.C3 = (self.m_K * (1 - self.m_X) - 0.5 * self.m_deltaT) / denominator
         self.C4 = self.m_deltaT * self.m_deltaX / (denominator)
 
-    # 计算运动波速
-    def KinematicWaveV(self,vflow):
+    def KinematicWaveV(self, vflow):
+        '''
+        计算运动波速
+        :param vflow:
+        :return:
+        '''
         dKWVC = self.GetKWVCoeff(self.m_iRriverType)
         dKWV = vflow * dKWVC
         return dKWV
@@ -68,10 +92,14 @@ class CMuskingumCunge:
         dDC = 1.
         if self.m_dSlp == 0.:
             self.m_dSlp = 0.0001
-        dDC = (self.m_Q12 + self.m_dQ * self.m_dB) / ( 2. * self.m_dSlp * self.m_dB)
+        dDC = (self.m_Q12 + self.m_dQ * self.m_dB) / (2. * self.m_dSlp * self.m_dB)
         return dDC
 
     def GetKWVCoeff(self, rivertype):
+        '''
+        :param rivertype:
+        :return:
+        '''
         dcoeff = 1.
         if rivertype == utils.config.M_RIVER_SECTION_TRIANGLE:
             dcoeff = 1.33
@@ -92,12 +120,3 @@ class CMuskingumCunge:
         else:
             dcoeff = 1.5
         return dcoeff
-
-
-
-
-
-
-
-
-

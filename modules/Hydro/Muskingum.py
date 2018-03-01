@@ -4,17 +4,28 @@ Created Feb 2018
 
 @author: Hao Chen
 
-Functions:
-    class: CMuskingum
-
+Class:
+    CMuskingum
+        functions:
+            SetRoutingPara(self, deltaT, Q11, Q12, Q21, x, k)
+            CalcMuskRoutingCoeff(self)
+            RoutingOutQ(self)
 
 """
 
 
 # load needed python modules
 class CMuskingum:
-
-    def SetRoutingPara(self,  deltaT, Q11, Q12, Q21, x, k):
+    def SetRoutingPara(self, deltaT, Q11, Q12, Q21, x, k):
+        '''
+        :param deltaT:
+        :param Q11:
+        :param Q12:
+        :param Q21:
+        :param x:
+        :param k:
+        :return:
+        '''
         self.m_deltaT = deltaT
         self.m_Q11 = Q11
         self.m_Q12 = Q12
@@ -35,4 +46,3 @@ class CMuskingum:
         self.CalcMuskRoutingCoeff()
         self.m_Q22 = self.C1 * self.m_Q11 + self.C2 * self.m_Q12 + self.C3 * self.m_Q21
         return self.m_Q22
-

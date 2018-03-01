@@ -1,16 +1,15 @@
 # -*- coding: utf-8 -*-
 
 
-from modules.VegetationPara import *
-from modules.SoilPara import *
-
+from modules.Hydro.SoilPara import *
+from modules.Hydro.VegetationPara import *
 
 veg1 = VegInfo()
 veg1.ReadVegFile(GetVegTypeName(12)+'.veg')
 
 print(veg1.Veg_Name)
-print(veg1.LAIMAX)
-print(veg1.LAIMIN)
+print(veg1.LAIMX)
+print(veg1.LAIMN)
 print(veg1.doffset)
 print(veg1.dManning_n)
 print(veg1.LAI)

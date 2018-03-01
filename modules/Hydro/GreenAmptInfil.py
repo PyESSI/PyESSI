@@ -4,19 +4,22 @@ Created Feb 2018
 
 @author: Hao Chen
 
-Functions:
-    class: CCanopyStorage
+Class:
+    CGreenAmptInfil
+        functions:
+            SetGridPara(self, currow, curcol, timelen, Prerateinf, Precumr, Prerintns, Precuminf, Preexcum, pcp, Cp)
+            GreenAmptExcessRunoff(self)
+            EffHydroConductivity(self, Cp=-1.)
 
 
 """
 
-
 # load needed python modules
-from utils.fileIO import *
-from modules.SoilPara import *
-import utils.config
 import math
 
+import utils.config
+from modules.Hydro.SoilPara import *
+from utils.fileIO import *
 
 
 # /*++++++++++++++++++++++++++++++++++++++++++++++++++++|
@@ -36,9 +39,21 @@ import math
 # |++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
 class CGreenAmptInfil:
-
-    # 功能:    -- 设置Green - Ampt法计算参数
     def SetGridPara(self, currow, curcol, timelen, Prerateinf, Precumr, Prerintns, Precuminf, Preexcum, pcp, Cp):
+        '''
+        功能:    -- 设置Green - Ampt法计算参数
+        :param currow:
+        :param curcol:
+        :param timelen:
+        :param Prerateinf:
+        :param Precumr:
+        :param Prerintns:
+        :param Precuminf:
+        :param Preexcum:
+        :param pcp:
+        :param Cp:
+        :return:
+        '''
         self.m_row = currow
         self.m_col = curcol
         self.m_timeLen = timelen
@@ -55,8 +70,8 @@ class CGreenAmptInfil:
         self.m_dSoilw = 0.
         self.m_dSurfQ = 0.
 
-        soilTemp = readRaster(utils.config.workSpace + os.sep + 'DEM' + os.sep +  utils.config.SoilFileName)
-        pGridSoilInfo =  SoilInfo()
+        soilTemp = readRaster(utils.config.workSpace + os.sep + 'DEM' + os.sep + utils.config.SoilFileName)
+        pGridSoilInfo = SoilInfo()
         pGridSoilInfo.ReadSoilFile(GetSoilTypeName(soilTemp.data[self.m_row][self.m_col]) + '.sol')
         dthet = pGridSoilInfo.SoilWaterDeficitPercent()
         psidt = 0.
@@ -74,13 +89,13 @@ class CGreenAmptInfil:
         drintns = self.m_Pcp / dt
 
         if self.m_dPreRateinf <= 0.:
-            self.m_dPreRateinf    = self.m_dEhc
+            self.m_dPreRateinf = self.m_dEhc
         if self.m_dPrecumr <= 0.:
             self.m_dPrecumr = 0.
         if self.m_dPrerintns <= 0.:
-            self.m_dPrerintns    = drintns
+            self.m_dPrerintns = drintns
         if self.m_dPrecuminf <= 0.:
-            self.m_dPrecuminf    = 0.
+            self.m_dPrecuminf = 0.
         if self.m_dPreexcum <= 0.:
             self.m_dPreexcum = 0.
 
@@ -98,7 +113,7 @@ class CGreenAmptInfil:
             dtmp = 0.
             bExistLoop = False
 
-            #do while
+            # do while
             df = 0.
             df = self.m_dPrecuminf + self.m_dEhc * dt + psidt * math.log((dtmp + psidt) / (self.m_dPrecuminf + psidt));
             if math.fabs(df - dtmp) <= 0.001:
@@ -116,7 +131,8 @@ class CGreenAmptInfil:
 
             while not bExistLoop:
                 df = 0.
-                df = self.m_dPrecuminf + self.m_dEhc * dt + psidt * math.log((dtmp + psidt) / (self.m_dPrecuminf + psidt));
+                df = self.m_dPrecuminf + self.m_dEhc * dt + psidt * math.log(
+                    (dtmp + psidt) / (self.m_dPrecuminf + psidt));
                 if math.fabs(df - dtmp) <= 0.001:
                     dcuminf = df
                     dexcum = dcumr - dcuminf
@@ -142,8 +158,11 @@ class CGreenAmptInfil:
             self.m_dPrecuminf = dcuminf
             self.m_dPreexcum = dexcum
 
-
-    def EffHydroConductivity(self,Cp):
+    def EffHydroConductivity(self, Cp=-1.):
+        '''
+        :param Cp:
+        :return:
+        '''
         soilTemp = readRaster(utils.config.workSpace + os.sep + 'DEM' + os.sep + utils.config.SoilFileName)
         pGridSoilInfo = SoilInfo()
         pGridSoilInfo.ReadSoilFile(GetSoilTypeName(soilTemp.data[self.m_row][self.m_col]) + '.sol')
@@ -157,6 +176,3 @@ class CGreenAmptInfil:
         if dehc <= 0.:
             dehc = 0.001
         return dehc
-
-
-
