@@ -9,12 +9,13 @@ if __name__ == "__main__":
     r.flowDir = flowDir
     r.streamOrd = streamOrder
     r.dem = DEMFileName
+    r.outlet = modifiedOutlet
     r.SetInfo()
 
-    r.outX = 154
-    r.outY = 579
-    # r.outX = 230
-    # r.outY = 72
+    # Get outlet cell X Y
+    coord = GetCellXYByPoint(r.workDir + os.sep + r.flowDir, r.workDir + os.sep + r.outlet)
+    r.outX = coord[0]
+    r.outY = coord[1]
 
     r.routingCode = routingCode
     r.RoutingGridCode()

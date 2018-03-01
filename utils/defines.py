@@ -3,9 +3,17 @@
 Created Feb 2018
 
 @author: Hao Chen
+<<<<<<< HEAD
+         Huiran Gao
 
 Functions:
     定义模型方法、参数识别值
+    定义常数
+=======
+
+Functions:
+    定义模型方法、参数识别值
+>>>>>>> upstream/master
 
 """
 
@@ -80,4 +88,14 @@ WATER_LOW_YEAR = 1  # 枯水年
 WATER_MID_YEAR = 2  # 平水年
 WATER_HIGH_YEAR = 3  # 丰水年
 
+<<<<<<< HEAD
+# 常数
+PI = 3.141592654
+I0 = 4.921
+AV = 0.2618
+RAD = 57.29578
+STEF_BOLTZ = 4.903e-9
+
+=======
+>>>>>>> upstream/master
 

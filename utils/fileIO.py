@@ -11,28 +11,26 @@ Functions:
 
 """
 
-
 # load needed python modules
 import sys
+
 try:
     from osgeo import gdal, ogr, osr, gdal_array, gdalconst
 except:
     sys.exit('ERROR: cannot find GDAL.OGR modules')
 
-
-#Enable GDAL/OGR exceptions
+# Enable GDAL/OGR exceptions
 gdal.UseExceptions()
 
 
 class Raster:
-    def __init__(self, nRows, nCols, data, noDataValue = None, geoTransform = None, srs = None):
+    def __init__(self, nRows, nCols, data, noDataValue=None, geoTransform=None, srs=None):
         self.nRows = nRows
         self.nCols = nCols
         self.data = data
         self.noDataValue = noDataValue
         self.geoTransform = geoTransform
         self.srs = srs
-
 
         ## GeoTransforms are lists of information used to geoReference an image
         ## From the GDAL documentation:
@@ -70,7 +68,7 @@ def readRaster(rasterFilename):
 def writeRaster(filename, nRows, nCols, data, geoTransform, srs, noDataValue, gdalType):
     format = 'GTiff'
     driver = gdal.GetDriverByName(format)
-    ds =  driver.Create(filename, nCols, nRows, 1, gdalType)
+    ds = driver.Create(filename, nCols, nRows, 1, gdalType)
     ds.SetGeoTransform(geoTransform)
     ds.SetProjection(srs.ExportToWkt())
     ds.GetRasterBand(1).SetNoDataValue(noDataValue)
@@ -79,5 +77,69 @@ def writeRaster(filename, nRows, nCols, data, geoTransform, srs, noDataValue, gd
     return True
 
 
+def GetCellXYByPoint(in_raster, in_shp, bright=False, bbottom=False):
+    '''
+    根据栅格中心坐标得到栅格的行列号
+    :param in_raster: 流域范围栅格
+    :param in_shp: 流域出水口矢量点
+    :param bright:
+    :param bbottom:
+    :return:
+    '''
+    r = readRaster(in_raster)
+    coords = GetShpPointCoords(in_shp)[0]
 
+    dcol = (coords[0] - r.geoTransform[0]) / r.geoTransform[1]
+    drow = (r.geoTransform[3] - coords[1]) / r.geoTransform[1]
+
+    col = int(dcol + 0.5)
+    row = int(drow + 0.5)
+
+    if (bright):
+        if ((dcol - int(dcol)) > 0.5):
+            col = int(dcol) + 1
+
+    if (bbottom):
+        if ((drow - int(drow)) > 0.5):
+            row = int(drow) + 1
+
+    if (col < 0 or row < 0):
+        return -1
+    else:
+        return row, col
+
+
+def GetShpPointCoords(in_shp):
+    '''
+    获取矢量点的地理坐标
+    :return:
+    '''
+    driver = ogr.GetDriverByName('ESRI Shapefile')
+    ds = driver.Open(in_shp)
+    if ds is None:
+        raise Exception('Could not open %s!' % in_shp, ds)
+    # 获取第0个图层
+    layer0 = ds.GetLayerByIndex(0)
+    feature = layer0.GetNextFeature()
+    defn = layer0.GetLayerDefn()
+    iFieldCount = defn.GetFieldCount()
+
+    # 遍历图层中的要素
+    coords = []
+    for index in range(iFieldCount):
+        if feature is not None:
+            # 获取要素中的几何体
+            geometry = feature.GetGeometryRef()
+            coords.append([geometry.GetX(), geometry.GetY()])
+    feature.Destroy()
+    ds.Destroy()
+
+    return coords
+
+
+# if __name__ == "__main__":
+#     r = r"D:\GaohrWS\DoctorWorks\DoctorWork\PyESSI\DCBAM\test\watershed.tif"
+#     p = r"D:\GaohrWS\DoctorWorks\DoctorWork\PyESSI\DCBAM\test\outlet.shp"
+#
+#     print(GetCellXYByPoint(r, p))
 
