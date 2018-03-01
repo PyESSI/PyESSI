@@ -13,6 +13,7 @@ Functions:
 
 # load needed python modules
 import utils.config
+import utils.defines
 from modules.Hydro.HydroSimulate import *
 
 m_HydroSim = CHydroSimulate()
@@ -20,10 +21,10 @@ m_HydroSim = CHydroSimulate()
 
 # 水文模拟循环开始
 def runpyESSI():
-    if utils.config.RunoffSimuType == 1:
-        if utils.config.InfilCurveType == 1:
+    if utils.config.RunoffSimuType == utils.defines.STORM_RUNOFF_SIMULATION:
+        if utils.config.InfilCurveType == utils.defines.INFILTRATION_HORTON:
             m_HydroSim.StormRunoffSim_Horton()
-        elif utils.config.InfilCurveType == 2:
+        elif utils.config.InfilCurveType == utils.defines.INFILTRATION_GREEN_AMPT:
             m_HydroSim.StormRunoffSim_GreenAmpt()
         else:
             m_HydroSim.StormRunoffSim_Horton()
