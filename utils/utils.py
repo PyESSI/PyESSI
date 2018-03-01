@@ -181,22 +181,6 @@ def LastHalfDay(date):
     return datetime.datetime(year, mon, day, h)
 
 
-def IsLeapYear(year):
-    if( (year%4 == 0 and year%100 != 0) or (year%400 == 0)):
-        return True
-    else:
-        return False
-
-def GetDayNumber(year, month):
-    if month in [1,3,5,7,8,10,12]:
-        return 31
-    elif month in [4,6,9,11]:
-        return 30
-    elif IsLeapYear(year):
-        return 29
-    else:
-        return 28
-
 def GetNumberList(s):
     a = []
     iCursor = 0
@@ -352,25 +336,6 @@ def createForld(forldPath):
     ## Create forld
     if not os.path.isdir(forldPath):
         os.makedirs(forldPath)
-
-
-## Calculate Nash coefficient
-def NashCoef(qObs, qSimu, obsNum=9999):
-    n = len(qObs)
-    ave = sum(qObs) / n
-    a1 = 0
-    a2 = 0
-    for i in range(n):
-        if qObs[i] != 0:
-            a1 = a1 + pow(float(qObs[i]) - float(qSimu[i]), 2)
-            a2 = a2 + pow(float(qObs[i]) - ave, 2)
-    if a2 == 0:
-        a2 = 1.e-6
-    if obsNum > 1:
-        return "%.3f" % round(1 - a1 / a2, 3)
-    else:
-        return "NAN"
-
 
 ## Calculate R2
 def RSquare(qObs, qSimu, obsNum=9999):

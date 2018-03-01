@@ -33,6 +33,7 @@ class RunoffParam:
         self.dem = ""        # Input dem (GeoTIFF file)
         self.flowDir = ""    # Input flow direction (GeoTIFF file)
         self.streamOrd = ""  # Input stream order (GeoTIFF file)
+        self.outlet = ""     # Input outlet (Shape file)
         self.d8 = [1, 8, 7, 6, 5, 4, 3, 2]  # d8算法的8个流向(流出) TauDEM
         self.fd8 = [5, 4, 3, 2, 1, 8, 7, 6]  # d8算法的8个流向(流进) TauDEM
         self.subbasinsNum = 0
