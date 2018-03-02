@@ -119,7 +119,7 @@ class CSolarRadiation():
                 self.dLat / RAD) * math.sin(ha))
         return dret
 
-    def RealSolarRadMax(self, dscale):
+    def RealSolarRadMax(self, dscale=0.85):
         '''
         the real solar radiation under cloudless skies assumes that 100*(1-dscale)%
         of the solar radiation is absorbed or scattered by atmosphere

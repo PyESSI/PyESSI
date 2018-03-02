@@ -38,7 +38,7 @@ import math
 # |++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
 class CPETInPM(CPET):
-    def __init__(self, tav, elev, curForcingFilename, lat):
+    def __init__(self, tav, elev, curForcingFilename, lat=33):
         CPET.__init__(self, curForcingFilename, lat)
         self.dTav = tav
         self.dElev = elev
