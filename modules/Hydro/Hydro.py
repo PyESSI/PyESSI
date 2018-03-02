@@ -38,8 +38,15 @@ class CMuskCungeRoutePara:
 
 class CMuskRouteFlux:
     def __init__(self):
-        self.pRoute = None
-        self.pPreRoute = None
+        self.pRoute = []
+        self.pPreRoute = []
+
+
+class RouteFlux:
+    def __init__(self):
+        self.dInFlux = 0.
+        self.dOutFlux = 0.
+        self.bCal = False
 
 
 def HillSideQVelocity(dUnitQ, slp, manning_n):
