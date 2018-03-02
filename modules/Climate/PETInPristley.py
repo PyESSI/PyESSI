@@ -39,7 +39,7 @@ import math
 # |++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
 class CPETInPristley(CPETInPM):
-    def __init__(self, tav, elev, curForcingFilename, lat):
+    def __init__(self, tav, elev, curForcingFilename, lat=33):
         CPETInPM.__init__(self, tav, elev, curForcingFilename, lat)
         self.dTav = tav
         self.dElev = elev

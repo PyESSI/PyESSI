@@ -31,6 +31,7 @@ import utils.defines
 from modules.Hydro.SoilPara import *
 from modules.Hydro.VegetationPara import *
 from modules.Hydro.CanopyStorage import *
+from modules.Climate.PETInPristley import *
 
 
 # /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -56,10 +57,11 @@ class CGridWaterBalance:
         self.m_dCrownInterc = 0.
         self.m_dGridLAI = 0.
         self.m_dRIntensity = 0.
+        self.m_dPET = 0.
 
     # /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +														+
-    # +				功能：设置栅格计算参数					+
+    # +				功能：设置栅格计算参数					    +
     # +														+
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
     def SetGridPara(self, currow, curcol, rint, dFp, year, dn, hr, curForcingFilename):
@@ -106,7 +108,7 @@ class CGridWaterBalance:
 
     # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +                                                        +
-    # +                    功能：计算冠层截留 +
+    # +                    功能：计算冠层截留                    +
     # +                                                        +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     def CalcCI(self):
@@ -116,25 +118,81 @@ class CGridWaterBalance:
 
     # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +                                                        +
-    # +                功能：计算栅格潜在蒸散量 +
+    # +                功能：计算栅格潜在蒸散量                   +
     # +                                                        +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
-
-    # chen TODO
     def CalcPET(self, dalbedo, curForcingFilename):
-        self.m_dPET = 0.
+        petPath = utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'petdata'
+        tmpmxPath = utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmpmxdata'
+        tmpmnPath = utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmpmndata'
+        slrPath = utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'slrdata'
+        hmdPath = utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'hmddata'
+        wndPath = utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'wnddata'
 
+        ## 判断选择的方法 ##
         if utils.config.PETMethod == utils.defines.PET_REAL:
-            curPet = readRaster(
-                utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'petdata' + os.sep + curForcingFilename)
+            curPet = readRaster(petPath + os.sep + curForcingFilename)
             self.m_dPET = curPet.data[self.m_row][self.m_col]
+        if not os.path.exists(tmpmxPath + os.sep + curForcingFilename) or not os.path.exists(
+                                tmpmnPath + os.sep + curForcingFilename):
+            return 0
+        curTmpmx = readRaster(tmpmxPath + os.sep + curForcingFilename)
+        curTmpmn = readRaster(tmpmnPath + os.sep + curForcingFilename)
+        dTmx = curTmpmx.data[self.m_row][self.m_col]
+        dTmn = curTmpmn.data[self.m_row][self.m_col]
+        dRLong = 0
+        dRShort = 0
+
+        if utils.config.PETMethod == utils.defines.PET_PRISTLEY_TAYLOR:
+            if not os.path.exists(slrPath + os.sep + curForcingFilename) or not os.path.exists(
+                                    hmdPath + os.sep + curForcingFilename):
+                return 0
+            prist = CPETInPristley(self.m_dTav, self.m_dHeight, curForcingFilename)
+            curSlr = readRaster(slrPath + os.sep + curForcingFilename)
+            curHmd = readRaster(hmdPath + os.sep + curForcingFilename)
+            dRLong = prist.NetLongWaveRadiationRHmd(curSlr.data[self.m_row][self.m_col],
+                                                    curHmd.data[self.m_row][self.m_col])
+            dRShort = prist.NetShortWaveRadiation(dalbedo, curSlr.data[self.m_row][self.m_col])
+            self.m_dPET = prist.PETByPristley(1.26, 0)
+
+        elif utils.config.PETMethod == utils.defines.PET_HARGREAVES:
+            if not os.path.exists(slrPath + os.sep + curForcingFilename) or not os.path.exists(
+                                    hmdPath + os.sep + curForcingFilename):
+                return 0
+                # har = CPETInHargreaves() TODO
+
+        elif utils.config.PETMethod == utils.defines.PET_FAO_PENMAN_MONTEITH:
+            if not os.path.exists(slrPath + os.sep + curForcingFilename) or not os.path.exists(
+                                    hmdPath + os.sep + curForcingFilename) or not os.path.exists(
+                                    wndPath + os.sep + curForcingFilename):
+                return 0
+                # faopm = CPETInFAOPM() TODO
+
+        elif utils.config.PETMethod == utils.defines.PET_DEBRUIN:
+            if not os.path.exists(slrPath + os.sep + curForcingFilename) or not os.path.exists(
+                                    hmdPath + os.sep + curForcingFilename):
+                return 0
+                # debruin = CPETInDeBruin() TODO
+
+        else:
+            if not os.path.exists(slrPath + os.sep + curForcingFilename) or not os.path.exists(
+                                    hmdPath + os.sep + curForcingFilename):
+                return 0
+            pm = CPETInPM(self.m_dTav, self.m_dHeight, curForcingFilename)
+            curSlr = readRaster(slrPath + os.sep + curForcingFilename)
+            curHmd = readRaster(hmdPath + os.sep + curForcingFilename)
+            curWnd = readRaster(wndPath + os.sep + curForcingFilename)
+            dRLong = pm.NetLongWaveRadiationRHmd(curSlr.data[self.m_row][self.m_col],
+                                                 curHmd.data[self.m_row][self.m_col])
+            dRShort = pm.NetShortWaveRadiation(dalbedo, curSlr.data[self.m_row][self.m_col])
+            self.m_dPET = pm.PETInPMByRHmd(curWnd.data[self.m_row][self.m_col], curHmd.data[self.m_row][self.m_col], 0)
 
     # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +                                                        +
-    # +                功能：计算栅格实际蒸散量 +
+    # +                功能：计算栅格实际蒸散量                   +
     # +                                                        +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    # +        由于Kojima法会出现比较大的空间不连续性，所以 +
+    # +        由于Kojima法会出现比较大的空间不连续性，所以       +
     # +        目前只有互补相关理论法可以用。                    +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     # chen TODO
@@ -154,7 +212,7 @@ class CGridWaterBalance:
 
     # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +                                                        +
-    # +        功能：互补相关理论法计算实际蒸散发 +
+    # +        功能：互补相关理论法计算实际蒸散发                  +
     # +                                                        +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     # chen TODO
@@ -163,7 +221,7 @@ class CGridWaterBalance:
 
     # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +                                                        +
-    # +        功能：计算干旱指数 - - AridIndex = (PET / pcp) +
+    # +        功能：计算干旱指数 - - AridIndex = (PET / pcp)    +
     # +                                                        +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     def CalcAI(self):
@@ -171,8 +229,8 @@ class CGridWaterBalance:
 
     # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +                                                        +
-    # +            功能：计算到达栅格的净雨量 +
-    # +        (降雨中扣除冠层截留, 填洼暂时忽略) +
+    # +            功能：计算到达栅格的净雨量                     +
+    # +        (降雨中扣除冠层截留, 填洼暂时忽略)                  +
     # +                                                        +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     def CalcNetRain(self):
@@ -187,26 +245,26 @@ class CGridWaterBalance:
     # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +                                                        +
     # +                功能：计算栅格总径流 +
-    # +        (原理见博士论文：栅格水量平衡关系计算产流)        +
+    # +        (原理见博士论文：栅格水量平衡关系计算产流)           +
     # +                                                        +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +                                                        +
-    # +        总径流 ＝ 地表径流 ＋ 壤中流 ＋ 地下径流 +
-    # +            1、计算地表径流 +
-    # +            2、计算壤中流 +
-    # +            3、计算地下径流 +
-    # +            4、计算土壤含水量变化 +
+    # +        总径流 ＝ 地表径流 ＋ 壤中流 ＋ 地下径流            +
+    # +            1、计算地表径流                               +
+    # +            2、计算壤中流                                +
+    # +            3、计算地下径流                               +
+    # +            4、计算土壤含水量变化                          +
     # +                                                        +
     # +        返回值：栅格产流类型；                            +
     # +                                                        +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +                                                        +
-    # +        调用本函数前的主要输入参数：                    +
+    # +        调用本函数前的主要输入参数：                        +
     # +            m_dNetRain - - 栅格净雨；                    +
-    # +            m_dAET - - 实际蒸散量；                +
-    # +            m_dRIntensity - - 雨强；                        +
-    # +            m_dFc - - 土壤稳定下渗率；            +
-    # +            m_dFp - - 时段土壤下渗率；            +
+    # +            m_dAET - - 实际蒸散量；                      +
+    # +            m_dRIntensity - - 雨强；                     +
+    # +            m_dFc - - 土壤稳定下渗率；                    +
+    # +            m_dFp - - 时段土壤下渗率；                    +
     # +                                                        +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     def CalcRunoffElement(self):
@@ -366,13 +424,13 @@ class CGridWaterBalance:
 
     # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +                                                                +
-    # +                            栅格公用变量推算 +
+    # +                            栅格公用变量推算                      +
     # +                                                                +
     # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     #
     # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +                                                        +
-    # +        功能：计算逐日LAI值 +
+    # +                    功能：计算逐日LAI值                   +
     # +                                                        +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     def DailyLai(self):
@@ -398,7 +456,7 @@ class CGridWaterBalance:
 
     # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +                                                        +
-    # +                功能：计算栅格逐日Albedo +
+    # +                功能：计算栅格逐日Albedo                  +
     # +                                                        +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     def DailyAlbedo(self):
@@ -411,7 +469,7 @@ class CGridWaterBalance:
 
     # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +                                                        +
-    # +                功能：计算栅格逐日盖度 +
+    # +                功能：计算栅格逐日盖度                     +
     # +                                                        +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     def DailyCoverDeg(self):

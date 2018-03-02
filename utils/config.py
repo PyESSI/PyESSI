@@ -148,3 +148,4 @@ gridMeanSlp = demName + "_grs.tif"  # Grid river slope
 routingTime_GST = demName + "_gst.tif"  # Grid surface runoff route Time
 routingTime_GLT = demName + "_glt.tif"  # Grid lateral route time
 routingTime_GBT = demName + "_gbt.tif"  # Grid base route Time
+MuskCoeffFile = "muskingum_coeff.txt"  # muskingum coef file

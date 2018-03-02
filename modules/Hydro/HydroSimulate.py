@@ -17,6 +17,7 @@ import sys
 import numpy
 import utils.config
 import utils.defines
+from utils.fileIO import *
 from modules.Hydro.Hydro import *
 
 
@@ -70,8 +71,30 @@ class CHydroSimulate:
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     def LongTermRunoffSimulate(self):
         if utils.config.SurfRouteMethod == utils.defines.ROUTE_MUSK_CONGE:
-            if self.ReadInRoutingPara():
-                print('LongTermRunoffSimulate')
+            if not self.ReadInRoutingPara():
+                raise Exception('Read In Routing Para!', self.ReadInRoutingPara)
+
+        if not self.ReadInRoutingLayerData():
+            raise Exception('Read In Routing Layer Data!', self.ReadInRoutingLayerData)
+
+        if utils.config.RiverRouteMethod == utils.defines.ROUTE_MUSKINGUM_COMBINE_FIRST or utils.config.RiverRouteMethod == utils.defines.ROUTE_MUSKINGUM_ROUTE_FIRST:
+            if not self.ReadMuskingCoeff():
+                raise Exception("马斯京根法河道参数读取失败，无法模拟", self.ReadMuskingCoeff)
+            if self.m_iNodeNum > 1:
+                self.MuskRouteInit(self.m_iNodeNum)
+
+        DEMForld = utils.config.workSpace + os.sep + "DEM"
+        DEMFile = DEMForld + os.sep + utils.config.DEMFileName
+        self.g_DemLayer = readRaster(DEMFile)
+
+        self.m_row = self.g_DemLayer.nRows
+        self.m_col = self.g_DemLayer.nCols
+
+             
+
+
+
+
 
 
     # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -87,12 +110,14 @@ class CHydroSimulate:
         self.m_OutCol = 0
         gutFile = utils.config.workSpace + os.sep + 'DEM' + os.sep + utils.config.DEMFileName.split('.')[0] + '_gud.txt'
         if os.path.exists(gutFile):
+            # 判断是否已读入栅格汇流最优次序参数文件
+            if self.RoutePara.pGridNum is not None:
+                return True
             strFileName = open(gutFile)
             gudLines = strFileName.readlines()
             num = len(gudLines)
             self.RoutePara = CMuskCungeRoutePara()
             self.RoutePara.m_iRouteGridNum = num
-
             for i in range(num):
                 self.RoutePara.pInGrid[i] = numpy.zeros(8)
             self.RoutePara.pGridNum = numpy.zeros(num)
@@ -119,16 +144,15 @@ class CHydroSimulate:
             self.RoutePara.pRow = []
             self.RoutePara.pCol = []
 
-            strLine =""
-            saLine = [] # string array
+
             for i in range(num):
                 if i % int(num / 100) == 0:
                     print("▋", end='')
                     sys.stdout.flush()
 
-                strLine = gudLines[i]
+                strLine = gudLines[i].rstrip(utils.defines.CHAR_SPLIT_ENTER)
                 n = 0
-                saLine = strLine.split("\t")
+                saLine = strLine.split(utils.defines.CHAR_SPLIT_TAB)
                 self.RoutePara.pGridNum[i] = int(saLine[n])
                 self.RoutePara.pGridRouteOrd[i] = int(saLine[n + 1])
                 self.RoutePara.pInGrid[i][0] = int(saLine[n + 2])
@@ -174,6 +198,110 @@ class CHydroSimulate:
             raise Exception("Can not find gut txt file", gutFile)
 
         return bret
+
+    # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    # +                                                        +
+    # +                加载滞时演算汇流图层参数                   +
+    # +                                                        +
+    # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
+    def ReadInRoutingLayerData(self):
+        DEMForld = utils.config.workSpace + os.sep + "DEM"
+        watershedFile = DEMForld + os.sep + utils.config.watershed
+        subbasinFile = DEMForld + os.sep + utils.config.subbasin
+        streamOrderFile = DEMForld + os.sep + utils.config.streamOrder
+        routingTime_GSTFile = DEMForld + os.sep + utils.config.routingTime_GST
+        routingTime_GLTFile = DEMForld + os.sep + utils.config.routingTime_GLT
+        routingTime_GBTFile = DEMForld + os.sep + utils.config.routingTime_GBT
+
+        if not os.path.exists(watershedFile):
+            raise Exception("Can not find watershed file!", watershedFile)
+        else:
+            self.g_BasinBoundary = readRaster(watershedFile)
+
+        if not os.path.exists(subbasinFile):
+            raise Exception("Can not find subbasin file!", subbasinFile)
+        else:
+            self.g_SubWaterShed = readRaster(subbasinFile)
+            self.m_subNum = numpy.max(self.g_SubWaterShed.data)
+
+        if not os.path.exists(streamOrderFile):
+            raise Exception("Can not find streamOrder file!", streamOrderFile)
+        else:
+            self.g_StrahlerRivNet = readRaster(streamOrderFile)
+            self.m_MaxStrahlerOrd = numpy.max(self.g_StrahlerRivNet.data)
+
+        if not os.path.exists(routingTime_GSTFile):
+            raise Exception("Can not find routingTime_GST file!", routingTime_GSTFile)
+        else:
+            self.g_RouteSurfQTime = readRaster(routingTime_GSTFile)
+
+        if not os.path.exists(routingTime_GLTFile):
+            raise Exception("Can not find routingTime_GLT file!", routingTime_GLTFile)
+        else:
+            self.g_RouteLatQTime = readRaster(routingTime_GLTFile)
+
+        if not os.path.exists(routingTime_GBTFile):
+            raise Exception("Can not find routingTime_GBT file!", routingTime_GBTFile)
+        else:
+            self.g_RouteBaseQTime = readRaster(routingTime_GBTFile)
+
+        return True
+
+
+    def ReadMuskingCoeff(self):
+        '''
+        读取先演后合的马斯京根河道汇流文件
+        :return:
+        '''
+        self.m_MuskCoeffFile = utils.config.workSpace + os.sep + "DEM" + os.sep + utils.config.MuskCoeffFile
+        if not os.path.exists(self.m_MuskCoeffFile):
+            return False
+
+        MuskCoeffLines = open(self.m_MuskCoeffFile, 'r').readlines()
+        self.m_iNodeNum = int(MuskCoeffLines[0].rstrip(utils.defines.CHAR_SPLIT_ENTER))
+        if self.m_iNodeNum > 1:
+            self.m_pX = []
+            self.m_pK = []
+
+            num = len(MuskCoeffLines)
+            id = 0
+            for i in range(2, num):
+                saOut = MuskCoeffLines[i].rstrip(utils.defines.CHAR_SPLIT_ENTER)
+                saOut = saOut.split(utils.defines.CHAR_SPLIT_TAB)
+                self.m_pX.append(float(saOut[1]))
+                self.m_pK.append(float(saOut[2]))
+                id += 1
+
+        return True
+
+
+    def MuskRouteInit(self, nodenum):
+        self.pRiverRoute = CMuskRouteFlux()
+        if self.pRiverRoute.pRoute:
+            self.pRiverRoute.pRoute = []
+
+        if self.pRiverRoute.pPreRoute:
+            self.pRiverRoute.pPreRoute = []
+
+        for i in range(nodenum):
+            newRouteFlux = RouteFlux()
+            self.pRiverRoute.pRoute.append(newRouteFlux)
+            self.pRiverRoute.pPreRoute.append(newRouteFlux)
+
+        for i in range(nodenum):
+            self.pRiverRoute.pRoute[i].dInFlux = 0.
+            self.pRiverRoute.pRoute[i].dOutFlux = 0.
+            self.pRiverRoute.pPreRoute[i].dInFlux = 0.
+            self.pRiverRoute.pPreRoute[i].dOutFlux = 0.
+
+
+
+
+
+
+
+
+
 
 
 

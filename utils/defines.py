@@ -8,6 +8,7 @@ Created Feb 2018
 Functions:
     定义模型方法、参数识别值
     定义常数
+    定义特殊字符
 
 """
 
@@ -88,5 +89,9 @@ I0 = 4.921
 AV = 0.2618
 RAD = 57.29578
 STEF_BOLTZ = 4.903e-9
+
+# 特殊字符
+CHAR_SPLIT_TAB = "\t"
+CHAR_SPLIT_ENTER = "\n"
 
 
