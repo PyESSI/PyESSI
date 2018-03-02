@@ -120,7 +120,7 @@ class CGridWaterBalance:
     # +                                                        +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
 
-    # chen 未完成
+    # chen TODO
     def CalcPET(self, dalbedo, curForcingFilename):
         self.m_dPET = 0.
 
@@ -137,7 +137,7 @@ class CGridWaterBalance:
     # +        由于Kojima法会出现比较大的空间不连续性，所以 +
     # +        目前只有互补相关理论法可以用。                    +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
-    # chen 未完成
+    # chen TODO
     def CalcAET(self, dalbedo, curForcingFilename):
         self.m_dAET = 0.
         if self.m_dPET == 0:
@@ -157,9 +157,9 @@ class CGridWaterBalance:
     # +        功能：互补相关理论法计算实际蒸散发 +
     # +                                                        +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
-    # chen 未完成
+    # chen TODO
     def CompleAET(self, dalbedo=0.23):
-        print('chen 未完成')
+        print('chen TODO')
 
     # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +                                                        +
