@@ -1,13 +1,23 @@
 
 import os
 import time
-from util.config import *
-from util.fileIO import *
 
-s = time.time()
-for i in range(10000):
-    # curPcp = readRaster(workSpace + os.sep + 'test' + os.sep + 'YLXDem240.tif')
-    curPcp = 0
-e = time.time()
+import numpy
 
-print(e - s)
+
+class A():
+    pass
+
+
+a = []
+for i in range(2):
+    for j in range(3):
+        a.append(A)
+
+# print(a)
+arr = numpy.array(a)
+arr = arr.reshape(2,3)
+# arr = list(a[0])
+
+print(arr)
+

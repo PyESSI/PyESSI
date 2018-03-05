@@ -32,6 +32,10 @@ from modules.Hydro.SoilPara import *
 from modules.Hydro.VegetationPara import *
 from modules.Hydro.CanopyStorage import *
 from modules.Climate.PETInPristley import *
+from modules.Climate.PETInHargreaves import *
+from modules.Climate.PETInBeDruin import *
+from modules.Climate.PETInFAOPM import *
+
 
 
 # /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -101,6 +105,10 @@ class CGridWaterBalance:
         :param hr:
         :return:
         '''
+<<<<<<< HEAD
+=======
+
+>>>>>>> upstream/master
         self.m_dRIntensity = rint
         self.m_nYear = year
         self.m_nDn = dn
@@ -163,20 +171,31 @@ class CGridWaterBalance:
             if not os.path.exists(slrPath + os.sep + curForcingFilename) or not os.path.exists(
                                     hmdPath + os.sep + curForcingFilename):
                 return 0
-                # har = CPETInHargreaves() TODO
+            har = CPETInHargreaves(self.m_dTav, self.m_dHeight, self.m_dTmx, self.m_dTmn, curForcingFilename)
+            dRLong = har.NetLongWaveRadiationRHmd(self.m_slr, self.m_hmd)
+            dRShort = har.NetShortWaveRadiation(dalbedo, self.m_slr)
+            self.m_dPET = har.PETByHarg()
+
 
         elif util.config.PETMethod == util.defines.PET_FAO_PENMAN_MONTEITH:
             if not os.path.exists(slrPath + os.sep + curForcingFilename) or not os.path.exists(
                                     hmdPath + os.sep + curForcingFilename) or not os.path.exists(
                                 wndPath + os.sep + curForcingFilename):
                 return 0
-                # faopm = CPETInFAOPM() TODO
+            faopm = CPETInFAOPM(self.m_dTav, self.m_dHeight, self.m_dTmx, self.m_dTmn, curForcingFilename)
+            dRLong = faopm.NetLongWaveRadiationRHmd(self.m_slr, self.m_hmd)
+            dRShort = faopm.NetShortWaveRadiation(dalbedo, self.m_slr)
+            self.m_dPET = faopm.PETByRAVP(self.m_wnd, self.m_hmd)
+
 
         elif util.config.PETMethod == util.defines.PET_DEBRUIN:
             if not os.path.exists(slrPath + os.sep + curForcingFilename) or not os.path.exists(
                                     hmdPath + os.sep + curForcingFilename):
                 return 0
-                # debruin = CPETInDeBruin() TODO
+            debruin = CPETInDeBruin(self.m_dTav, self.m_dHeight, curForcingFilename)
+            dRLong = debruin.NetLongWaveRadiationRHmd(self.m_slr, self.m_hmd)
+            dRShort = debruin.NetShortWaveRadiation(dalbedo, self.m_slr)
+            self.m_dPET = debruin.PETByDeBruin()
 
         else:
             if not os.path.exists(slrPath + os.sep + curForcingFilename) or not os.path.exists(
