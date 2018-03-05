@@ -42,8 +42,11 @@ class SoilInfo:
         self.SP_Wp = 0.
         self.SP_Arid = 0.
         self.Horton_K = 0.05
+
         self.TPercolation = 0.
         self.SP_Temp = 0.
+
+        self.SP_Sat_K = 0.
 
         self.SL_ID = []
         self.SL_Z = []
@@ -102,7 +105,10 @@ class SoilInfo:
                 self.SL_Rock.append(float(soilInfos[i + 8].split('\n')[0].split(':')[1].strip().split()[9]))
                 self.SL_Init_F.append(float(soilInfos[i + 8].split('\n')[0].split(':')[1].strip().split()[10]))
                 self.SL_bFillOK.append(True)
+
+            self.CalcSoilPara()
             self.TPercolation = (self.SP_Sat - self.SP_Fc) / self.SP_Sat_K
+
         else:
             print('Soil info File does not exist!')
 
@@ -113,15 +119,15 @@ class SoilInfo:
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     def CalcSoilPara(self):
         for i in range(self.iLayer):
-            self.SL_StaInfil[i] = self.SL_Stable_F[i] * self.SL_Sat_K[i]
-            self.SL_InitInfil[i] = self.SL_Init_F[i] * self.SL_Sat_K[i]
+            self.SL_StaInfil.append(self.SL_Stable_F[i] * self.SL_Sat_K[i])
+            self.SL_InitInfil.append(self.SL_Init_F[i] * self.SL_Sat_K[i])
 
-            self.SL_WpRatio[i] = 0.4 * self.SL_Clay[i] * self.SL_BD[i] / 100.
+            self.SL_WpRatio.append(0.4 * self.SL_Clay[i] * self.SL_BD[i] / 100.)
             if self.SL_WpRatio[i] <= 0.:
                 self.SL_WpRatio[i] = 0.005
 
-            self.SL_FcRatio[i] = self.SL_WpRatio[i] + self.SL_AWC[i]
-            self.SL_Por[i] = 1. - self.SL_BD[i] / 2.65
+            self.SL_FcRatio.append(self.SL_WpRatio[i] + self.SL_AWC[i])
+            self.SL_Por.append(1. - self.SL_BD[i] / 2.65)
 
             if self.SL_FcRatio[i] >= self.SL_Por[i]:
                 self.SL_FcRatio[i] = self.SL_Por[i] - 0.05
@@ -142,14 +148,14 @@ class SoilInfo:
             suminfil += stainfil
             suminit += stainit
             sumsat_k += sat_k
-            self.SL_Sat[i] = (self.SL_Por[i] - self.SL_WpRatio[i]) * lyrdepth
+            self.SL_Sat.append((self.SL_Por[i] - self.SL_WpRatio[i]) * lyrdepth)
             self.SP_Sat += self.SL_Sat[i]
-            self.SL_Wp[i] = self.SL_WpRatio[i] * lyrdepth
+            self.SL_Wp.append(self.SL_WpRatio[i] * lyrdepth)
             self.SP_Wp += self.SL_Wp[i]
-            self.SL_P_Fc[i] = (self.SL_FcRatio[i] - self.SL_WpRatio[i]) * lyrdepth
+            self.SL_P_Fc.append((self.SL_FcRatio[i] - self.SL_WpRatio[i]) * lyrdepth)
             self.SP_Fc += self.SL_P_Fc[i]
-            self.SL_SW[i] = self.SL_P_Fc[i] * self.InitSWP
-            self.SL_HK[i] = (self.SL_Sat[i] - self.SL_P_Fc[i]) / self.SL_Sat_K[i]
+            self.SL_SW.append(self.SL_P_Fc[i] * self.InitSWP)
+            self.SL_HK.append((self.SL_Sat[i] - self.SL_P_Fc[i]) / self.SL_Sat_K[i])
             if self.SL_HK[i] < 1.:
                 self.SL_HK[i] = 1.
                 self.SP_Sw += self.SL_SW[i]
@@ -225,4 +231,5 @@ def GetSoilTypeName(SoilTypeID):
             soilIdName.append((soilTypeInfos[i].split('\n')[0].split('\t')[0].strip(),
                                soilTypeInfos[i].split('\n')[0].split('\t')[1].strip()))
         soilTypeName = dict(soilIdName)
+
         return soilTypeName[str(SoilTypeID)]
