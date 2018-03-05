@@ -115,7 +115,7 @@ class CGreenAmptInfil:
 
             # do while
             df = 0.
-            df = self.m_dPrecuminf + self.m_dEhc * dt + psidt * math.log((dtmp + psidt) / (self.m_dPrecuminf + psidt));
+            df = self.m_dPrecuminf + self.m_dEhc * dt + psidt * math.log((dtmp + psidt) / (self.m_dPrecuminf + psidt))
             if math.fabs(df - dtmp) <= 0.001:
                 dcuminf = df
                 dexcum = dcumr - dcuminf
@@ -132,7 +132,7 @@ class CGreenAmptInfil:
             while not bExistLoop:
                 df = 0.
                 df = self.m_dPrecuminf + self.m_dEhc * dt + psidt * math.log(
-                    (dtmp + psidt) / (self.m_dPrecuminf + psidt));
+                    (dtmp + psidt) / (self.m_dPrecuminf + psidt))
                 if math.fabs(df - dtmp) <= 0.001:
                     dcuminf = df
                     dexcum = dcumr - dcuminf

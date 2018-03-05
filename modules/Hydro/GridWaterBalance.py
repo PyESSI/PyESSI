@@ -109,6 +109,15 @@ class CGridWaterBalance:
         self.m_dFp = dFp
         self.m_dHr = hr
 
+
+        curPcp = readRaster(utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'pcpdata' + os.sep + curForcingFilename)
+        self.m_dPcp = curPcp.data[self.m_row][self.m_col]
+
+        curHeight = readRaster(utils.config.workSpace + os.sep + 'DEM' + os.sep + utils.config.DEMFileName)
+        self.m_dHeight = curHeight.data[self.m_row][self.m_col]
+
+        soilTemp = readRaster(utils.config.workSpace + os.sep + 'DEM' + os.sep + utils.config.SoilFileName)
+
         pGridSoilInfo = SoilInfo()
         pGridSoilInfo.ReadSoilFile(GetSoilTypeName(self.m_Soil) + '.sol')
         self.m_dFc = pGridSoilInfo.SP_Stable_Fc
