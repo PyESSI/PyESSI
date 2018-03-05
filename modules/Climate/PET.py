@@ -11,10 +11,10 @@ Revised:
 """
 
 # load needed python modules
-import utils.config
+import util.config
 import math
 from modules.Climate.SolarRadiation import *
-from utils.defines import *
+from util.defines import *
 
 
 #

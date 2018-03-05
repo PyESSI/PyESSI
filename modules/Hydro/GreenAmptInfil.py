@@ -17,9 +17,9 @@ Class:
 # load needed python modules
 import math
 
-import utils.config
+import util.config
 from modules.Hydro.SoilPara import *
-from utils.fileIO import *
+from util.fileIO import *
 
 
 # /*++++++++++++++++++++++++++++++++++++++++++++++++++++|
@@ -70,7 +70,7 @@ class CGreenAmptInfil:
         self.m_dSoilw = 0.
         self.m_dSurfQ = 0.
 
-        soilTemp = readRaster(utils.config.workSpace + os.sep + 'DEM' + os.sep + utils.config.SoilFileName)
+        soilTemp = readRaster(util.config.workSpace + os.sep + 'DEM' + os.sep + util.config.SoilFileName)
         pGridSoilInfo = SoilInfo()
         pGridSoilInfo.ReadSoilFile(GetSoilTypeName(soilTemp.data[self.m_row][self.m_col]) + '.sol')
         dthet = pGridSoilInfo.SoilWaterDeficitPercent()
@@ -163,7 +163,7 @@ class CGreenAmptInfil:
         :param Cp:
         :return:
         '''
-        soilTemp = readRaster(utils.config.workSpace + os.sep + 'DEM' + os.sep + utils.config.SoilFileName)
+        soilTemp = readRaster(util.config.workSpace + os.sep + 'DEM' + os.sep + util.config.SoilFileName)
         pGridSoilInfo = SoilInfo()
         pGridSoilInfo.ReadSoilFile(GetSoilTypeName(soilTemp.data[self.m_row][self.m_col]) + '.sol')
 

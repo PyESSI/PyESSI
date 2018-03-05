@@ -20,7 +20,7 @@ Revised:
 import os
 import subprocess
 from osgeo import gdal
-from utils.fileIO import readRaster, writeRaster
+from util.fileIO import readRaster, writeRaster
 
 
 class DEMRiverNet:

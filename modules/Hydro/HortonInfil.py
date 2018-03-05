@@ -13,9 +13,9 @@ Revised:
 # load needed python modules
 import math
 
-import utils.config
+import util.config
 from modules.Hydro.SoilPara import *
-from utils.fileIO import *
+from util.fileIO import *
 
 
 # /*++++++++++++++++++++++++++++++++++++++++++++++++++++|
@@ -60,7 +60,7 @@ class CHortonInfil:
         self.m_dPreSoilW = dSoilW
         self.m_dERR = dErr
 
-        soilTemp = readRaster(utils.config.workSpace + os.sep + 'DEM' + os.sep + utils.config.SoilFileName)
+        soilTemp = readRaster(util.config.workSpace + os.sep + 'DEM' + os.sep + util.config.SoilFileName)
         pGridSoilInfo = SoilInfo()
         pGridSoilInfo.ReadSoilFile(GetSoilTypeName(soilTemp.data[self.m_currow][self.m_curcol]) + '.sol')
         self.m_dK = pGridSoilInfo.Horton_K

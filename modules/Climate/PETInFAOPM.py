@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
 """
-@Class: CPETInPM
+@Class: CPETInFAOPM
 @Author: Huiran Gao
 @Functions:
-    潜在蒸散发(彭曼公式)
+    潜在蒸散发(FAO-彭曼公式)
 
 Created: 2018-03-01
 Revised:
@@ -12,8 +12,7 @@ Revised:
 
 
 # load needed python modules
-from util.fileIO import *
-from modules.Climate.WaterVapor import *
+from modules.Climate.WaterVaporFAOPM import *
 from modules.Climate.SolarRadiation import *
 from util.defines import *
 import math
@@ -23,27 +22,30 @@ import math
 # |														|
 # |	*************************************************   |
 # |	*												*	|
-# |	*         潜在蒸散发类 -- CPETInPM			*	|
+# |	*         潜在蒸散发类 -- CPETInFAOPM			*	|
 # | *												*   |
 # |                                                     |
 # |	*************************************************   |
 # |	*												*	|
 # | *         功能：利用彭曼公式计算潜在蒸散发          *   |
 # | *    Calculate potential Evaportranspiration    *   |
-# | *          with Penman-Monteith method          *   |
+# | *        with FAO-Penman-Monteith method        *   |
 # |	*				                    			*   |
 # |	*												*	|
 # |   *************************************************	|
 # |														|
 # |++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
-class CPETInPM(CPET):
-    def __init__(self, tav, elev, curForcingFilename, lat=33):
+class CPETInFAOPM(CPET):
+    def __init__(self, tav, elev, tmx, tmn, curForcingFilename, lat=33):
         CPET.__init__(self, curForcingFilename, lat)
         self.dTav = tav
         self.dElev = elev
-        self.dTavk = self.dTav + 273.15
-        self.pwatvap = CWaterVapor(self.dTav, self.dElev)
+        self.dTmx = tmx
+        self.dTmn = tmn
+        self.dTmxk = self.dTmx + 273.15
+        self.dTmnk = self.dTmn + 273.15
+        self.pwatvap = CWaterVaporFAOPM(self.dTav, self.dElev, self.dTmx, self.dTmn)
         self.pslr = CSolarRadiation(curForcingFilename, lat)
 
     def CombineConst(self):
@@ -130,29 +132,37 @@ class CPETInPM(CPET):
         '''
         return self.dNetShort + self.dNetLong
 
-    def PETInPMByRHmd(self, wspeed, rhmd, G):
+    def PETInPMByRHmd(self, dn, wspeed, rhmd, G=0):
         '''
         Calculate PET using Penman - Monteith formula
+        :param dn:
         :param wspeed:
         :param rhmd:
         :param G:
         :return:
         '''
+        avp = self.pwatvap.ActVapPressureByTMxMn(rhmd)
+        return self.PETByRAVP_dn(dn, wspeed, avp, G)
+
+    def PETByRAVP(self, wspeed, avp, G=0):
+        '''
+        ---
+        :param wspeed:
+        :param avp:
+        :param G:
+        :return:
+        '''
         Hnet = self.NetRadiation()
         dlta = self.pwatvap.TmpVapCurveSlp()
-        lhv = self.pwatvap.LatHeatVapor()
-        comb = self.CombineConst()
         svp = self.pwatvap.SatuVapPressure()
-        avp = self.pwatvap.ActVapPressure(rhmd)
         psy = self.pwatvap.PsychroConst()
-        rc = self.CanopyResistance()
-        ra = self.AeroDynResistance(wspeed)
-        dEnergy = (dlta * (Hnet - G)) / (dlta + psy * (1 + rc / ra)) / lhv
-        dAero = (psy * comb * (svp - avp) / ra) / (dlta + psy * (1 + rc / ra)) / lhv
+        dEnergy = (0.408 * dlta * (Hnet - G) / (self.dTav + 273)) / (dlta + psy * (1 + 0.32 * wspeed))
+        dAero = (psy * 900 * wspeed * (svp - avp) / (self.dTav + 273)) / (dlta + psy * (1 + 0.32 * wspeed))
         dPet = dEnergy + dAero
         return dPet
 
-    def PETInPMByRHmd_dn(self, dn, wspeed, rhmd, G):
+
+    def PETByRAVP_dn(self, dn, wspeed, rhmd, G=0):
         '''
         Calculate PET using Penman - Monteith formula
         :param dn:
@@ -174,15 +184,3 @@ class CPETInPM(CPET):
         dAero = (psy * comb * (svp - avp) / ra) / (dlta + psy * (1 + rc / ra)) / lhv
         dPet = dEnergy + dAero
         return dPet
-
-    def PETByRAVP(self, wspeed, avp, G):
-        '''
-        ---
-        :param wspeed:
-        :param avp:
-        :param G:
-        :return:
-        '''
-        svp = self.pwatvap.SatuVapPressure()
-        rhmd = avp / svp
-        return self.PETInPMByRHmd(wspeed, rhmd, G)

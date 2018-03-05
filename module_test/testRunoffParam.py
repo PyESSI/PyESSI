@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from preprocess.dem.RunoffParam import *
-from utils.config import *
+from util.config import *
 
 if __name__ == "__main__":
     r = RunoffParam()

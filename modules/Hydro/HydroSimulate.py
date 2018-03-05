@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 """
 Created Jan 2018
 
@@ -15,16 +16,15 @@ Class:
 
 # load needed python modules
 import numpy
-import utils.config
-import utils.defines
-from utils.fileIO import *
+import util.config
+import util.defines
 from modules.Hydro.Hydro import *
-from utils.dateTime import *
+from util.dateTime import *
 from modules.Hydro.SoilPara import *
 from modules.Hydro.VegetationPara import *
-from modules.hydro.HortonInfil import *
-from modules.hydro.GridWaterBalance import *
-from modules.hydro.VegetationPara import *
+from modules.Hydro.HortonInfil import *
+from modules.Hydro.GridWaterBalance import *
+from modules.Hydro.VegetationPara import *
 
 
 class CHydroSimulate:
@@ -62,9 +62,9 @@ class CHydroSimulate:
         self.HortonInfil = CHortonInfil()
 
 
-        self.gridwb = CGridWaterBalance()
+        # self.gridwb = CGridWaterBalance()
 
-        if utils.config.RunoffSimuType == utils.defines.LONGTERM_RUNOFF_SIMULATION:
+        if util.config.RunoffSimuType == util.defines.LONGTERM_RUNOFF_SIMULATION:
             self.m_bDate = True
         else:
             self.m_bDate = False
@@ -84,14 +84,14 @@ class CHydroSimulate:
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     def LongTermRunoffSimulate(self):
         print('LongTermRunoffSimulate')
-        if utils.config.SurfRouteMethod == utils.defines.ROUTE_MUSK_CONGE:
+        if util.config.SurfRouteMethod == util.defines.ROUTE_MUSK_CONGE:
             if not self.ReadInRoutingPara():
                 raise Exception('Read In Routing Para!', self.ReadInRoutingPara)
 
         if not self.ReadInRoutingLayerData():
             raise Exception('Read In Routing Layer Data!', self.ReadInRoutingLayerData)
 
-        if utils.config.RiverRouteMethod == utils.defines.ROUTE_MUSKINGUM_COMBINE_FIRST or utils.config.RiverRouteMethod == utils.defines.ROUTE_MUSKINGUM_ROUTE_FIRST:
+        if util.config.RiverRouteMethod == util.defines.ROUTE_MUSKINGUM_COMBINE_FIRST or util.config.RiverRouteMethod == util.defines.ROUTE_MUSKINGUM_ROUTE_FIRST:
             if not self.ReadMuskingCoeff():
                 raise Exception("马斯京根法河道参数读取失败，无法模拟", self.ReadMuskingCoeff)
             if self.m_iNodeNum > 1:
@@ -102,8 +102,8 @@ class CHydroSimulate:
 
         self.m_SnowWater = numpy.zeros([self.m_row, self.m_col])
 
-        startDay = utils.config.startTime
-        endDay = utils.config.endTime
+        startDay = util.config.startTime
+        endDay = util.config.endTime
 
         iniDate = datetime.date(int(startDay[0:4]), int(startDay[4:6]), int(startDay[6:8]))
         endDate = datetime.date(int(endDay[0:4]), int(endDay[4:6]), int(endDay[6:8]))
@@ -133,7 +133,7 @@ class CHydroSimulate:
             for i in range(totYear):
                 wytypeTemp = WaterYearType()
                 wytypeTemp.year = int(startDay[0:4]) + i
-                wytypeTemp.wtype = utils.defines.WATER_LOW_YEAR
+                wytypeTemp.wtype = util.defines.WATER_LOW_YEAR
 
                 self.wytype.append(wytypeTemp)
 
@@ -164,21 +164,21 @@ class CHydroSimulate:
 
                     dsnowfactor = 1.
                     curPcp = readRaster(
-                        utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'pcpdata' + os.sep + theDay + '.tif')
+                        util.config.workSpace + os.sep + 'Forcing' + os.sep + 'pcpdata' + os.sep + theDay + '.tif')
                     curTmpmean = readRaster(
-                        utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmpmeandata' + os.sep + theDay + '.tif')
+                        util.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmpmeandata' + os.sep + theDay + '.tif')
                     curPet = readRaster(
-                        utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'petdata' + os.sep + theDay + '.tif')
+                        util.config.workSpace + os.sep + 'Forcing' + os.sep + 'petdata' + os.sep + theDay + '.tif')
 
-                    if utils.config.tmpmeandata == 1:
-                        if curTmpmean.data[row][col] < utils.config.SnowTemperature:
+                    if util.config.tmpmeandata == 1:
+                        if curTmpmean.data[row][col] < util.config.SnowTemperature:
                             self.m_SnowWater[row][col] += curPcp.data[row][col]
                             curPcp.data[row][col] = 0.
                             dsnowfactor = 0.15
                         else:
                             if self.m_SnowWater[row][col] > 0:
-                                smelt = self.DDFSnowMelt(curTmpmean.data[row][col], utils.config.SnowTemperature,
-                                                         utils.config.DDF, utils.config.DailyMeanPcpTime)
+                                smelt = self.DDFSnowMelt(curTmpmean.data[row][col], util.config.SnowTemperature,
+                                                         util.config.DDF, util.config.DailyMeanPcpTime)
                                 if self.m_SnowWater[row][col] < smelt:
                                     smelt = self.m_SnowWater[row][col]
                                     self.m_SnowWater[row][col] = 0.
@@ -187,7 +187,7 @@ class CHydroSimulate:
                                 curPcp.data[row][col] += smelt
                                 dsnowfactor = 0.3
 
-                    dhrIntensity = utils.config.DailyMeanPcpTime
+                    dhrIntensity = util.config.DailyMeanPcpTime
                     dintensity = curPcp.data[row][col] / dhrIntensity
                     self.HortonInfil.SetGridPara(row, col, self.pGridSoilInfo_SP_Sw[row][col].SP_Sw, 0.03)
 
@@ -234,7 +234,7 @@ class CHydroSimulate:
 
 
                         # //*************对蒸散发处理的特殊代码段 -- 计算实际蒸散发**************//
-                        if utils.config.PETMethod == utils.defines.PET_REAL:
+                        if util.config.PETMethod == util.defines.PET_REAL:
                             self.gridwb.m_dAET = curPet.data[row][col] * aetfactor
                             self.m_AET[row][col] = self.gridwb.m_dAET
 
@@ -282,7 +282,7 @@ class CHydroSimulate:
         return dret
 
     def ReadWaterYearType(self):
-        waterYearTypeFile = utils.config.workSpace + os.sep + 'DEM' + os.sep + utils.config.WaterYearTypeFile
+        waterYearTypeFile = util.config.workSpace + os.sep + 'DEM' + os.sep + util.config.WaterYearTypeFile
         if os.path.exists(waterYearTypeFile):
             self.wytype = []
             wytypeFile = open(waterYearTypeFile, 'r')
@@ -292,9 +292,9 @@ class CHydroSimulate:
             for i in range(len(wytypeLines)):
                 wyTypeTemp = WaterYearType()
                 wyTypeTemp.year = \
-                    wytypeLines[i].rstrip(utils.defines.CHAR_SPLIT_ENTER).split(utils.defines.CHAR_SPLIT_TAB)[0]
+                    wytypeLines[i].rstrip(util.defines.CHAR_SPLIT_ENTER).split(util.defines.CHAR_SPLIT_TAB)[0]
                 wyTypeTemp.wtype = \
-                    wytypeLines[i].rstrip(utils.defines.CHAR_SPLIT_ENTER).split(utils.defines.CHAR_SPLIT_TAB)[1]
+                    wytypeLines[i].rstrip(util.defines.CHAR_SPLIT_ENTER).split(util.defines.CHAR_SPLIT_TAB)[1]
 
                 self.wytype.append(wyTypeTemp)
             return True
@@ -304,10 +304,10 @@ class CHydroSimulate:
 
     # 加载栅格参数
     def gridLayerInit(self):
-        DEMFolder = utils.config.workSpace + os.sep + "DEM"
-        DEMFile = DEMFolder + os.sep + utils.config.DEMFileName
-        LULCFile = DEMFolder + os.sep + utils.config.LULCFileName
-        SoilFile = DEMFolder + os.sep + utils.config.SoilFileName
+        DEMFolder = util.config.workSpace + os.sep + "DEM"
+        DEMFile = DEMFolder + os.sep + util.config.DEMFileName
+        LULCFile = DEMFolder + os.sep + util.config.LULCFileName
+        SoilFile = DEMFolder + os.sep + util.config.SoilFileName
 
         self.g_DemLayer = readRaster(DEMFile)
         self.g_VegLayer = readRaster(LULCFile)
@@ -382,7 +382,7 @@ class CHydroSimulate:
         bret = False
         self.m_OutRow = 0
         self.m_OutCol = 0
-        gutFile = utils.config.workSpace + os.sep + 'DEM' + os.sep + utils.config.DEMFileName.split('.')[0] + '_gud.txt'
+        gutFile = util.config.workSpace + os.sep + 'DEM' + os.sep + util.config.DEMFileName.split('.')[0] + '_gud.txt'
         if os.path.exists(gutFile):
             # 判断是否已读入栅格汇流最优次序参数文件
             if self.RoutePara.pGridNum is not None:
@@ -423,9 +423,9 @@ class CHydroSimulate:
                     print("▋", end='')
                     sys.stdout.flush()
 
-                strLine = gudLines[i].rstrip(utils.defines.CHAR_SPLIT_ENTER)
+                strLine = gudLines[i].rstrip(util.defines.CHAR_SPLIT_ENTER)
                 n = 0
-                saLine = strLine.split(utils.defines.CHAR_SPLIT_TAB)
+                saLine = strLine.split(util.defines.CHAR_SPLIT_TAB)
                 self.RoutePara.pGridNum[i] = int(saLine[n])
                 self.RoutePara.pGridRouteOrd[i] = int(saLine[n + 1])
                 self.RoutePara.pInGrid[i][0] = int(saLine[n + 2])
@@ -478,13 +478,13 @@ class CHydroSimulate:
     # +                                                        +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     def ReadInRoutingLayerData(self):
-        DEMForld = utils.config.workSpace + os.sep + "DEM"
-        watershedFile = DEMForld + os.sep + utils.config.watershed
-        subbasinFile = DEMForld + os.sep + utils.config.subbasin
-        streamOrderFile = DEMForld + os.sep + utils.config.streamOrder
-        routingTime_GSTFile = DEMForld + os.sep + utils.config.routingTime_GST
-        routingTime_GLTFile = DEMForld + os.sep + utils.config.routingTime_GLT
-        routingTime_GBTFile = DEMForld + os.sep + utils.config.routingTime_GBT
+        DEMForld = util.config.workSpace + os.sep + "DEM"
+        watershedFile = DEMForld + os.sep + util.config.watershed
+        subbasinFile = DEMForld + os.sep + util.config.subbasin
+        streamOrderFile = DEMForld + os.sep + util.config.streamOrder
+        routingTime_GSTFile = DEMForld + os.sep + util.config.routingTime_GST
+        routingTime_GLTFile = DEMForld + os.sep + util.config.routingTime_GLT
+        routingTime_GBTFile = DEMForld + os.sep + util.config.routingTime_GBT
 
         if not os.path.exists(watershedFile):
             raise Exception("Can not find watershed file!", watershedFile)
@@ -525,12 +525,12 @@ class CHydroSimulate:
         读取先演后合的马斯京根河道汇流文件
         :return:
         '''
-        self.m_MuskCoeffFile = utils.config.workSpace + os.sep + "DEM" + os.sep + utils.config.MuskCoeffFile
+        self.m_MuskCoeffFile = util.config.workSpace + os.sep + "DEM" + os.sep + util.config.MuskCoeffFile
         if not os.path.exists(self.m_MuskCoeffFile):
             return False
 
         MuskCoeffLines = open(self.m_MuskCoeffFile, 'r').readlines()
-        self.m_iNodeNum = int(MuskCoeffLines[0].rstrip(utils.defines.CHAR_SPLIT_ENTER))
+        self.m_iNodeNum = int(MuskCoeffLines[0].rstrip(util.defines.CHAR_SPLIT_ENTER))
         if self.m_iNodeNum > 1:
             self.m_pX = []
             self.m_pK = []
@@ -538,8 +538,8 @@ class CHydroSimulate:
             num = len(MuskCoeffLines)
             id = 0
             for i in range(2, num):
-                saOut = MuskCoeffLines[i].rstrip(utils.defines.CHAR_SPLIT_ENTER)
-                saOut = saOut.split(utils.defines.CHAR_SPLIT_TAB)
+                saOut = MuskCoeffLines[i].rstrip(util.defines.CHAR_SPLIT_ENTER)
+                saOut = saOut.split(util.defines.CHAR_SPLIT_TAB)
                 self.m_pX.append(float(saOut[1]))
                 self.m_pK.append(float(saOut[2]))
                 id += 1
@@ -574,8 +574,8 @@ class CHydroSimulate:
 
         ## Basic data ##
 
-        soilTempFile = utils.config.workSpace + os.sep + 'DEM' + os.sep + utils.config.SoilFileName
-        vegTempFile = utils.config.workSpace + os.sep + 'DEM' + os.sep + utils.config.LULCFileName
+        soilTempFile = util.config.workSpace + os.sep + 'DEM' + os.sep + util.config.SoilFileName
+        vegTempFile = util.config.workSpace + os.sep + 'DEM' + os.sep + util.config.LULCFileName
 
         if os.path.exists(soilTempFile):
             self.soilTemp = readRaster(soilTempFile).data
@@ -596,14 +596,14 @@ class CHydroSimulate:
         self.hmdData = numpy.zeros((self.m_row, self.m_col))
         self.wndData = numpy.zeros((self.m_row, self.m_col))
 
-        petFile = utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'petdata' + os.sep + self.curForcingFilename
-        pcpFile = utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'pcpdata' + os.sep + self.curForcingFilename
-        tavFile = utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'tavdata' + os.sep + self.curForcingFilename
-        tmxFile = utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmxdata' + os.sep + self.curForcingFilename
-        tmnFile = utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmndata' + os.sep + self.curForcingFilename
-        slrFile = utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'slrdata' + os.sep + self.curForcingFilename
-        hmdFile = utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'hmddata' + os.sep + self.curForcingFilename
-        wndFile = utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'wnddata' + os.sep + self.curForcingFilename
+        petFile = util.config.workSpace + os.sep + 'Forcing' + os.sep + 'petdata' + os.sep + self.curForcingFilename
+        pcpFile = util.config.workSpace + os.sep + 'Forcing' + os.sep + 'pcpdata' + os.sep + self.curForcingFilename
+        tavFile = util.config.workSpace + os.sep + 'Forcing' + os.sep + 'tavdata' + os.sep + self.curForcingFilename
+        tmxFile = util.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmxdata' + os.sep + self.curForcingFilename
+        tmnFile = util.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmndata' + os.sep + self.curForcingFilename
+        slrFile = util.config.workSpace + os.sep + 'Forcing' + os.sep + 'slrdata' + os.sep + self.curForcingFilename
+        hmdFile = util.config.workSpace + os.sep + 'Forcing' + os.sep + 'hmddata' + os.sep + self.curForcingFilename
+        wndFile = util.config.workSpace + os.sep + 'Forcing' + os.sep + 'wnddata' + os.sep + self.curForcingFilename
 
         if os.path.exists(petFile):
             self.petData = readRaster(petFile).data

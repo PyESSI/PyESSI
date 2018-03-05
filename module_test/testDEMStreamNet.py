@@ -8,8 +8,8 @@ Created 2018-02-13
 """
 
 from preprocess.dem.DEMStreamNet import *
-from utils.config import *
-from utils.fileIO import GetRasterStat
+from util.config import *
+from util.fileIO import GetRasterStat
 
 
 if __name__ == "__main__":

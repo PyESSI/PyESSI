@@ -23,7 +23,7 @@ Functions:
 
 # load needed python modules
 import os
-import utils.config
+import util.config
 import math
 
 
@@ -80,8 +80,8 @@ class SoilInfo:
         :param soilFilename:
         :return:
         '''
-        if os.path.exists(utils.config.workSpace + os.sep + 'Soil' + os.sep + soilFilename):
-            soilInfos = open(utils.config.workSpace + os.sep + 'Soil' + os.sep + soilFilename, 'r').readlines()
+        if os.path.exists(util.config.workSpace + os.sep + 'Soil' + os.sep + soilFilename):
+            soilInfos = open(util.config.workSpace + os.sep + 'Soil' + os.sep + soilFilename, 'r').readlines()
             self.Soil_Name = soilInfos[0].split('\n')[0].strip().split()[1]
             self.iLayer = int(soilInfos[1].split('\n')[0].strip().split()[1])
             self.rootdepth = float(soilInfos[2].split('\n')[0].strip().split()[1])
@@ -218,8 +218,8 @@ def GetSoilTypeName(SoilTypeID):
     :param SoilTypeID:
     :return:
     '''
-    if os.path.exists(utils.config.workSpace + os.sep + 'LookupTable' + os.sep + 'SoilType.txt'):
-        soilTypeInfos = open(utils.config.workSpace + os.sep + 'LookupTable' + os.sep + 'SoilType.txt', 'r').readlines()
+    if os.path.exists(util.config.workSpace + os.sep + 'LookupTable' + os.sep + 'SoilType.txt'):
+        soilTypeInfos = open(util.config.workSpace + os.sep + 'LookupTable' + os.sep + 'SoilType.txt', 'r').readlines()
         soilIdName = []
         for i in range(len(soilTypeInfos)):
             soilIdName.append((soilTypeInfos[i].split('\n')[0].split('\t')[0].strip(),

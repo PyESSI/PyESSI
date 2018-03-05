@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-@Class: CWaterVapor
+@Class: CWaterVaporFAOPM
 @Author: Huiran Gao
 @Functions:
     计算与水汽相关的变量
@@ -22,7 +22,7 @@ from modules.Climate.PET import *
 # |														|
 # |	*************************************************   |
 # |	*												*	|
-# |	*          水汽相关类 -- CWaterVapor          	*	|
+# |	*          水汽相关类 -- CWaterVaporFAOPM        	*	|
 # | *												*   |
 # |                                                     |
 # |	*************************************************   |
@@ -35,10 +35,12 @@ from modules.Climate.PET import *
 # |														|
 # |++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
-class CWaterVapor():
-    def __init__(self, tav, elev):
+class CWaterVaporFAOPM():
+    def __init__(self, tav, elev, tmx, tmn):
         self.dTav = tav
         self.dElev = elev
+        self.dTmx = tmx
+        self.dTmn = tmn
         self.dSvp = self.SatuVapPressure()
 
     def SatuVapPressure(self):
@@ -46,7 +48,9 @@ class CWaterVapor():
         Calculate saturation vapor pressure
         :return:
         '''
-        dsvap = math.exp((16.78 * self.dTav - 116.9) / (self.dTav + 237.3))
+        etmx = self.ESatuTemp(self.dTmx)
+        etmn = self.ESatuTemp(self.dTmn)
+        dsvap = (etmx + etmn) / 2.
         return dsvap
 
     def ESatuTemp(self, dtmp):
@@ -83,13 +87,12 @@ class CWaterVapor():
         ap = 101.3 * pow((293. - 0.0065 * self.dElev) / 293., 5.62)
         return ap
 
-    def AirPressureInSite_dn(self, dn):
+    def AirPressureInPlain(self, dn):
         '''
         Calculate the air pressure (kPa)
         本公式可输出逐日大气压, 公式由汉江的32个气象站拟合得到，高程范围200～1600米!!!???
         :return:
         '''
-        ap = 101.3 * pow((293. - 0.0065 * self.dElev) / 293., 5.62)
         ap = 101.3 - 0.0109 * self.dElev + (1.1702 - 0.0005 * self.dElev) * math.cos(2 * math.pi * dn / 365.)
         return ap
 
@@ -108,7 +111,7 @@ class CWaterVapor():
         Calculate psychrometric constant(kPa/C)
         :return:
         '''
-        ap = self.AirPressureInSite(dn)
+        ap = self.AirPressureInPlain(dn)
         lmt = self.LatHeatVapor()
         gm = 0.00163 * ap / lmt
         return gm
@@ -139,6 +142,6 @@ class CWaterVapor():
         :param self:
         :return:
         '''
-        dlta = -1.
         dlta = 4098 * self.dSvp / (pow((self.dTav + 237.3), 2))
         return dlta
+
