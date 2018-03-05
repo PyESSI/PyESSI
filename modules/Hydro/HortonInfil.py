@@ -62,7 +62,7 @@ class CHortonInfil:
 
         soilTemp = readRaster(util.config.workSpace + os.sep + 'DEM' + os.sep + util.config.SoilFileName)
         pGridSoilInfo = SoilInfo()
-        pGridSoilInfo.ReadSoilFile(GetSoilTypeName(soilTemp.data[self.m_currow][self.m_curcol]) + '.sol')
+        pGridSoilInfo.ReadSoilFile(GetSoilTypeName(int(soilTemp.data[self.m_currow][self.m_curcol])) + '.sol')
         self.m_dK = pGridSoilInfo.Horton_K
         self.m_dF0 = pGridSoilInfo.SP_Init_F0
         self.m_dFc = pGridSoilInfo.SP_Stable_Fc

@@ -16,8 +16,8 @@ Functions:
 workSpace = r'D:\pyESSITest\DCBAM'
 mpiexeDir = r'"C:\Program Files\Microsoft MPI\Bin"'
 exeDir = None
-startTime = 19960101  # 模拟起始日期
-endTime = 20001231  # 模拟结束日期
+startTime = '19960101'  # 模拟起始日期
+endTime = '20001231'  # 模拟结束日期
 
 # pyESSI GridIO File
 # [GridIO]
@@ -84,8 +84,8 @@ petdata = 1  # 潜在蒸散发数据
 
 # PyESSI Model MidGridOut Parameters
 # [MidGridOut]
-strOutBDate = 19960101  # 中间结果输出起始日期
-strOutEDate = 20001231  # 中间结果输出结束日期
+strOutBDate = '19960101'  # 中间结果输出起始日期
+strOutEDate = '20001231'  # 中间结果输出结束日期
 iPcp = 0  # 降雨量
 iTempMax = 0  # 最高气温
 iTempMin = 0  # 最低气温

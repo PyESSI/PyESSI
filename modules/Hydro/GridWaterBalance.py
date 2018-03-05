@@ -95,7 +95,7 @@ class CGridWaterBalance:
     # +				功能：设置栅格计算参数					    +
     # +														+
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-    def SetGridPara(self, currow, curcol, rint, dFp, year, dn, hr, curForcingFilename):
+    def SetGridPara(self, rint, dFp, year, dn, hr, curForcingFilename):
         '''
         :param curcol:
         :param rint:
@@ -105,7 +105,10 @@ class CGridWaterBalance:
         :param hr:
         :return:
         '''
+<<<<<<< HEAD
+=======
 
+>>>>>>> upstream/master
         self.m_dRIntensity = rint
         self.m_nYear = year
         self.m_nDn = dn
@@ -114,7 +117,7 @@ class CGridWaterBalance:
 
 
         pGridSoilInfo = SoilInfo()
-        pGridSoilInfo.ReadSoilFile(GetSoilTypeName(self.m_Soil) + '.sol')
+        pGridSoilInfo.ReadSoilFile(GetSoilTypeName(int(self.m_Soil)) + '.sol')
         self.m_dFc = pGridSoilInfo.SP_Stable_Fc
 
         if util.config.RunoffSimuType == util.defines.STORM_RUNOFF_SIMULATION:
@@ -285,7 +288,7 @@ class CGridWaterBalance:
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     def CalcRunoffElement(self):
         pGridSoilInfo = SoilInfo()
-        pGridSoilInfo.ReadSoilFile(GetSoilTypeName(self.m_Soil) + '.sol')
+        pGridSoilInfo.ReadSoilFile(GetSoilTypeName(int(self.m_Soil)) + '.sol')
         dthet = pGridSoilInfo.SoilWaterDeficitContent()
         dPE = self.m_dNetRain - self.m_dAET
 
@@ -441,7 +444,7 @@ class CGridWaterBalance:
     def DailyLai(self):
         dLai = 0.5
         pGridVegInfo = VegInfo()
-        pGridVegInfo.ReadVegFile(GetVegTypeName(self.m_Veg) + '.veg')
+        pGridVegInfo.ReadVegFile(GetVegTypeName(int(self.m_Veg)) + '.veg')
 
         if util.config.DLAICalcMethod == util.defines.DAILY_LAI_CAL_SINE:
             dmax = pGridVegInfo.LAIMX
@@ -464,7 +467,7 @@ class CGridWaterBalance:
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     def DailyAlbedo(self):
         pGridVegInfo = VegInfo()
-        pGridVegInfo.ReadVegFile(GetVegTypeName(self.m_Veg) + '.veg')
+        pGridVegInfo.ReadVegFile(GetVegTypeName(int(self.m_Veg)) + '.veg')
         dAlb = 0.23
         dAlb = pGridVegInfo.Albedo[self.m_nMon - 1]
 
@@ -477,7 +480,7 @@ class CGridWaterBalance:
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     def DailyCoverDeg(self):
         pGridVegInfo = VegInfo()
-        pGridVegInfo.ReadVegFile(GetVegTypeName(self.m_Veg) + '.veg')
+        pGridVegInfo.ReadVegFile(GetVegTypeName(int(self.m_Veg)) + '.veg')
         dCovD = 0.
         dCovD = pGridVegInfo.CoverDeg[self.m_nMon - 1]
 
