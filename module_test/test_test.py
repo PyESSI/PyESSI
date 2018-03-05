@@ -3,21 +3,13 @@ import os
 import time
 
 import numpy
+a = 0
+s = time.time()
+for i in range(966):
+    for j in range(667):
+        a += 1
+e = time.time()
 
+print(e - s)
 
-class A():
-    pass
-
-
-a = []
-for i in range(2):
-    for j in range(3):
-        a.append(A)
-
-# print(a)
-arr = numpy.array(a)
-arr = arr.reshape(2,3)
-# arr = list(a[0])
-
-print(arr)
 
