@@ -71,3 +71,8 @@ def ChannelQVelocity(dUnitQ, slp, manning_n):
     '''
     dVflow = 0.489 * pow(dUnitQ, 0.25) * pow(slp, 0.375) / pow(manning_n, 0.75)
     return dVflow
+
+class WaterYearType:
+    def __init__(self):
+        self.year = None
+        self.wtype = None

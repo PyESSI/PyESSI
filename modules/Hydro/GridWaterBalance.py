@@ -82,8 +82,7 @@ class CGridWaterBalance:
         self.m_dFp = dFp
         self.m_dHr = hr
 
-        curPcp = readRaster(
-            utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'pcpdata' + os.sep + curForcingFilename)
+        curPcp = readRaster(utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'pcpdata' + os.sep + curForcingFilename)
         self.m_dPcp = curPcp.data[self.m_row][self.m_col]
 
         curHeight = readRaster(utils.config.workSpace + os.sep + 'DEM' + os.sep + utils.config.DEMFileName)

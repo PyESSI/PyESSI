@@ -34,7 +34,7 @@ from utils.fileIO import *
 # |														|
 # |++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
-class CGreenAmptInfil:
+class CHortonInfil:
     def __init__(self):
         self.m_dERR = 0.
         self.m_dK = 0.
