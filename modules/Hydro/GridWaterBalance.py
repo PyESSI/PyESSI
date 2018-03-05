@@ -25,13 +25,17 @@ Class:
 """
 
 # load needed python modules
-from utils.fileIO import *
-import utils.config
-import utils.defines
+from util.fileIO import *
+import util.config
+import util.defines
 from modules.Hydro.SoilPara import *
 from modules.Hydro.VegetationPara import *
 from modules.Hydro.CanopyStorage import *
 from modules.Climate.PETInPristley import *
+from modules.Climate.PETInHargreaves import *
+from modules.Climate.PETInBeDruin import *
+from modules.Climate.PETInFAOPM import *
+
 
 
 # /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -101,8 +105,7 @@ class CGridWaterBalance:
         :param hr:
         :return:
         '''
-        self.m_row = currow
-        self.m_col = curcol
+
         self.m_dRIntensity = rint
         self.m_nYear = year
         self.m_nDn = dn
@@ -110,19 +113,11 @@ class CGridWaterBalance:
         self.m_dHr = hr
 
 
-        curPcp = readRaster(utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'pcpdata' + os.sep + curForcingFilename)
-        self.m_dPcp = curPcp.data[self.m_row][self.m_col]
-
-        curHeight = readRaster(utils.config.workSpace + os.sep + 'DEM' + os.sep + utils.config.DEMFileName)
-        self.m_dHeight = curHeight.data[self.m_row][self.m_col]
-
-        soilTemp = readRaster(utils.config.workSpace + os.sep + 'DEM' + os.sep + utils.config.SoilFileName)
-
         pGridSoilInfo = SoilInfo()
         pGridSoilInfo.ReadSoilFile(GetSoilTypeName(self.m_Soil) + '.sol')
         self.m_dFc = pGridSoilInfo.SP_Stable_Fc
 
-        if utils.config.RunoffSimuType == utils.defines.STORM_RUNOFF_SIMULATION:
+        if util.config.RunoffSimuType == util.defines.STORM_RUNOFF_SIMULATION:
             return
 
         self.m_nMon = int(curForcingFilename[4:6])
@@ -145,14 +140,14 @@ class CGridWaterBalance:
     # +                                                        +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     def CalcPET(self, dalbedo, curForcingFilename):
-        tmpmxPath = utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmpmxdata'
-        tmpmnPath = utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmpmndata'
-        slrPath = utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'slrdata'
-        hmdPath = utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'hmddata'
-        wndPath = utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'wnddata'
+        tmpmxPath = util.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmpmxdata'
+        tmpmnPath = util.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmpmndata'
+        slrPath = util.config.workSpace + os.sep + 'Forcing' + os.sep + 'slrdata'
+        hmdPath = util.config.workSpace + os.sep + 'Forcing' + os.sep + 'hmddata'
+        wndPath = util.config.workSpace + os.sep + 'Forcing' + os.sep + 'wnddata'
 
         ## 判断选择的方法 ##
-        if utils.config.PETMethod == utils.defines.PET_REAL:
+        if util.config.PETMethod == util.defines.PET_REAL:
             pass
         if not os.path.exists(tmpmxPath + os.sep + curForcingFilename) or not os.path.exists(
                                 tmpmnPath + os.sep + curForcingFilename):
@@ -160,7 +155,7 @@ class CGridWaterBalance:
         dRLong = 0
         dRShort = 0
 
-        if utils.config.PETMethod == utils.defines.PET_PRISTLEY_TAYLOR:
+        if util.config.PETMethod == util.defines.PET_PRISTLEY_TAYLOR:
             if not os.path.exists(slrPath + os.sep + curForcingFilename) or not os.path.exists(
                                     hmdPath + os.sep + curForcingFilename):
                 return 0
@@ -169,24 +164,35 @@ class CGridWaterBalance:
             dRShort = prist.NetShortWaveRadiation(dalbedo, self.m_slr)
             self.m_dPET = prist.PETByPristley(1.26, 0)
 
-        elif utils.config.PETMethod == utils.defines.PET_HARGREAVES:
+        elif util.config.PETMethod == util.defines.PET_HARGREAVES:
             if not os.path.exists(slrPath + os.sep + curForcingFilename) or not os.path.exists(
                                     hmdPath + os.sep + curForcingFilename):
                 return 0
-                # har = CPETInHargreaves() TODO
+            har = CPETInHargreaves(self.m_dTav, self.m_dHeight, self.m_dTmx, self.m_dTmn, curForcingFilename)
+            dRLong = har.NetLongWaveRadiationRHmd(self.m_slr, self.m_hmd)
+            dRShort = har.NetShortWaveRadiation(dalbedo, self.m_slr)
+            self.m_dPET = har.PETByHarg()
 
-        elif utils.config.PETMethod == utils.defines.PET_FAO_PENMAN_MONTEITH:
+
+        elif util.config.PETMethod == util.defines.PET_FAO_PENMAN_MONTEITH:
             if not os.path.exists(slrPath + os.sep + curForcingFilename) or not os.path.exists(
                                     hmdPath + os.sep + curForcingFilename) or not os.path.exists(
                                 wndPath + os.sep + curForcingFilename):
                 return 0
-                # faopm = CPETInFAOPM() TODO
+            faopm = CPETInFAOPM(self.m_dTav, self.m_dHeight, self.m_dTmx, self.m_dTmn, curForcingFilename)
+            dRLong = faopm.NetLongWaveRadiationRHmd(self.m_slr, self.m_hmd)
+            dRShort = faopm.NetShortWaveRadiation(dalbedo, self.m_slr)
+            self.m_dPET = faopm.PETByRAVP(self.m_wnd, self.m_hmd)
 
-        elif utils.config.PETMethod == utils.defines.PET_DEBRUIN:
+
+        elif util.config.PETMethod == util.defines.PET_DEBRUIN:
             if not os.path.exists(slrPath + os.sep + curForcingFilename) or not os.path.exists(
                                     hmdPath + os.sep + curForcingFilename):
                 return 0
-                # debruin = CPETInDeBruin() TODO
+            debruin = CPETInDeBruin(self.m_dTav, self.m_dHeight, curForcingFilename)
+            dRLong = debruin.NetLongWaveRadiationRHmd(self.m_slr, self.m_hmd)
+            dRShort = debruin.NetShortWaveRadiation(dalbedo, self.m_slr)
+            self.m_dPET = debruin.PETByDeBruin()
 
         else:
             if not os.path.exists(slrPath + os.sep + curForcingFilename) or not os.path.exists(
@@ -211,11 +217,11 @@ class CGridWaterBalance:
         if self.m_dPET == 0:
             return
 
-        if utils.config.AETMethod == utils.defines.AET_BY_CROP_COEFFICIENTS:
+        if util.config.AETMethod == util.defines.AET_BY_CROP_COEFFICIENTS:
             self.m_dAET = self.CompleAET(dalbedo)
-        elif utils.config.AETMethod == utils.defines.AET_BY_COMPRELATIONSHIP:
+        elif util.config.AETMethod == util.defines.AET_BY_COMPRELATIONSHIP:
             self.m_dAET = self.CompleAET(dalbedo)
-        elif utils.config.AETMethod == utils.defines.AET_BY_COMPRELA_AND_KOJIMA:
+        elif util.config.AETMethod == util.defines.AET_BY_COMPRELA_AND_KOJIMA:
             self.m_dAET = self.CompleAET(dalbedo)
         else:
             return
@@ -305,8 +311,8 @@ class CGridWaterBalance:
                     self.m_dBaseQ = self.m_dFc * self.m_dHr
                     self.m_dSurfQ = dPE - self.m_dBaseQ
                     if self.m_dSurfQ < 0:
-                        self.m_dSurfQ = dPE * utils.config.SurfQOutFactor
-                        self.m_dBaseQ = dPE * (1 - utils.config.SurfQOutFactor)
+                        self.m_dSurfQ = dPE * util.config.SurfQOutFactor
+                        self.m_dBaseQ = dPE * (1 - util.config.SurfQOutFactor)
                     iret = 3
                 else:  # 方案4：超渗产流＋蓄满产流
                     self.m_dSurfQ = dIFc * self.m_dHr
@@ -314,8 +320,8 @@ class CGridWaterBalance:
                     if self.m_dSurfQ + self.m_dBaseQ > dPE:
                         self.m_dBaseQ = dPE - self.m_dSurfQ
                         if self.m_dBaseQ < 0:
-                            self.m_dSurfQ = dPE * utils.config.SurfQOutFactor
-                            self.m_dBaseQ = dPE * (1 - utils.config.SurfQOutFactor)
+                            self.m_dSurfQ = dPE * util.config.SurfQOutFactor
+                            self.m_dBaseQ = dPE * (1 - util.config.SurfQOutFactor)
 
                     else:
                         self.m_dLateralQ = dPE - self.m_dSurfQ - self.m_dBaseQ
@@ -333,8 +339,8 @@ class CGridWaterBalance:
                     self.m_dBaseQ = self.m_dFp * self.m_dHr
                     self.m_dSurfQ = dPE - dthet - self.m_dBaseQ
                     if self.m_dSurfQ < 0:
-                        self.m_dSurfQ = (dPE - dthet) * utils.config.SurfQOutFactor
-                        self.m_dBaseQ = (dPE - dthet) * (1 - utils.config.SurfQOutFactor)
+                        self.m_dSurfQ = (dPE - dthet) * util.config.SurfQOutFactor
+                        self.m_dBaseQ = (dPE - dthet) * (1 - util.config.SurfQOutFactor)
                     iret = 7
                 else:  # 方案8：超渗产流＋蓄满产流
                     self.m_dTotalQ = dPE - dthet
@@ -347,8 +353,8 @@ class CGridWaterBalance:
                     elif self.m_dSurfQ + self.m_dBaseQ > self.m_dTotalQ:
                         self.m_dBaseQ = self.m_dTotalQ - self.m_dSurfQ
                         if self.m_dBaseQ < 0:
-                            self.m_dSurfQ = (dPE - dthet) * utils.config.SurfQOutFactor
-                            self.m_dBaseQ = (dPE - dthet) * (1 - utils.config.SurfQOutFactor)
+                            self.m_dSurfQ = (dPE - dthet) * util.config.SurfQOutFactor
+                            self.m_dBaseQ = (dPE - dthet) * (1 - util.config.SurfQOutFactor)
 
                             self.m_dLateralQ = 0.
                     else:
@@ -364,7 +370,7 @@ class CGridWaterBalance:
                     pGridSoilInfo.SP_Sw -= dPerco
                     self.m_dBaseQ += dPerco
 
-                    dLatQ = dPerco * utils.config.LatQOutFactor
+                    dLatQ = dPerco * util.config.LatQOutFactor
                     self.m_dLateralQ += dLatQ
                     pGridSoilInfo.SP_Sw -= dLatQ
 
@@ -437,14 +443,14 @@ class CGridWaterBalance:
         pGridVegInfo = VegInfo()
         pGridVegInfo.ReadVegFile(GetVegTypeName(self.m_Veg) + '.veg')
 
-        if utils.config.DLAICalcMethod == utils.defines.DAILY_LAI_CAL_SINE:
+        if util.config.DLAICalcMethod == util.defines.DAILY_LAI_CAL_SINE:
             dmax = pGridVegInfo.LAIMX
             dmin = pGridVegInfo.LAIMN
             doffset = pGridVegInfo.doffset
             dLai = (dmax + dmin) / 2. - (dmax - dmin) * math.sin(2 * math.pi * (self.m_nDn - doffset) / 365.) / 2.
-        elif utils.config.DLAICalcMethod == utils.defines.DAILY_LAI_CAL_LINEAR:
+        elif util.config.DLAICalcMethod == util.defines.DAILY_LAI_CAL_LINEAR:
             dLai = pGridVegInfo.LAI[self.m_nMon - 1]
-        elif utils.config.DLAICalcMethod == utils.defines.DAILY_LAI_BY_MONTH:
+        elif util.config.DLAICalcMethod == util.defines.DAILY_LAI_BY_MONTH:
             dLai = pGridVegInfo.LAI[self.m_nMon - 1]
         else:
             dLai = pGridVegInfo.LAI[self.m_nMon - 1]

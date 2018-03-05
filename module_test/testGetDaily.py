@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
-from utils.dateTime import *
+from util.dateTime import *
 
 iniDate =  datetime.date(1996,1,1)
 endDate = datetime.date(2000,12,31)

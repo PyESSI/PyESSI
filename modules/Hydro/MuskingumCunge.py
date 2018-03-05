@@ -18,7 +18,7 @@ Class:
 """
 
 # load needed python modules
-import utils.config
+import util.defines
 
 
 class CMuskingumCunge:
@@ -101,21 +101,21 @@ class CMuskingumCunge:
         :return:
         '''
         dcoeff = 1.
-        if rivertype == utils.config.M_RIVER_SECTION_TRIANGLE:
+        if rivertype == util.defines.M_RIVER_SECTION_TRIANGLE:
             dcoeff = 1.33
-        elif rivertype == utils.config.M_RIVER_SECTION_RECTANGLE:
+        elif rivertype == util.defines.M_RIVER_SECTION_RECTANGLE:
             dcoeff = 1.67
-        elif rivertype == utils.config.M_RIVER_SECTION_PARABOLA:
+        elif rivertype == util.defines.M_RIVER_SECTION_PARABOLA:
             dcoeff = 1.44
-        elif rivertype == utils.config.M_RIVER_SECTION_HILLSIDE:
+        elif rivertype == util.defines.M_RIVER_SECTION_HILLSIDE:
             dcoeff = 3.0
-        elif rivertype == utils.config.C_RIVER_SECTION_TRIANGLE:
+        elif rivertype == util.defines.C_RIVER_SECTION_TRIANGLE:
             dcoeff = 1.25
-        elif rivertype == utils.config.C_RIVER_SECTION_RECTANGLE:
+        elif rivertype == util.defines.C_RIVER_SECTION_RECTANGLE:
             dcoeff = 1.50
-        elif rivertype == utils.config.C_RIVER_SECTION_PARABOLA:
+        elif rivertype == util.defines.C_RIVER_SECTION_PARABOLA:
             dcoeff = 1.33
-        elif rivertype == utils.config.C_RIVER_SECTION_HILLSIDE:
+        elif rivertype == util.defines.C_RIVER_SECTION_HILLSIDE:
             dcoeff = 2.50
         else:
             dcoeff = 1.5

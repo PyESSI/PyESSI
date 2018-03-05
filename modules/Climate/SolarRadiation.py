@@ -11,10 +11,10 @@ Revised:
 """
 
 # load needed python modules
-import utils.config
+import util.config
 import math
 from modules.Climate.PET import *
-from utils.dateTime import CheckLeapYear, GetDayNum
+from util.dateTime import CheckLeapYear, GetDayNum
 
 
 #
