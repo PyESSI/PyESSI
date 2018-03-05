@@ -3,10 +3,12 @@
 Created Jan 2018
 
 @author: Hao Chen
+         Huiran Gao
 
-Functions:
-    class: SoilInfo
-    GetSoilTypeName(SoilTypeID)
+Class:
+    CHydroSimulate
+        functions:
+
 
 
 """
@@ -19,6 +21,7 @@ import utils.config
 import utils.defines
 from utils.fileIO import *
 from modules.Hydro.Hydro import *
+from utils.dateTime import *
 
 
 class CHydroSimulate:
@@ -70,6 +73,7 @@ class CHydroSimulate:
     # +                                                        +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     def LongTermRunoffSimulate(self):
+        print('LongTermRunoffSimulate')
         if utils.config.SurfRouteMethod == utils.defines.ROUTE_MUSK_CONGE:
             if not self.ReadInRoutingPara():
                 raise Exception('Read In Routing Para!', self.ReadInRoutingPara)
@@ -83,16 +87,36 @@ class CHydroSimulate:
             if self.m_iNodeNum > 1:
                 self.MuskRouteInit(self.m_iNodeNum)
 
-        DEMForld = utils.config.workSpace + os.sep + "DEM"
-        DEMFile = DEMForld + os.sep + utils.config.DEMFileName
-        self.g_DemLayer = readRaster(DEMFile)
+        #加载土壤、植被和DEM图层
+        self.gridLayerInit()
 
         self.m_row = self.g_DemLayer.nRows
         self.m_col = self.g_DemLayer.nCols
 
+        startDay = utils.config.startTime
+
+
+        iniDate =  datetime.date(2008,1,1)
+        endDate = datetime.date(2016,12,31)
+        dayCount = endDate.toordinal() - iniDate.toordinal() + 1
+        daily = dailyRange('20080101', '20161231')
+
+        totrec = dayCount
+
              
 
 
+
+    #加载栅格参数
+    def gridLayerInit(self):
+        DEMFolder = utils.config.workSpace + os.sep + "DEM"
+        DEMFile = DEMFolder + os.sep + utils.config.DEMFileName
+        LULCFile = DEMFolder + os.sep + utils.config.LULCFileName
+        SoilFile = DEMFolder + os.sep + utils.config.SoilFileName
+
+        self.g_DemLayer = readRaster(DEMFile)
+        self.g_VegLayer = readRaster(LULCFile)
+        self.g_SoilLayer = readRaster(SoilFile)
 
 
 
