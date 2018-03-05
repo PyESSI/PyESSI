@@ -14,8 +14,6 @@ Class:
 """
 
 # load needed python modules
-import os
-import sys
 import numpy
 import utils.config
 import utils.defines
@@ -62,6 +60,8 @@ class CHydroSimulate:
         self.m_col = 0
 
         self.HortonInfil = CHortonInfil()
+
+
         self.gridwb = CGridWaterBalance()
 
         if utils.config.RunoffSimuType == utils.defines.LONGTERM_RUNOFF_SIMULATION:
@@ -253,8 +253,7 @@ class CHydroSimulate:
 
 
 
-                            # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
+    # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +                                                        +
     # +                度－日因子模型计算日融雪量 +
     # +                                                        +
