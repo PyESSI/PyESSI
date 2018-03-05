@@ -11,8 +11,8 @@ Revised:
 """
 
 # load needed python modules
-from utils.fileIO import *
-import utils.config
+from util.fileIO import *
+import util.config
 import math
 from modules.Climate.PET import *
 

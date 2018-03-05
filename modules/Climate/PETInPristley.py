@@ -12,11 +12,11 @@ Revised:
 
 
 # load needed python modules
-from utils.fileIO import *
+from util.fileIO import *
 from modules.Climate.PETInPM import *
 from modules.Climate.WaterVapor import *
 from modules.Climate.SolarRadiation import *
-from utils.defines import *
+from util.defines import *
 import math
 
 #

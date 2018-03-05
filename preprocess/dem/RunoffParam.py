@@ -23,7 +23,7 @@ import os
 import sys
 import math
 import numpy
-from utils.fileIO import *
+from util.fileIO import *
 from preprocess.dem.utils_dem import *
 
 

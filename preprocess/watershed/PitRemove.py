@@ -12,7 +12,7 @@ Functions:
 # load needed python modules
 from numpy import *
 import numpy
-from utils.fileIO import *
+from util.fileIO import *
 import heapq
 import time
 

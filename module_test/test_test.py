@@ -1,8 +1,8 @@
 
 import os
 import time
-from utils.config import *
-from utils.fileIO import *
+from util.config import *
+from util.fileIO import *
 
 s = time.time()
 for i in range(10000):

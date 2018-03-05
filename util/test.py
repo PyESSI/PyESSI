@@ -1,7 +1,7 @@
 #test scripts
 
 import os, os.path
-from utils.fileIO import *
+from util.fileIO import *
 import numpy as np
 
 raster_file = r'F:\00000000000000ESSI_srb\DEM\srbdem_projected\srb.tif'

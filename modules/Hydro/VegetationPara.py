@@ -18,7 +18,7 @@ Functions:
 
 # load needed python modules
 import os
-import utils.config
+import util.config
 
 
 class VegInfo:
@@ -34,8 +34,8 @@ class VegInfo:
         self.dManning_n = 0.05
 
     def ReadVegFile(self, vegFilename):
-        if os.path.exists(utils.config.workSpace + os.sep + 'Vegetation' + os.sep + vegFilename):
-            vegInfos = open(utils.config.workSpace + os.sep + 'Vegetation' + os.sep + vegFilename, 'r').readlines()
+        if os.path.exists(util.config.workSpace + os.sep + 'Vegetation' + os.sep + vegFilename):
+            vegInfos = open(util.config.workSpace + os.sep + 'Vegetation' + os.sep + vegFilename, 'r').readlines()
             self.Veg_Name = vegInfos[0].split('\n')[0].split(':')[1].strip()
             self.LAIMX = float(vegInfos[1].split('\n')[0].split(':')[1].strip())
             self.LAIMN = float(vegInfos[2].split('\n')[0].split(':')[1].strip())
@@ -54,8 +54,8 @@ class VegInfo:
 
 
 def GetVegTypeName(VegTypeID):
-    if os.path.exists(utils.config.workSpace + os.sep + 'LookupTable' + os.sep + 'LulcType.txt'):
-        vegTypeInfos = open(utils.config.workSpace + os.sep + 'LookupTable' + os.sep + 'LulcType.txt', 'r').readlines()
+    if os.path.exists(util.config.workSpace + os.sep + 'LookupTable' + os.sep + 'LulcType.txt'):
+        vegTypeInfos = open(util.config.workSpace + os.sep + 'LookupTable' + os.sep + 'LulcType.txt', 'r').readlines()
         vegIdName = []
         for i in range(len(vegTypeInfos)):
             vegIdName.append((vegTypeInfos[i].split('\n')[0].split('\t')[0].strip(),
