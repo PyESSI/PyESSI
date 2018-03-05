@@ -53,11 +53,38 @@ from modules.Climate.PETInPristley import *
 # +														+
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 class CGridWaterBalance:
-    def __init__(self):
+    def __init__(self, elev, soil, veg, pet, pcp, tav, tmx, tmn, slr, hmd, wnd):
+        '''
+        Set variance values
+        :param elev: DEM
+        :param soil: Soil type
+        :param veg: LUCC type
+        :param pet:
+        :param pcp:
+        :param tav:
+        :param tmx:
+        :param tmn:
+        :param slr:
+        :param hmd:
+        :param wnd:
+        '''
         self.m_dCrownInterc = 0.
         self.m_dGridLAI = 0.
         self.m_dRIntensity = 0.
-        self.m_dPET = 0.
+
+        # 当前栅格值
+        self.m_dHeight = elev
+        self.m_Soil = soil
+        self.m_Veg = veg
+
+        self.m_dPET = pet
+        self.m_dPcp = pcp
+        self.m_dTav = tav
+        self.m_dTmx = tmx
+        self.m_dTmn = tmn
+        self.m_slr = slr
+        self.m_hmd = hmd
+        self.m_wnd = wnd
 
     # /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +														+
@@ -82,25 +109,12 @@ class CGridWaterBalance:
         self.m_dFp = dFp
         self.m_dHr = hr
 
-        curPcp = readRaster(
-            utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'pcpdata' + os.sep + curForcingFilename)
-        self.m_dPcp = curPcp.data[self.m_row][self.m_col]
-
-        curHeight = readRaster(utils.config.workSpace + os.sep + 'DEM' + os.sep + utils.config.DEMFileName)
-        self.m_dHeight = curHeight.data[self.m_row][self.m_col]
-
-        soilTemp = readRaster(utils.config.workSpace + os.sep + 'DEM' + os.sep + utils.config.SoilFileName)
         pGridSoilInfo = SoilInfo()
-        pGridSoilInfo.ReadSoilFile(GetSoilTypeName(soilTemp.data[self.m_row][self.m_col]) + '.sol')
+        pGridSoilInfo.ReadSoilFile(GetSoilTypeName(self.m_Soil) + '.sol')
         self.m_dFc = pGridSoilInfo.SP_Stable_Fc
 
         if utils.config.RunoffSimuType == utils.defines.STORM_RUNOFF_SIMULATION:
             return
-
-        if utils.config.petdata == 0:
-            curTav = readRaster(
-                utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmpmeandata' + os.sep + curForcingFilename)
-            self.m_dTav = curTav.data[self.m_row][self.m_col]
 
         self.m_nMon = int(curForcingFilename[4:6])
         self.m_dGridLAI = self.DailyLai()
@@ -122,7 +136,6 @@ class CGridWaterBalance:
     # +                                                        +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     def CalcPET(self, dalbedo, curForcingFilename):
-        petPath = utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'petdata'
         tmpmxPath = utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmpmxdata'
         tmpmnPath = utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmpmndata'
         slrPath = utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'slrdata'
@@ -131,15 +144,10 @@ class CGridWaterBalance:
 
         ## 判断选择的方法 ##
         if utils.config.PETMethod == utils.defines.PET_REAL:
-            curPet = readRaster(petPath + os.sep + curForcingFilename)
-            self.m_dPET = curPet.data[self.m_row][self.m_col]
+            pass
         if not os.path.exists(tmpmxPath + os.sep + curForcingFilename) or not os.path.exists(
                                 tmpmnPath + os.sep + curForcingFilename):
             return 0
-        curTmpmx = readRaster(tmpmxPath + os.sep + curForcingFilename)
-        curTmpmn = readRaster(tmpmnPath + os.sep + curForcingFilename)
-        dTmx = curTmpmx.data[self.m_row][self.m_col]
-        dTmn = curTmpmn.data[self.m_row][self.m_col]
         dRLong = 0
         dRShort = 0
 
@@ -148,11 +156,8 @@ class CGridWaterBalance:
                                     hmdPath + os.sep + curForcingFilename):
                 return 0
             prist = CPETInPristley(self.m_dTav, self.m_dHeight, curForcingFilename)
-            curSlr = readRaster(slrPath + os.sep + curForcingFilename)
-            curHmd = readRaster(hmdPath + os.sep + curForcingFilename)
-            dRLong = prist.NetLongWaveRadiationRHmd(curSlr.data[self.m_row][self.m_col],
-                                                    curHmd.data[self.m_row][self.m_col])
-            dRShort = prist.NetShortWaveRadiation(dalbedo, curSlr.data[self.m_row][self.m_col])
+            dRLong = prist.NetLongWaveRadiationRHmd(self.m_slr, self.m_hmd)
+            dRShort = prist.NetShortWaveRadiation(dalbedo, self.m_slr)
             self.m_dPET = prist.PETByPristley(1.26, 0)
 
         elif utils.config.PETMethod == utils.defines.PET_HARGREAVES:
@@ -164,7 +169,7 @@ class CGridWaterBalance:
         elif utils.config.PETMethod == utils.defines.PET_FAO_PENMAN_MONTEITH:
             if not os.path.exists(slrPath + os.sep + curForcingFilename) or not os.path.exists(
                                     hmdPath + os.sep + curForcingFilename) or not os.path.exists(
-                                    wndPath + os.sep + curForcingFilename):
+                                wndPath + os.sep + curForcingFilename):
                 return 0
                 # faopm = CPETInFAOPM() TODO
 
@@ -179,13 +184,9 @@ class CGridWaterBalance:
                                     hmdPath + os.sep + curForcingFilename):
                 return 0
             pm = CPETInPM(self.m_dTav, self.m_dHeight, curForcingFilename)
-            curSlr = readRaster(slrPath + os.sep + curForcingFilename)
-            curHmd = readRaster(hmdPath + os.sep + curForcingFilename)
-            curWnd = readRaster(wndPath + os.sep + curForcingFilename)
-            dRLong = pm.NetLongWaveRadiationRHmd(curSlr.data[self.m_row][self.m_col],
-                                                 curHmd.data[self.m_row][self.m_col])
-            dRShort = pm.NetShortWaveRadiation(dalbedo, curSlr.data[self.m_row][self.m_col])
-            self.m_dPET = pm.PETInPMByRHmd(curWnd.data[self.m_row][self.m_col], curHmd.data[self.m_row][self.m_col], 0)
+            dRLong = pm.NetLongWaveRadiationRHmd(self.m_slr, self.m_hmd)
+            dRShort = pm.NetShortWaveRadiation(dalbedo, self.m_slr)
+            self.m_dPET = pm.PETInPMByRHmd(self.m_wnd, self.m_hmd, 0)
 
     # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +                                                        +
@@ -268,19 +269,8 @@ class CGridWaterBalance:
     # +                                                        +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     def CalcRunoffElement(self):
-        iret = 0
-        dthet = 0.
-        dPE = 0.
-        dIFc = 0.
-        dIFp = 0.
-        dPerco = 0.
-        dRecharge = 0.
-        dBaseQ = 0.
-        dLatQ = 0.
-
-        soilTemp = readRaster(utils.config.workSpace + os.sep + 'DEM' + os.sep + utils.config.SoilFileName)
         pGridSoilInfo = SoilInfo()
-        pGridSoilInfo.ReadSoilFile(GetSoilTypeName(soilTemp.data[self.m_row][self.m_col]) + '.sol')
+        pGridSoilInfo.ReadSoilFile(GetSoilTypeName(self.m_Soil) + '.sol')
         dthet = pGridSoilInfo.SoilWaterDeficitContent()
         dPE = self.m_dNetRain - self.m_dAET
 
@@ -435,9 +425,9 @@ class CGridWaterBalance:
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     def DailyLai(self):
         dLai = 0.5
-        vegTemp = readRaster(utils.config.workSpace + os.sep + 'DEM' + os.sep + utils.config.LULCFileName)
         pGridVegInfo = VegInfo()
-        pGridVegInfo.ReadVegFile(GetVegTypeName(vegTemp.data[self.m_row][self.m_col]) + '.veg')
+        pGridVegInfo.ReadVegFile(GetVegTypeName(self.m_Veg) + '.veg')
+
         if utils.config.DLAICalcMethod == utils.defines.DAILY_LAI_CAL_SINE:
             dmax = pGridVegInfo.LAIMX
             dmin = pGridVegInfo.LAIMN
@@ -445,10 +435,8 @@ class CGridWaterBalance:
             dLai = (dmax + dmin) / 2. - (dmax - dmin) * math.sin(2 * math.pi * (self.m_nDn - doffset) / 365.) / 2.
         elif utils.config.DLAICalcMethod == utils.defines.DAILY_LAI_CAL_LINEAR:
             dLai = pGridVegInfo.LAI[self.m_nMon - 1]
-
         elif utils.config.DLAICalcMethod == utils.defines.DAILY_LAI_BY_MONTH:
             dLai = pGridVegInfo.LAI[self.m_nMon - 1]
-
         else:
             dLai = pGridVegInfo.LAI[self.m_nMon - 1]
 
@@ -460,11 +448,11 @@ class CGridWaterBalance:
     # +                                                        +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     def DailyAlbedo(self):
-        vegTemp = readRaster(utils.config.workSpace + os.sep + 'DEM' + os.sep + utils.config.LULCFileName)
         pGridVegInfo = VegInfo()
-        pGridVegInfo.ReadVegFile(GetVegTypeName(vegTemp.data[self.m_row][self.m_col]) + '.veg')
+        pGridVegInfo.ReadVegFile(GetVegTypeName(self.m_Veg) + '.veg')
         dAlb = 0.23
         dAlb = pGridVegInfo.Albedo[self.m_nMon - 1]
+
         return dAlb
 
     # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -473,9 +461,9 @@ class CGridWaterBalance:
     # +                                                        +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     def DailyCoverDeg(self):
-        vegTemp = readRaster(utils.config.workSpace + os.sep + 'DEM' + os.sep + utils.config.LULCFileName)
         pGridVegInfo = VegInfo()
-        pGridVegInfo.ReadVegFile(GetVegTypeName(vegTemp.data[self.m_row][self.m_col]) + '.veg')
+        pGridVegInfo.ReadVegFile(GetVegTypeName(self.m_Veg) + '.veg')
         dCovD = 0.
         dCovD = pGridVegInfo.CoverDeg[self.m_nMon - 1]
+
         return dCovD

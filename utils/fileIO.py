@@ -137,6 +137,20 @@ def GetShpPointCoords(in_shp):
     return coords
 
 
+def GetRasterStat(rasterFile):
+    dataset = gdal.Open(rasterFile, gdalconst.GA_ReadOnly)
+    if not dataset is None:
+        band = dataset.GetRasterBand(1)
+        max = band.GetMaximum()
+        min = band.GetMinimum()
+        if max is None or min is None:
+            (min,max) = band.ComputeRasterMinMax(1)
+        mean, std = band.ComputeBandStats()
+        band = None
+        dataset = None
+        return (max,min,mean,std)
+    dataset = None
+
 # if __name__ == "__main__":
 #     r = r"D:\GaohrWS\DoctorWorks\DoctorWork\PyESSI\DCBAM\test\watershed.tif"
 #     p = r"D:\GaohrWS\DoctorWorks\DoctorWork\PyESSI\DCBAM\test\outlet.shp"

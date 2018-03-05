@@ -103,8 +103,6 @@ class CHydroSimulate:
 
         totrec = dayCount
 
-             
-
 
 
     #加载栅格参数
@@ -319,6 +317,64 @@ class CHydroSimulate:
             self.pRiverRoute.pPreRoute[i].dOutFlux = 0.
 
 
+    def InitialInput(self):
+        '''
+        Initial input data
+        :return:
+        '''
+        print("Initial daily input data...")
+
+        ## Basic data ##
+
+        soilTempFile = utils.config.workSpace + os.sep + 'DEM' + os.sep + utils.config.SoilFileName
+        vegTempFile = utils.config.workSpace + os.sep + 'DEM' + os.sep + utils.config.LULCFileName
+
+        if os.path.exists(soilTempFile):
+            self.soilTemp = readRaster(soilTempFile).data
+        else:
+            raise Exception("Can not find soilTempFile!", soilTempFile)
+        if os.path.exists(vegTempFile):
+            self.vegTemp = readRaster(vegTempFile).data
+        else:
+            raise Exception("Can not find vegTempFile!", vegTempFile)
+
+        ## WaterBalance ##
+        self.petData = numpy.zeros((self.m_row, self.m_col))
+        self.pcpData = numpy.zeros((self.m_row, self.m_col))
+        self.tavData = numpy.zeros((self.m_row, self.m_col))
+        self.tmxData = numpy.zeros((self.m_row, self.m_col))
+        self.tmnData = numpy.zeros((self.m_row, self.m_col))
+        self.slrData = numpy.zeros((self.m_row, self.m_col))
+        self.hmdData = numpy.zeros((self.m_row, self.m_col))
+        self.wndData = numpy.zeros((self.m_row, self.m_col))
+
+        petFile = utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'petdata' + os.sep + self.curForcingFilename
+        pcpFile = utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'pcpdata' + os.sep + self.curForcingFilename
+        tavFile = utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'tavdata' + os.sep + self.curForcingFilename
+        tmxFile = utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmxdata' + os.sep + self.curForcingFilename
+        tmnFile = utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmndata' + os.sep + self.curForcingFilename
+        slrFile = utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'slrdata' + os.sep + self.curForcingFilename
+        hmdFile = utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'hmddata' + os.sep + self.curForcingFilename
+        wndFile = utils.config.workSpace + os.sep + 'Forcing' + os.sep + 'wnddata' + os.sep + self.curForcingFilename
+
+        if os.path.exists(petFile):
+            self.petData = readRaster(petFile).data
+        if os.path.exists(pcpFile):
+            self.pcpData = readRaster(pcpFile).data
+        if os.path.exists(tavFile):
+            self.tavData = readRaster(tavFile).data
+        if os.path.exists(tmxFile):
+            self.tmxData = readRaster(tmxFile).data
+        if os.path.exists(tmnFile):
+            self.tmnData = readRaster(tmnFile).data
+        if os.path.exists(slrFile):
+            self.slrData = readRaster(slrFile).data
+        if os.path.exists(hmdFile):
+            self.hmdData = readRaster(hmdFile).data
+        if os.path.exists(wndFile):
+            self.wndData = readRaster(wndFile).data
+
+        return 0
 
 
 

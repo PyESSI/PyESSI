@@ -9,7 +9,7 @@ Created 2018-02-13
 
 from preprocess.dem.DEMStreamNet import *
 from utils.config import *
-from utils.utils import GetRasterStat
+from utils.fileIO import GetRasterStat
 
 
 if __name__ == "__main__":
