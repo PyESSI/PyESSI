@@ -18,6 +18,9 @@ Class:
 import numpy
 import util.config
 import util.defines
+
+from util.fileIO import *
+
 from modules.Hydro.Hydro import *
 from util.dateTime import *
 from modules.Hydro.SoilPara import *
@@ -60,8 +63,6 @@ class CHydroSimulate:
         self.m_col = 0
 
         self.HortonInfil = CHortonInfil()
-
-        # self.gridwb = CGridWaterBalance()
 
         if util.config.RunoffSimuType == util.defines.LONGTERM_RUNOFF_SIMULATION:
             self.m_bDate = True
@@ -237,6 +238,7 @@ class CHydroSimulate:
                                 dsnowfactor = 0.3
 
                     dhrIntensity = util.config.DailyMeanPcpTime
+
                     dintensity = curPcp[row][col] / dhrIntensity
                     self.HortonInfil.SetGridPara(row, col, self.pGridSoilInfo_SP_Sw[row][col], 0.03)
 
