@@ -151,27 +151,27 @@ class CGridWaterBalance:
 
         ## 判断选择的方法 ##
         if util.config.PETMethod == util.defines.PET_REAL:
-            pass
-        if not os.path.exists(tmpmxPath + os.sep + curForcingFilename) or not os.path.exists(
-                                tmpmnPath + os.sep + curForcingFilename):
+            return 0
+        if not os.path.exists(tmpmxPath + os.sep + curForcingFilename + '.tif') or not os.path.exists(
+                                tmpmnPath + os.sep + curForcingFilename + '.tif'):
             return 0
         dRLong = 0
         dRShort = 0
 
         if util.config.PETMethod == util.defines.PET_PRISTLEY_TAYLOR:
-            if not os.path.exists(slrPath + os.sep + curForcingFilename) or not os.path.exists(
-                                    hmdPath + os.sep + curForcingFilename):
+            if not os.path.exists(slrPath + os.sep + curForcingFilename + '.tif') or not os.path.exists(
+                                    hmdPath + os.sep + curForcingFilename + '.tif'):
                 return 0
-            prist = CPETInPristley(self.m_dTav, self.m_dHeight, curForcingFilename)
+            prist = CPETInPristley(self.m_dTav, self.m_dHeight, curForcingFilename + '.tif')
             dRLong = prist.NetLongWaveRadiationRHmd(self.m_slr, self.m_hmd)
             dRShort = prist.NetShortWaveRadiation(dalbedo, self.m_slr)
             self.m_dPET = prist.PETByPristley(1.26, 0)
 
         elif util.config.PETMethod == util.defines.PET_HARGREAVES:
-            if not os.path.exists(slrPath + os.sep + curForcingFilename) or not os.path.exists(
-                                    hmdPath + os.sep + curForcingFilename):
+            if not os.path.exists(slrPath + os.sep + curForcingFilename + '.tif') or not os.path.exists(
+                                    hmdPath + os.sep + curForcingFilename + '.tif'):
                 return 0
-            har = CPETInHargreaves(self.m_dTav, self.m_dHeight, self.m_dTmx, self.m_dTmn, curForcingFilename)
+            har = CPETInHargreaves(self.m_dTav, self.m_dHeight, self.m_dTmx, self.m_dTmn, curForcingFilename + '.tif')
             dRLong = har.NetLongWaveRadiationRHmd(self.m_slr, self.m_hmd)
             dRShort = har.NetShortWaveRadiation(dalbedo, self.m_slr)
             self.m_dPET = har.PETByHarg()
@@ -359,7 +359,7 @@ class CGridWaterBalance:
                         if self.m_dBaseQ < 0:
                             self.m_dSurfQ = (dPE - dthet) * util.config.SurfQOutFactor
                             self.m_dBaseQ = (dPE - dthet) * (1 - util.config.SurfQOutFactor)
-                            self.m_dLateralQ = 0.
+                        self.m_dLateralQ = 0.
                     else:
                         self.m_dLateralQ = self.m_dTotalQ - self.m_dSurfQ - self.m_dBaseQ
                     iret = 8
