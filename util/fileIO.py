@@ -12,6 +12,7 @@ Functions:
 """
 
 # load needed python modules
+import os
 import sys
 
 try:
@@ -150,6 +151,17 @@ def GetRasterStat(rasterFile):
         dataset = None
         return (max,min,mean,std)
     dataset = None
+
+
+def CreateForld(forldPath):
+    '''
+    Create forld
+    :param forldPath:
+    :return:
+    '''
+    if not os.path.isdir(forldPath):
+        os.makedirs(forldPath)
+
 
 # if __name__ == "__main__":
 #     r = r"D:\GaohrWS\DoctorWorks\DoctorWork\PyESSI\DCBAM\test\watershed.tif"

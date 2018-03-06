@@ -18,11 +18,7 @@ Class:
 """
 
 # load needed python modules
-<<<<<<< HEAD
-import util.config
-=======
 import util.defines
->>>>>>> upstream/master
 
 
 class CMuskingumCunge:

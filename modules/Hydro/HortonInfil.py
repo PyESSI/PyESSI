@@ -46,7 +46,7 @@ class CHortonInfil:
         self.m_dFt = 0  # 土壤水下渗量
         self.m_dPreSoilW = 0  # 初始土壤含水量
 
-    def SetGridPara(self, currow, curcol, dSoilW, dErr):
+    def SetGridPara(self, currow, curcol, dSoilW, dErr, soil, soilTypename):
         '''
         设置参数
         :param currow:
@@ -59,10 +59,11 @@ class CHortonInfil:
         self.m_curcol = curcol
         self.m_dPreSoilW = dSoilW
         self.m_dERR = dErr
+        self.m_Soil = soil
+        self.soilTypename = soilTypename
 
-        soilTemp = readRaster(util.config.workSpace + os.sep + 'DEM' + os.sep + util.config.SoilFileName)
-        pGridSoilInfo = SoilInfo()
-        pGridSoilInfo.ReadSoilFile(GetSoilTypeName(int(soilTemp.data[self.m_currow][self.m_curcol])) + '.sol')
+        pGridSoilInfo = SoilInfo(self.soilTypename)
+        pGridSoilInfo.ReadSoilFile(pGridSoilInfo.soilTypename[str(int(self.m_Soil))] + '.sol')
         self.m_dK = pGridSoilInfo.Horton_K
         self.m_dF0 = pGridSoilInfo.SP_Init_F0
         self.m_dFc = pGridSoilInfo.SP_Stable_Fc
