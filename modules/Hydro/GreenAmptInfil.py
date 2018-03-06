@@ -39,7 +39,7 @@ from util.fileIO import *
 # |++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
 class CGreenAmptInfil:
-    def SetGridPara(self, currow, curcol, timelen, Prerateinf, Precumr, Prerintns, Precuminf, Preexcum, pcp, Cp):
+    def SetGridPara(self, currow, curcol, timelen, Prerateinf, Precumr, Prerintns, Precuminf, Preexcum, pcp, Cp, soil, stn):
         '''
         功能:    -- 设置Green - Ampt法计算参数
         :param currow:
@@ -66,13 +66,15 @@ class CGreenAmptInfil:
 
         self.m_dEhc = self.EffHydroConductivity(Cp)
 
+        self.m_Soil = soil
+        self.soilTypename = stn
+
     def GreenAmptExcessRunoff(self):
         self.m_dSoilw = 0.
         self.m_dSurfQ = 0.
 
-        soilTemp = readRaster(util.config.workSpace + os.sep + 'DEM' + os.sep + util.config.SoilFileName)
-        pGridSoilInfo = SoilInfo()
-        pGridSoilInfo.ReadSoilFile(GetSoilTypeName(soilTemp.data[self.m_row][self.m_col]) + '.sol')
+        pGridSoilInfo = SoilInfo(self.soilTypename)
+        pGridSoilInfo.ReadSoilFile(pGridSoilInfo.soilTypename(str(int(self.m_Soil))) + '.sol')
         dthet = pGridSoilInfo.SoilWaterDeficitPercent()
         psidt = 0.
         psidt = dthet * pGridSoilInfo.SP_WFCS
@@ -163,9 +165,8 @@ class CGreenAmptInfil:
         :param Cp:
         :return:
         '''
-        soilTemp = readRaster(util.config.workSpace + os.sep + 'DEM' + os.sep + util.config.SoilFileName)
-        pGridSoilInfo = SoilInfo()
-        pGridSoilInfo.ReadSoilFile(GetSoilTypeName(soilTemp.data[self.m_row][self.m_col]) + '.sol')
+        pGridSoilInfo = SoilInfo(self.soilTypename)
+        pGridSoilInfo.ReadSoilFile(pGridSoilInfo.soilTypename(str(int(self.m_Soil))) + '.sol')
 
         dehc = 0.
         if Cp == -1.:

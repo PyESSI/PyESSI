@@ -25,10 +25,11 @@ Functions:
 import os
 import util.config
 import math
+import time
 
 
 class SoilInfo:
-    def __init__(self):
+    def __init__(self, stn):
         self.Soil_Name = ""
         self.Soil_id = 0
         self.iLayer = 0
@@ -72,6 +73,8 @@ class SoilInfo:
         self.SL_WpRatio = []
         self.albedo = 0.23
 
+        self.soilTypename = stn
+
         # 这三个变量是否有需要定义？？
         self.SL_StaInfil = []
         self.SL_InitInfil = []
@@ -80,37 +83,38 @@ class SoilInfo:
     def ReadSoilFile(self, soilFilename):
         '''
         从文件中加载每一种指定土壤类型的主要输入物理参数（固有参数）
+        :param soilTypeName:
         :param soilFilename:
         :return:
         '''
-        if os.path.exists(util.config.workSpace + os.sep + 'Soil' + os.sep + soilFilename):
-            soilInfos = open(util.config.workSpace + os.sep + 'Soil' + os.sep + soilFilename, 'r').readlines()
-            self.Soil_Name = soilInfos[0].split('\n')[0].strip().split()[1]
-            self.iLayer = int(soilInfos[1].split('\n')[0].strip().split()[1])
-            self.rootdepth = float(soilInfos[2].split('\n')[0].strip().split()[1])
-            self.albedo = float(soilInfos[3].split('\n')[0].strip().split()[1])
-            self.Horton_K = float(soilInfos[4].split('\n')[0].strip().split()[1])
-            self.InitSWP = float(soilInfos[5].split('\n')[0].strip().split()[1])
-            for i in range(self.iLayer):
-                self.SL_ID.append(i + 1)
-                self.SL_Z.append(float(soilInfos[i + 8].split('\n')[0].split(':')[1].strip().split()[0]))
-                self.SL_BD.append(float(soilInfos[i + 8].split('\n')[0].split(':')[1].strip().split()[1]))
-                self.SL_AWC.append(float(soilInfos[i + 8].split('\n')[0].split(':')[1].strip().split()[2]))
-                self.SL_Sat_K.append(float(soilInfos[i + 8].split('\n')[0].split(':')[1].strip().split()[3]))
-                self.SL_Stable_F.append(float(soilInfos[i + 8].split('\n')[0].split(':')[1].strip().split()[4]))
-                self.SL_Org_C.append(float(soilInfos[i + 8].split('\n')[0].split(':')[1].strip().split()[5]))
-                self.SL_Clay.append(float(soilInfos[i + 8].split('\n')[0].split(':')[1].strip().split()[6]))
-                self.SL_Silt.append(float(soilInfos[i + 8].split('\n')[0].split(':')[1].strip().split()[7]))
-                self.SL_Sand.append(float(soilInfos[i + 8].split('\n')[0].split(':')[1].strip().split()[8]))
-                self.SL_Rock.append(float(soilInfos[i + 8].split('\n')[0].split(':')[1].strip().split()[9]))
-                self.SL_Init_F.append(float(soilInfos[i + 8].split('\n')[0].split(':')[1].strip().split()[10]))
-                self.SL_bFillOK.append(True)
+        s = time.clock()
+        soilInfos = open(util.config.workSpace + os.sep + 'Soil' + os.sep + soilFilename, 'r').readlines()
+        self.Soil_Name = soilInfos[0].split('\n')[0].strip().split()[1]
+        self.iLayer = int(soilInfos[1].split('\n')[0].strip().split()[1])
+        self.rootdepth = float(soilInfos[2].split('\n')[0].strip().split()[1])
+        self.albedo = float(soilInfos[3].split('\n')[0].strip().split()[1])
+        self.Horton_K = float(soilInfos[4].split('\n')[0].strip().split()[1])
+        self.InitSWP = float(soilInfos[5].split('\n')[0].strip().split()[1])
+        for i in range(self.iLayer):
+            self.SL_ID.append(i + 1)
+            self.SL_Z.append(float(soilInfos[i + 8].split('\n')[0].split(':')[1].strip().split()[0]))
+            self.SL_BD.append(float(soilInfos[i + 8].split('\n')[0].split(':')[1].strip().split()[1]))
+            self.SL_AWC.append(float(soilInfos[i + 8].split('\n')[0].split(':')[1].strip().split()[2]))
+            self.SL_Sat_K.append(float(soilInfos[i + 8].split('\n')[0].split(':')[1].strip().split()[3]))
+            self.SL_Stable_F.append(float(soilInfos[i + 8].split('\n')[0].split(':')[1].strip().split()[4]))
+            self.SL_Org_C.append(float(soilInfos[i + 8].split('\n')[0].split(':')[1].strip().split()[5]))
+            self.SL_Clay.append(float(soilInfos[i + 8].split('\n')[0].split(':')[1].strip().split()[6]))
+            self.SL_Silt.append(float(soilInfos[i + 8].split('\n')[0].split(':')[1].strip().split()[7]))
+            self.SL_Sand.append(float(soilInfos[i + 8].split('\n')[0].split(':')[1].strip().split()[8]))
+            self.SL_Rock.append(float(soilInfos[i + 8].split('\n')[0].split(':')[1].strip().split()[9]))
+            self.SL_Init_F.append(float(soilInfos[i + 8].split('\n')[0].split(':')[1].strip().split()[10]))
+            self.SL_bFillOK.append(True)
 
-            self.CalcSoilPara()
-            self.TPercolation = (self.SP_Sat - self.SP_Fc) / self.SP_Sat_K
+        self.CalcSoilPara()
+        self.TPercolation = (self.SP_Sat - self.SP_Fc) / self.SP_Sat_K
 
-        else:
-            print('Soil info File does not exist!')
+        e = time.clock()
+        # print("ReadSoilFile time: %.6f" % (e - s))
 
     # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +                                                        +
@@ -217,19 +221,3 @@ class SoilInfo:
     def SoilAvgWater(self):
         dret = self.SP_Sw / self.rootdepth * 100
         return dret
-
-
-def GetSoilTypeName(SoilTypeID):
-    '''
-    :param SoilTypeID:
-    :return:
-    '''
-    if os.path.exists(util.config.workSpace + os.sep + 'LookupTable' + os.sep + 'SoilType.txt'):
-        soilTypeInfos = open(util.config.workSpace + os.sep + 'LookupTable' + os.sep + 'SoilType.txt', 'r').readlines()
-        soilIdName = []
-        for i in range(len(soilTypeInfos)):
-            soilIdName.append((soilTypeInfos[i].split('\n')[0].split('\t')[0].strip(),
-                               soilTypeInfos[i].split('\n')[0].split('\t')[1].strip()))
-        soilTypeName = dict(soilIdName)
-
-        return soilTypeName[str(SoilTypeID)]

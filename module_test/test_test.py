@@ -3,13 +3,26 @@ import os
 import time
 
 import numpy
-a = 0
+class A():
+    def __init__(self):
+        self.a = 1
+        self.b = 1
+        self.c = 1
+        self.d = 1
+        self.e = 1
+        self.f = 1
+        self.g = 1
+
+
 s = time.time()
-for i in range(966):
-    for j in range(667):
-        a += 1
+arr = []
+for i in range(5):
+        arr.append((i, A))
 e = time.time()
 
-print(e - s)
+ad = dict(arr)
+print(ad[3].c)
+
+print("time: %.3f" % (e - s))
 
 
