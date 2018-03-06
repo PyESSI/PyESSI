@@ -105,10 +105,7 @@ class CGridWaterBalance:
         :param hr:
         :return:
         '''
-<<<<<<< HEAD
-=======
 
->>>>>>> upstream/master
         self.m_dRIntensity = rint
         self.m_nYear = year
         self.m_nDn = dn
