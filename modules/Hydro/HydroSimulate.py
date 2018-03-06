@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 # -*- coding: utf-8 -*-
 
 """
@@ -16,15 +14,13 @@ Class:
 
 """
 
->>>>>>> upstream/master
 # load needed python modules
 import numpy
 import util.config
 import util.defines
-<<<<<<< HEAD
+
 from util.fileIO import *
-=======
->>>>>>> upstream/master
+
 from modules.Hydro.Hydro import *
 from util.dateTime import *
 from modules.Hydro.SoilPara import *
@@ -68,12 +64,7 @@ class CHydroSimulate:
 
         self.HortonInfil = CHortonInfil()
 
-<<<<<<< HEAD
-=======
 
-        # self.gridwb = CGridWaterBalance()
-
->>>>>>> upstream/master
         if util.config.RunoffSimuType == util.defines.LONGTERM_RUNOFF_SIMULATION:
             self.m_bDate = True
         else:
@@ -228,24 +219,12 @@ class CHydroSimulate:
                         continue
 
                     dsnowfactor = 1.
-<<<<<<< HEAD
+
                     if util.config.tmpmeandata == 1:
                         if curTmpmean.data[row][col] < util.config.SnowTemperature:
                             self.m_SnowWater[row][col] += curPcp[row][col]
                             curPcp[row][col] = 0.
-=======
-                    curPcp = readRaster(
-                        util.config.workSpace + os.sep + 'Forcing' + os.sep + 'pcpdata' + os.sep + theDay + '.tif')
-                    curTmpmean = readRaster(
-                        util.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmpmeandata' + os.sep + theDay + '.tif')
-                    curPet = readRaster(
-                        util.config.workSpace + os.sep + 'Forcing' + os.sep + 'petdata' + os.sep + theDay + '.tif')
 
-                    if util.config.tmpmeandata == 1:
-                        if curTmpmean.data[row][col] < util.config.SnowTemperature:
-                            self.m_SnowWater[row][col] += curPcp.data[row][col]
-                            curPcp.data[row][col] = 0.
->>>>>>> upstream/master
                             dsnowfactor = 0.15
                         else:
                             if self.m_SnowWater[row][col] > 0:
@@ -260,13 +239,10 @@ class CHydroSimulate:
                                 dsnowfactor = 0.3
 
                     dhrIntensity = util.config.DailyMeanPcpTime
-<<<<<<< HEAD
+
                     dintensity = curPcp[row][col] / dhrIntensity
                     self.HortonInfil.SetGridPara(row, col, self.pGridSoilInfo_SP_Sw[row][col], 0.03)
-=======
-                    dintensity = curPcp.data[row][col] / dhrIntensity
-                    self.HortonInfil.SetGridPara(row, col, self.pGridSoilInfo_SP_Sw[row][col].SP_Sw, 0.03)
->>>>>>> upstream/master
+
 
                     self.HortonInfil.HortonExcessRunoff()
                     self.m_drateinf[row][col] = self.HortonInfil.m_dFt
@@ -317,11 +293,9 @@ class CHydroSimulate:
 
                         # //*************对蒸散发处理的特殊代码段 -- 计算实际蒸散发**************//
                         if util.config.PETMethod == util.defines.PET_REAL:
-<<<<<<< HEAD
+
                             self.gridwb.m_dAET = curPet[row][col] * aetfactor
-=======
-                            self.gridwb.m_dAET = curPet.data[row][col] * aetfactor
->>>>>>> upstream/master
+
                             self.m_AET[row][col] = self.gridwb.m_dAET
                         else:
                             self.gridwb.CalcAET(dalb,theDay)
@@ -396,15 +370,10 @@ class CHydroSimulate:
 
             for i in range(len(wytypeLines)):
                 wyTypeTemp = WaterYearType()
-<<<<<<< HEAD
+
                 wyTypeTemp.year = wytypeLines[i].rstrip(util.defines.CHAR_SPLIT_ENTER).split(util.defines.CHAR_SPLIT_TAB)[0]
                 wyTypeTemp.wtype = wytypeLines[i].rstrip(util.defines.CHAR_SPLIT_ENTER).split(util.defines.CHAR_SPLIT_TAB)[1]
-=======
-                wyTypeTemp.year = \
-                    wytypeLines[i].rstrip(util.defines.CHAR_SPLIT_ENTER).split(util.defines.CHAR_SPLIT_TAB)[0]
-                wyTypeTemp.wtype = \
-                    wytypeLines[i].rstrip(util.defines.CHAR_SPLIT_ENTER).split(util.defines.CHAR_SPLIT_TAB)[1]
->>>>>>> upstream/master
+
 
                 self.wytype.append(wyTypeTemp)
             return True
@@ -810,67 +779,3 @@ class CHydroSimulate:
             self.pRiverRoute.pRoute[i].dOutFlux = 0.
             self.pRiverRoute.pPreRoute[i].dInFlux = 0.
             self.pRiverRoute.pPreRoute[i].dOutFlux = 0.
-
-<<<<<<< HEAD
-=======
-    def InitialInput(self):
-        '''
-        Initial input data
-        :return:
-        '''
-        print("Initial daily input data...")
-
-        ## Basic data ##
-
-        soilTempFile = util.config.workSpace + os.sep + 'DEM' + os.sep + util.config.SoilFileName
-        vegTempFile = util.config.workSpace + os.sep + 'DEM' + os.sep + util.config.LULCFileName
-
-        if os.path.exists(soilTempFile):
-            self.soilTemp = readRaster(soilTempFile).data
-        else:
-            raise Exception("Can not find soilTempFile!", soilTempFile)
-        if os.path.exists(vegTempFile):
-            self.vegTemp = readRaster(vegTempFile).data
-        else:
-            raise Exception("Can not find vegTempFile!", vegTempFile)
-
-        ## WaterBalance ##
-        self.petData = numpy.zeros((self.m_row, self.m_col))
-        self.pcpData = numpy.zeros((self.m_row, self.m_col))
-        self.tavData = numpy.zeros((self.m_row, self.m_col))
-        self.tmxData = numpy.zeros((self.m_row, self.m_col))
-        self.tmnData = numpy.zeros((self.m_row, self.m_col))
-        self.slrData = numpy.zeros((self.m_row, self.m_col))
-        self.hmdData = numpy.zeros((self.m_row, self.m_col))
-        self.wndData = numpy.zeros((self.m_row, self.m_col))
-
-        petFile = util.config.workSpace + os.sep + 'Forcing' + os.sep + 'petdata' + os.sep + self.curForcingFilename
-        pcpFile = util.config.workSpace + os.sep + 'Forcing' + os.sep + 'pcpdata' + os.sep + self.curForcingFilename
-        tavFile = util.config.workSpace + os.sep + 'Forcing' + os.sep + 'tavdata' + os.sep + self.curForcingFilename
-        tmxFile = util.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmxdata' + os.sep + self.curForcingFilename
-        tmnFile = util.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmndata' + os.sep + self.curForcingFilename
-        slrFile = util.config.workSpace + os.sep + 'Forcing' + os.sep + 'slrdata' + os.sep + self.curForcingFilename
-        hmdFile = util.config.workSpace + os.sep + 'Forcing' + os.sep + 'hmddata' + os.sep + self.curForcingFilename
-        wndFile = util.config.workSpace + os.sep + 'Forcing' + os.sep + 'wnddata' + os.sep + self.curForcingFilename
-
-        if os.path.exists(petFile):
-            self.petData = readRaster(petFile).data
-        if os.path.exists(pcpFile):
-            self.pcpData = readRaster(pcpFile).data
-        if os.path.exists(tavFile):
-            self.tavData = readRaster(tavFile).data
-        if os.path.exists(tmxFile):
-            self.tmxData = readRaster(tmxFile).data
-        if os.path.exists(tmnFile):
-            self.tmnData = readRaster(tmnFile).data
-        if os.path.exists(slrFile):
-            self.slrData = readRaster(slrFile).data
-        if os.path.exists(hmdFile):
-            self.hmdData = readRaster(hmdFile).data
-        if os.path.exists(wndFile):
-            self.wndData = readRaster(wndFile).data
-
-        return 0
-
->>>>>>> upstream/master
-
