@@ -299,7 +299,8 @@ class CHydroSimulate:
                         if self.m_GridSurfQ[row][col] < 0:
                             self.m_GridSurfQ[row][col] = 0.
                         if self.m_GridSurfQ[row][col] > 1e+10:
-                            self.m_GridLateralQ[row][col] = 0.
+                            print("hello")
+                        self.m_GridLateralQ[row][col] = 0.
                         self.m_GridBaseQ[row][col] = 0.
                         self.m_GridTotalQ[row][col] = self.m_GridSurfQ[row][col]
                         self.m_AET[row][col] = self.gridwb.m_dPET
@@ -356,12 +357,12 @@ class CHydroSimulate:
 
 
             if self.m_iNodeNum == 1 or util.config.RiverRouteMethod == util.defines.ROUTE_PURE_LAG:
-                self.PureLagGridRouting(self.m_GridSurfQ, self.m_pOutletSurfQ, dhr, util.defines.RUNOFF_ELEMENT_SURFQ,
+                self.m_pOutletSurfQ = self.PureLagGridRouting(self.m_GridSurfQ, self.m_pOutletSurfQ, dhr, util.defines.RUNOFF_ELEMENT_SURFQ,
                                         curorder, totrec, dsnowfactor, self.wytype[int(theDay[0:4])])
-                self.PureLagGridRouting(self.m_GridLateralQ, self.m_pOutletLatQ, dhr,
+                self.m_pOutletLatQ = self.PureLagGridRouting(self.m_GridLateralQ, self.m_pOutletLatQ, dhr,
                                         util.defines.RUNOFF_ELEMENT_LATERALQ,
                                         curorder, totrec, dsnowfactor, self.wytype[int(theDay[0:4])])
-                self.PureLagGridRouting(self.m_GridBaseQ, self.m_pOutletBaseQ, dhr, util.defines.RUNOFF_ELEMENT_BASEQ,
+                self.m_pOutletBaseQ = self.PureLagGridRouting(self.m_GridBaseQ, self.m_pOutletBaseQ, dhr, util.defines.RUNOFF_ELEMENT_BASEQ,
                                         curorder, totrec, dsnowfactor, self.wytype[int(theDay[0:4])])
                 self.m_pOutletDeepBaseQ[curorder] = self.DeepBaseQSim(dn, util.config.DeepBaseQ)
                 self.m_pOutletQ[curorder] = self.m_pOutletSurfQ[curorder] * util.config.SurfQLinearFactor + \
@@ -411,6 +412,9 @@ class CHydroSimulate:
 
             self.RiverOutletQ_Hao(theDay, curorder - 1)
 
+            e_long = time.clock()
+            print("\ttime: %.3f" % (e_long - s_long))
+
         if util.config.RiverRouteMethod == util.defines.ROUTE_MUSKINGUM_COMBINE_FIRST or util.config.RiverRouteMethod == util.defines.ROUTE_MUSKINGUM_ROUTE_FIRST:
             if self.m_pX:
                 self.m_pX = None
@@ -423,68 +427,68 @@ class CHydroSimulate:
     def MidGridResultOut(self, curDay, curPcp, curPet, curWnd, curHmd, curSlr, curTmpmean, curTmpmn, curTmpmx):
         if curDay in self.middaily:
             if util.config.iPcp == 1:
-                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'Pcp'+ curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, curPcp, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'Pcp'+ curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, curPcp, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iPET == 1:
-                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'PET'+ curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, curPet, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'PET'+ curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, curPet, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iWnd == 1:
-                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'Wnd'+ curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, curWnd, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'Wnd'+ curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, curWnd, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iHmd == 1:
-                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'Hmd'+ curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, curHmd, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'Hmd'+ curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, curHmd, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iSlr == 1:
-                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'Slr'+ curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, curSlr, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'Slr'+ curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, curSlr, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iTempMean == 1:
-                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'TempMean'+ curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, curTmpmean, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'TempMean'+ curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, curTmpmean, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iTempMin == 1:
-                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'TempMin'+ curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, curTmpmn, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'TempMin'+ curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, curTmpmn, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iTempMax == 1:
-                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'TempMax'+ curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, curTmpmx, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'TempMax'+ curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, curTmpmx, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
 
 
 
             if util.config.iAET == 1:
-                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'AET'+ curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, self.m_AET, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'AET'+ curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, self.m_AET, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iCI == 1:
-                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'CI'+ curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, self.m_CI, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'CI'+ curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, self.m_CI, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iSnowWater == 1:
-                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'Snow'+ curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, self.m_SnowWater, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'Snow'+ curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, self.m_SnowWater, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iAI == 1:
-                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'AI'+ curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, self.m_AI, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'AI'+ curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, self.m_AI, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iRouteOut == 1:
-                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'GridRoute'+ curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, self.m_GridRoutingQ, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'GridRoute'+ curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, self.m_GridRoutingQ, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iSurfQ == 1:
-                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'SurfQ'+ curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, self.m_GridSurfQ, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'SurfQ'+ curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, self.m_GridSurfQ, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iLatQ == 1:
-                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'WYType'+ curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, self.m_GridLateralQ, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'WYType'+ curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, self.m_GridLateralQ, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iBaseQ == 1:
-                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'LatQ'+ curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, self.m_GridBaseQ, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'LatQ'+ curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, self.m_GridBaseQ, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iWaterYieldType == 1:
-                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'BaseQ'+ curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, self.m_GridWaterYieldType, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'BaseQ'+ curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, self.m_GridWaterYieldType, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iInfilRate == 1:
-                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'InfilRate'+ curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, self.m_drateinf, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'InfilRate'+ curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, self.m_drateinf, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iProfileSoilWater == 1:
-                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'SoilProfileWater' + curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, self.m_SoilProfileWater, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'SoilProfileWater' + curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, self.m_SoilProfileWater, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iAvgSoilWater == 1:
-                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'oilAvgWater' + curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, self.m_SoilAvgWater, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'oilAvgWater' + curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, self.m_SoilAvgWater, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
 
 
 
@@ -638,7 +642,7 @@ class CHydroSimulate:
                     else:
                         return False
 
-        return True
+        return pRoute
 
 
     # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -751,7 +755,6 @@ class CHydroSimulate:
                 if not self.IfGridBeCalculated(i, j):
                     continue
                 if self.GetSoilTypeOrder(int(self.g_SoilLayer.data[i][j])):
-                    s_soil = time.clock()
                     soilTemp = SoilInfo(self.soilTypeName)
                     self.m_iSoilOrd = int(self.g_SoilLayer.data[i][j])
                     soilTemp.ReadSoilFile(self.soilTypeName[str(int(self.m_iSoilOrd))] + '.sol')
@@ -772,6 +775,7 @@ class CHydroSimulate:
                     vegTemp = VegInfo(self.vegTypeName)
                     self.m_iVegOrd = self.g_VegLayer.data[i][j]
                     vegTemp.ReadVegFile(self.vegTypeName[str(int(self.m_iVegOrd))] + '.veg')
+                    self.pGridVegInfo[i][j] = vegTemp
 
         e = time.clock()
         print('\nFinished Load grid parameters：%.3f' % (e - s))

@@ -307,7 +307,7 @@ class CGridWaterBalance:
                 if dIFc < 0.:  # 方案1：不产流
                     iret = 1
                 else:  # 方案2：超渗产流
-                    m_dSurfQ = dIFc * self.m_dHr
+                    self.m_dSurfQ = dIFc * self.m_dHr
                     iret = 2
             else:
                 if dIFc < 0.:  # 方案3：蓄满产流
