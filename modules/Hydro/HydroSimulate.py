@@ -178,7 +178,7 @@ class CHydroSimulate:
             iniDateTemp = datetime.date(int(theDay[0:4]), 1, 1)
             endDateTemp = datetime.date(int(theDay[0:4]), int(theDay[4:6]), int(theDay[6:8]))
 
-            dayCountTemp = iniDateTemp.toordinal() - endDateTemp.toordinal() + 1
+            dayCountTemp = endDateTemp.toordinal() - iniDateTemp.toordinal() + 1
 
             i = int(theDay[0:4])
             j = dayCountTemp
@@ -191,51 +191,51 @@ class CHydroSimulate:
             dPE = 0.
 
             if util.config.pcpdata == 1:
-                curPcp = readRaster(
+                self.curPcp = readRaster(
                     util.config.workSpace + os.sep + 'Forcing' + os.sep + 'pcpdata' + os.sep + theDay + '.tif').data
             else:
-                curPcp = numpy.zeros((self.m_row, self.m_col))
+                self.curPcp = numpy.zeros((self.m_row, self.m_col))
 
             if util.config.petdata == 1:
-                curPet = readRaster(
+                self.curPet = readRaster(
                     util.config.workSpace + os.sep + 'Forcing' + os.sep + 'petdata' + os.sep + theDay + '.tif').data
             else:
-                curPet = numpy.zeros((self.m_row, self.m_col))
+                self.curPet = numpy.zeros((self.m_row, self.m_col))
 
             if util.config.tmpmeandata == 1:
-                curTmpmean = readRaster(
+                self.curTmpmean = readRaster(
                     util.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmpmeandata' + os.sep + theDay + '.tif').data
             else:
-                curTmpmean = numpy.zeros((self.m_row, self.m_col))
+                self.curTmpmean = numpy.zeros((self.m_row, self.m_col))
 
             if util.config.tmpmxdata == 1:
-                curTmpmx = readRaster(
+                self.curTmpmx = readRaster(
                     util.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmpmxdata' + os.sep + theDay + '.tif').data
             else:
-                curTmpmx = numpy.zeros((self.m_row, self.m_col))
+                self.curTmpmx = numpy.zeros((self.m_row, self.m_col))
 
             if util.config.tmpmndata == 1:
-                curTmpmn = readRaster(
+                self.curTmpmn = readRaster(
                     util.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmpmndata' + os.sep + theDay + '.tif').data
             else:
-                curTmpmn = numpy.zeros((self.m_row, self.m_col))
+                self.curTmpmn = numpy.zeros((self.m_row, self.m_col))
 
             if util.config.wnddata == 1:
-                curWnd = readRaster(
+                self.curWnd = readRaster(
                     util.config.workSpace + os.sep + 'Forcing' + os.sep + 'wnddata' + os.sep + theDay + '.tif').data
             else:
-                curWnd = numpy.zeros((self.m_row, self.m_col))
+                self.curWnd = numpy.zeros((self.m_row, self.m_col))
 
             if util.config.hmddata == 1:
-                curHmd = readRaster(
+                self.curHmd = readRaster(
                     util.config.workSpace + os.sep + 'Forcing' + os.sep + 'hmddata' + os.sep + theDay + '.tif').data
             else:
-                curHmd = numpy.zeros((self.m_row, self.m_col))
+                self.curHmd = numpy.zeros((self.m_row, self.m_col))
             if util.config.slrdata == 1:
-                curSlr = readRaster(
+                self.curSlr = readRaster(
                     util.config.workSpace + os.sep + 'Forcing' + os.sep + 'slrdata' + os.sep + theDay + '.tif').data
             else:
-                curSlr = numpy.zeros((self.m_row, self.m_col))
+                self.curSlr = numpy.zeros((self.m_row, self.m_col))
 
             for row in range(self.m_row):
                 for col in range(self.m_col):
@@ -249,26 +249,26 @@ class CHydroSimulate:
                     dsnowfactor = 1.
 
                     if util.config.tmpmeandata == 1:
-                        if curTmpmean.data[row][col] < util.config.SnowTemperature:
-                            self.m_SnowWater[row][col] += curPcp[row][col]
-                            curPcp[row][col] = 0.
+                        if self.curTmpmean[row][col] < util.config.SnowTemperature:
+                            self.m_SnowWater[row][col] += self.curPcp[row][col]
+                            self.curPcp[row][col] = 0.
 
                             dsnowfactor = 0.15
                         else:
                             if self.m_SnowWater[row][col] > 0:
-                                smelt = self.DDFSnowMelt(curTmpmean.data[row][col], util.config.SnowTemperature,
+                                smelt = self.DDFSnowMelt(self.curTmpmean[row][col], util.config.SnowTemperature,
                                                          util.config.DDF, util.config.DailyMeanPcpTime)
                                 if self.m_SnowWater[row][col] < smelt:
                                     smelt = self.m_SnowWater[row][col]
                                     self.m_SnowWater[row][col] = 0.
                                 else:
                                     self.m_SnowWater[row][col] -= smelt
-                                curPcp[row][col] += smelt
+                                self.curPcp[row][col] += smelt
                                 dsnowfactor = 0.3
 
                     dhrIntensity = util.config.DailyMeanPcpTime
 
-                    dintensity = curPcp[row][col] / dhrIntensity
+                    dintensity = self.curPcp[row][col] / dhrIntensity
 
                     self.HortonInfil.SetGridPara(row, col, self.pGridSoilInfo_SP_Sw[row][col], 0.03,
                                                  self.g_SoilLayer.data[row][col], self.soilTypeName)
@@ -282,9 +282,9 @@ class CHydroSimulate:
 
                     self.gridwb = CGridWaterBalance(self.g_DemLayer.data[row][col], self.g_SoilLayer.data[row][col],
                                                     self.g_VegLayer.data[row][col],
-                                                    curPet[row][col], curPcp[row][col], curTmpmean[row][col],
-                                                    curTmpmx[row][col], curTmpmn[row][col], curSlr[row][col],
-                                                    curHmd[row][col], curWnd[row][col], self.soilTypeName, self.vegTypeName)
+                                                    self.curPet[row][col], self.curPcp[row][col], self.curTmpmean[row][col],
+                                                    self.curTmpmx[row][col], self.curTmpmn[row][col], self.curSlr[row][col],
+                                                    self.curHmd[row][col], self.curWnd[row][col], self.soilTypeName, self.vegTypeName)
 
                     self.gridwb.SetGridPara(dintensity, self.m_drateinf[row][col], i, j, dhrIntensity, theDay)
 
@@ -293,7 +293,7 @@ class CHydroSimulate:
                     self.gridwb.CalcPET(dalb, theDay)
 
                     if not self.g_StrahlerRivNet.data[row][col] == 0:
-                        self.m_GridSurfQ[row][col] = curPcp[row][col] - self.gridwb.m_dPET
+                        self.m_GridSurfQ[row][col] = self.curPcp[row][col] - self.gridwb.m_dPET
                         if self.m_GridSurfQ[row][col] < 0:
                             self.m_GridSurfQ[row][col] = 0.
                         if self.m_GridSurfQ[row][col] > 1e+10:
@@ -313,12 +313,12 @@ class CHydroSimulate:
                         self.gridwb.CalcCI()
                         self.m_CI[row][col] = self.gridwb.m_dCrownInterc
                         if self.pGridSoilInfo_SP_Sw[row][col] / self.pGridSoilInfo_SP_Fc[row][col] > 0.8:
-                            if curPcp[row][col] > 0:
+                            if self.curPcp[row][col] > 0:
                                 aetfactor = 0.6
                             else:
                                 aetfactor = 0.9
                         else:
-                            if curPcp[row][col] > 0:
+                            if self.curPcp[row][col] > 0:
                                 aetfactor = 0.4
                             else:
                                 aetfactor = 0.6
@@ -326,16 +326,15 @@ class CHydroSimulate:
                         # //*************对蒸散发处理的特殊代码段 -- 计算实际蒸散发**************//
                         if util.config.PETMethod == util.defines.PET_REAL:
 
-                            self.gridwb.m_dAET = curPet[row][col] * aetfactor
-
+                            self.gridwb.m_dAET = self.curPet[row][col] * aetfactor
                             self.m_AET[row][col] = self.gridwb.m_dAET
                         else:
                             self.gridwb.CalcAET(dalb, theDay)
-                            if self.gridwb.m_dAET > curPet[row][col]:
-                                self.m_AET[row][col] = curPet[row][col] * math.exp(
-                                    -1 * curPet[row][col] / self.gridwb.m_dAET)
+                            if self.gridwb.m_dAET > self.curPet[row][col]:
+                                self.m_AET[row][col] = self.curPet[row][col] * math.exp(
+                                    -1 * self.curPet[row][col] / self.gridwb.m_dAET)
                             if self.gridwb.m_dAET < 0:
-                                self.m_AET[row][col] = curPet[row][col] * 0.1
+                                self.m_AET[row][col] = self.curPet[row][col] * 0.1
 
                         # // ** ** ** ** ** ** ** ** ** ** ** 对蒸散发处理的特殊代码段 ** ** ** ** ** ** ** ** ** ** **
                         self.gridwb.CalcNetRain()
@@ -405,7 +404,7 @@ class CHydroSimulate:
                                                 self.m_pOutletBaseQ[curorder] + self.m_pOutletDeepBaseQ[curorder]
 
             curorder += 1
-            self.MidGridResultOut(theDay, curPcp, curPet, curWnd, curHmd, curSlr, curTmpmean, curTmpmn, curTmpmx)
+            self.MidGridResultOut(theDay, self.curPcp, self.curPet, self.curWnd, self.curHmd, self.curSlr, self.curTmpmean, self.curTmpmn, self.curTmpmx)
 
             self.RiverOutletQ_Hao(theDay, curorder - 1)
 
@@ -1042,11 +1041,7 @@ class CHydroSimulate:
 
     def MuskRouteInit(self, nodenum):
         self.pRiverRoute = CMuskRouteFlux()
-        if self.pRiverRoute.pRoute:
-            self.pRiverRoute.pRoute = []
 
-        if self.pRiverRoute.pPreRoute:
-            self.pRiverRoute.pPreRoute = []
 
         for i in range(nodenum):
             newRouteFlux = RouteFlux()
