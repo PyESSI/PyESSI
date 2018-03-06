@@ -27,6 +27,7 @@ from modules.Hydro.VegetationPara import *
 from modules.Hydro.HortonInfil import *
 from modules.Hydro.GridWaterBalance import *
 from modules.Hydro.VegetationPara import *
+from modules.Hydro.Muskingum import *
 
 
 class CHydroSimulate:
@@ -60,6 +61,7 @@ class CHydroSimulate:
 
         self.m_row = 0
         self.m_col = 0
+        self.middaily = []
 
         self.HortonInfil = CHortonInfil()
 
@@ -135,6 +137,12 @@ class CHydroSimulate:
         dayCount = endDate.toordinal() - iniDate.toordinal() + 1
         daily = dailyRange(startDay, endDay)
 
+        midOutBdate = util.config.strOutBDate
+        midOutEdate = util.config.strOutEDate
+        self.middaily = dailyRange(midOutBdate, midOutEdate)
+
+
+
         totrec = dayCount
         self.m_pOutletQ = numpy.zeros(totrec)
         self.m_pOutletSurfQ = numpy.zeros(totrec)
@@ -154,13 +162,14 @@ class CHydroSimulate:
         totYear = int(endDay[0:4]) - int(startDay[0:4]) + 1
         if not self.ReadWaterYearType():
             if not self.wytype:
-                self.wytype = []
+                self.wytype = None
+            wyTypeTemps = []
             for i in range(totYear):
                 wytypeTemp = WaterYearType()
                 wytypeTemp.year = int(startDay[0:4]) + i
-                wytypeTemp.wtype = util.defines.WATER_LOW_YEAR
-
-                self.wytype.append(wytypeTemp)
+                wytypeTemp.wtype = int(util.defines.WATER_LOW_YEAR)
+                wyTypeTemps.append((wytypeTemp.year, wytypeTemp.wtype))
+            self.wytype = dict(wyTypeTemps)
 
         ##水文过程循环
         for theDay in daily:
@@ -235,6 +244,7 @@ class CHydroSimulate:
                     if (row * self.m_row + col + 1) % int(self.m_row * self.m_col / 10) == 0:
                         print("•", end='')
                         sys.stdout.flush()
+
                     if not self.IfGridBeCalculated(row, col):
                         continue
 
@@ -261,6 +271,7 @@ class CHydroSimulate:
                     dhrIntensity = util.config.DailyMeanPcpTime
 
                     dintensity = curPcp[row][col] / dhrIntensity
+
                     self.HortonInfil.SetGridPara(row, col, self.pGridSoilInfo_SP_Sw[row][col], 0.03,
                                                  self.g_SoilLayer.data[row][col], self.soilTypeName)
 
@@ -343,8 +354,291 @@ class CHydroSimulate:
                         if self.m_GridSurfQ[row][col] > 1e+10:
                             print("hello2")
 
-            e_long = time.clock()
-            print("\ttime: %.3fs" % (e_long - s_long))
+
+            if self.m_iNodeNum == 1 or util.config.RiverRouteMethod == util.defines.ROUTE_PURE_LAG:
+                self.PureLagGridRouting(self.m_GridSurfQ, self.m_pOutletSurfQ, dhr, util.defines.RUNOFF_ELEMENT_SURFQ,
+                                        curorder, totrec, dsnowfactor, self.wytype[int(theDay[0:4])])
+                self.PureLagGridRouting(self.m_GridLateralQ, self.m_pOutletLatQ, dhr,
+                                        util.defines.RUNOFF_ELEMENT_LATERALQ,
+                                        curorder, totrec, dsnowfactor, self.wytype[int(theDay[0:4])])
+                self.PureLagGridRouting(self.m_GridBaseQ, self.m_pOutletBaseQ, dhr, util.defines.RUNOFF_ELEMENT_BASEQ,
+                                        curorder, totrec, dsnowfactor, self.wytype[int(theDay[0:4])])
+                self.m_pOutletDeepBaseQ[curorder] = self.DeepBaseQSim(dn, util.config.DeepBaseQ)
+                self.m_pOutletQ[curorder] = self.m_pOutletSurfQ[curorder] * util.config.SurfQLinearFactor + \
+                                            self.m_pOutletLatQ[curorder] + self.m_pOutletBaseQ[curorder] + \
+                                            self.m_pOutletDeepBaseQ[curorder]
+            else:
+                self.PureLagGridRouting_Node(self.m_GridSurfQ, self.m_pNodeSurfQ, dhr,
+                                             util.defines.RUNOFF_ELEMENT_SURFQ,
+                                             curorder, totrec, dsnowfactor, self.wytype[int(theDay[0:4])])
+                self.PureLagGridRouting_Node(self.m_GridLateralQ, self.m_pNodeLatQ, dhr,
+                                             util.defines.RUNOFF_ELEMENT_LATERALQ,
+                                             curorder, totrec, dsnowfactor, self.wytype[int(theDay[0:4])])
+                self.PureLagGridRouting_Node(self.m_GridBaseQ, self.m_pNodeBaseQ, dhr,
+                                             util.defines.RUNOFF_ELEMENT_BASEQ,
+                                             curorder, totrec, dsnowfactor, self.wytype[int(theDay[0:4])])
+
+                dSurf = 0.
+                dLat = 0.
+                dBase = 0.
+
+                for i in range(self.m_subNum):
+                    dSurf += self.m_pNodeSurfQ[curorder][i] * util.config.SurfQLinearFactor
+                    dLat += self.m_pNodeLatQ[curorder][i]
+                    dBase += self.m_pNodeBaseQ[curorder][i]
+                self.m_pOutletSurfQ[curorder] = dSurf
+                self.m_pOutletLatQ[curorder] = dLat
+                self.m_pOutletBaseQ[curorder] = dBase
+                self.m_pOutletDeepBaseQ[curorder] = self.DeepBaseQSim(dn, util.config.DeepBaseQ)
+
+                if util.config.RiverRouteMethod == util.defines.ROUTE_MUSKINGUM_COMBINE_FIRST:
+                    for i in range(self.m_subNum):
+                        self.m_pNodeOutQ[curorder][i] = self.m_pNodeSurfQ[curorder][i] * util.config.SurfQLinearFactor + \
+                                                        self.m_pNodeLatQ[curorder][i] + self.m_pNodeBaseQ[curorder][i]
+                    self.MuskingumRiverRouting(24, self.m_pNodeOutQ, self.pRiverRoute.pRoute,
+                                               self.pRiverRoute.pPreRoute, self.m_pX, self.m_pK, self.m_subNum,
+                                               curorder)
+                    self.m_pOutletQ[curorder] = self.pRiverRoute.pRoute[self.m_subNum - 1].dOutFlux + \
+                                                self.m_pOutletDeepBaseQ[curorder]
+                elif util.config.RiverRouteMethod == ROUTE_MUSKINGUM_ROUTE_FIRST:
+                    print('TODO')
+                else:
+                    self.m_pOutletQ[curorder] = self.m_pOutletSurfQ[curorder] + self.m_pOutletLatQ[curorder] + \
+                                                self.m_pOutletBaseQ[curorder] + self.m_pOutletDeepBaseQ[curorder]
+
+            curorder += 1
+            self.MidGridResultOut(theDay, curPcp, curPet, curWnd, curHmd, curSlr, curTmpmean, curTmpmn, curTmpmx)
+
+            self.RiverOutletQ_Hao(theDay, curorder - 1)
+
+        if util.config.RiverRouteMethod == util.defines.ROUTE_MUSKINGUM_COMBINE_FIRST or util.config.RiverRouteMethod == util.defines.ROUTE_MUSKINGUM_ROUTE_FIRST:
+            if self.m_pX:
+                self.m_pX = None
+            if self.m_pK:
+                self.m_pK = None
+        if self.wytype:
+            self.wytype = None
+
+
+    def MidGridResultOut(self, curDay, curPcp, curPet, curWnd, curHmd, curSlr, curTmpmean, curTmpmn, curTmpmx):
+        if curDay in self.middaily:
+            if util.config.iPcp == 1:
+                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'Pcp'+ curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, curPcp, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+            if util.config.iPET == 1:
+                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'PET'+ curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, curPet, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+            if util.config.iWnd == 1:
+                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'Wnd'+ curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, curWnd, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+            if util.config.iHmd == 1:
+                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'Hmd'+ curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, curHmd, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+            if util.config.iSlr == 1:
+                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'Slr'+ curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, curSlr, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+            if util.config.iTempMean == 1:
+                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'TempMean'+ curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, curTmpmean, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+            if util.config.iTempMin == 1:
+                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'TempMin'+ curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, curTmpmn, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+            if util.config.iTempMax == 1:
+                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'TempMax'+ curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, curTmpmx, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+
+
+
+            if util.config.iAET == 1:
+                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'AET'+ curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, self.m_AET, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+            if util.config.iCI == 1:
+                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'CI'+ curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, self.m_CI, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+            if util.config.iSnowWater == 1:
+                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'Snow'+ curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, self.m_SnowWater, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+            if util.config.iAI == 1:
+                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'AI'+ curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, self.m_AI, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+            if util.config.iRouteOut == 1:
+                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'GridRoute'+ curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, self.m_GridRoutingQ, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+            if util.config.iSurfQ == 1:
+                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'SurfQ'+ curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, self.m_GridSurfQ, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+            if util.config.iLatQ == 1:
+                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'WYType'+ curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, self.m_GridLateralQ, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+            if util.config.iBaseQ == 1:
+                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'LatQ'+ curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, self.m_GridBaseQ, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+            if util.config.iWaterYieldType == 1:
+                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'BaseQ'+ curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, self.m_GridWaterYieldType, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+            if util.config.iInfilRate == 1:
+                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'InfilRate'+ curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, self.m_drateinf, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+            if util.config.iProfileSoilWater == 1:
+                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'SoilProfileWater' + curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, self.m_SoilProfileWater, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+            if util.config.iAvgSoilWater == 1:
+                filename = util.config.workSpace + os.sep + 'Ouput' + os.sep + 'oilAvgWater' + curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, self.m_SoilAvgWater, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, self.g_DemLayer.gdalType)
+
+
+
+    def RiverOutletQ_Hao(self, curDay, curOrder):
+        outQ = open(util.config.workSpace + os.sep + 'Output' + os.sep + 'outQ.txt','a')
+        outQ.write("%s\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\n" % (curDay, self.m_pOutletQ[curOrder], self.m_pOutletSurfQ[curOrder], self.m_pOutletLatQ[curOrder], self.m_pOutletBaseQ[curOrder], self.m_pOutletDeepBaseQ[curOrder]))
+
+        outQ.close()
+
+
+    # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    # +                                                        +
+    # +                    河道Muskingum汇流 +
+    # +                                                        +
+    # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    # +                        先合后演 +
+    # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
+    def MuskingumRiverRouting(self, dTLen, pNodeQ, pRoute, pPreRoute, pX, pK, NodeNum, curOrder):
+        bret = True
+        for i in range(NodeNum):
+            QOut = 0.
+            if i == 0:
+                QOut = pNodeQ[curOrder][i]
+            else:
+                QOut = pNodeQ[curOrder][i] + (pRoute)[i - 1].dOutFlux
+            pRoute[i].dInFlux = QOut
+            pRoute[i].dOutFlux = self.RiverRoutingOut(dTLen, pPreRoute[i].dInFlux, pRoute[i].dInFlux,
+                                                      pPreRoute[i].dOutFlux, pX[i], pK[i])
+            pRoute[i].bCal = True
+        for i in range(NodeNum):
+            pPreRoute[i].dInFlux = pRoute[i].dInFlux
+            pPreRoute[i].dOutFlux = pRoute[i].dOutFlux
+            pRoute[i].bCal = False
+        return bret
+
+    # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    # +                                                        +
+    # +                    河道Muskingum汇流2 +
+    # +                                                        +
+    # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    # +          单栅格运动波汇流处理, 计算栅格出流 +
+    # +            河道和坡面的运动波汇流分别计算 +
+    # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
+
+    def RiverRoutingOut(self, deltaT, dInFlux1, dInFlux2, dOutFlux1, x, k):
+        dOutFlux2 = 0.
+        self.Muskingum = CMuskingum()
+        self.Muskingum.SetRoutingPara(deltaT, dInFlux1, dInFlux2, dOutFlux1, x, k)
+        dOutFlux2 = self.Muskingum.RoutingOutQ()
+
+        return dOutFlux2
+
+    # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    # +                                                        +
+    # +                滞时演算法计算汇流(子流域) +
+    # +                                                        +
+    # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
+    def PureLagGridRouting_Node(self, GridQ, pRoute, dTlen, QType, curorder, totorder, snowfactor, WaterYrType):
+        LagOrder = 0
+        LagTime = 0
+        dGridOut = 0.
+        subID = 0
+        dSurfQLoss = 0.
+        if WaterYearType == util.defines.WATER_HIGH_YEAR:
+            dSurfQLoss = util.config.HighWaterSurfQLoss
+        elif WaterYearType == util.defines.WATER_MID_YEAR:
+            dSurfQLoss = util.config.MidWaterSurfQLoss
+        elif WaterYearType == util.defines.WATER_LOW_YEAR:
+            dSurfQLoss = util.config.LowWaterSurfQLoss
+        else:
+            dSurfQLoss = util.config.LowWaterSurfQLoss
+
+        for i in range(self.m_row):
+            for j in range(self.m_col):
+                if self.g_BasinBoundary.data[i][j] == 1.:
+                    subID = int(self.g_SubWaterShed.data[i][j] - 1)
+                    if QType == util.defines.RUNOFF_ELEMENT_SURFQ:
+                        LagTime = int(self.g_RouteSurfQTime[i][j] / dTlen)
+                        LagOrder = int(curorder + LagTime)
+                        if LagOrder < int(totorder):
+                            if self.g_RouteSurfQTime.data[i][j] <= 0:
+                                self.g_RouteSurfQTime.data[i][j] = 0.1
+                                dGridOut = snowfactor * GridQ[i][j] / (
+                                dSurfQLoss * math.pow(self.g_RouteSurfQTime.data[i][j], 1))
+                                pRoute[LagOrder][subID] += dGridOut
+                    elif QType == util.defines.RUNOFF_ELEMENT_LATERALQ:
+                        LagTime = int(self.g_RouteLatQTime[i][j] / dTlen)
+                        LagOrder = int(curorder + LagTime)
+                        if LagOrder < int(totorder):
+                            if self.g_RouteLatQTime.data[i][j] <= 0:
+                                self.g_RouteLatQTime.data[i][j] = 0.1
+                                dGridOut = snowfactor * GridQ[i][j] / (
+                                util.config.LatQLoss * math.pow(self.g_RouteLatQTime.data[i][j], 1))
+                                pRoute[LagOrder][subID] += dGridOut
+                    elif QType == util.defines.RUNOFF_ELEMENT_BASEQ:
+                        LagTime = int(self.g_RouteBaseQTime[i][j] / dTlen)
+                        LagOrder = int(curorder + LagTime)
+                        if LagOrder < int(totorder):
+                            if self.g_RouteBaseQTime.data[i][j] <= 0:
+                                self.g_RouteBaseQTime.data[i][j] = 0.1
+                                dGridOut = snowfactor * GridQ[i][j] / (
+                                util.config.LatQLoss * math.pow(self.g_RouteBaseQTime.data[i][j], 1))
+                                pRoute[LagOrder][subID] += dGridOut
+                    else:
+                        return False
+        return True
+
+    # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    # +                                                        +
+    # +                滞时演算法计算汇流(全流域) +
+    # +                                                        +
+    # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
+    def PureLagGridRouting(self, GridQ, pRoute, dTlen, QType, curorder, totorder, snowfactor, WaterYrType):
+        LagOrder = 0
+        LagTime = 0
+        dGridOut = 0.
+        dSurfQLoss = 0.
+        if WaterYearType == util.defines.WATER_HIGH_YEAR:
+            dSurfQLoss = util.config.HighWaterSurfQLoss
+        elif WaterYearType == util.defines.WATER_MID_YEAR:
+            dSurfQLoss = util.config.MidWaterSurfQLoss
+        elif WaterYearType == util.defines.WATER_LOW_YEAR:
+            dSurfQLoss = util.config.LowWaterSurfQLoss
+        else:
+            dSurfQLoss = util.config.LowWaterSurfQLoss
+
+        for i in range(self.m_row):
+            for j in range(self.m_col):
+                if self.IfGridBeCalculated(i, j):
+                    if QType == util.defines.RUNOFF_ELEMENT_SURFQ:
+                        LagTime = int(self.g_RouteSurfQTime.data[i][j] / dTlen)
+                        LagOrder = int(curorder + LagTime)
+                        if LagOrder < int(totorder):
+                            dGridOut = snowfactor * GridQ[i][j] / (
+                                dSurfQLoss * math.pow(self.g_RouteSurfQTime.data[i][j], 1))
+                            pRoute[int(LagOrder)] += dGridOut
+                    elif QType == util.defines.RUNOFF_ELEMENT_LATERALQ:
+                        LagTime =  int(self.g_RouteLatQTime.data[i][j] / dTlen)
+                        LagOrder = int(curorder + LagTime)
+                        if LagOrder < totorder:
+                            dGridOut = snowfactor * GridQ[i][j] / (
+                                util.config.LatQLoss * math.pow(self.g_RouteLatQTime.data[i][j], 1))
+                            pRoute[LagOrder] += dGridOut
+                    elif QType == util.defines.RUNOFF_ELEMENT_BASEQ:
+                        LagTime =  int(self.g_RouteBaseQTime.data[i][j] / dTlen)
+                        LagOrder = int(curorder + LagTime)
+                        if LagOrder < totorder:
+                            dGridOut = snowfactor * GridQ[i][j] / (
+                                util.config.BaseQLoss * math.pow(self.g_RouteBaseQTime.data[i][j], 1))
+                            pRoute[LagOrder] += dGridOut
+                    else:
+                        return False
+
+        return True
 
 
     # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -377,20 +671,20 @@ class CHydroSimulate:
     def ReadWaterYearType(self):
         waterYearTypeFile = util.config.workSpace + os.sep + 'DEM' + os.sep + util.config.WaterYearTypeFile
         if os.path.exists(waterYearTypeFile):
-            self.wytype = []
+            self.wytype = None
             wytypeFile = open(waterYearTypeFile, 'r')
             wytypeLines = wytypeFile.readlines()
             wytypeFile.close()
 
+            wyTypeTemps = []
             for i in range(len(wytypeLines)):
                 wyTypeTemp = WaterYearType()
 
-                wyTypeTemp.year = \
-                wytypeLines[i].rstrip(util.defines.CHAR_SPLIT_ENTER).split(util.defines.CHAR_SPLIT_TAB)[0]
-                wyTypeTemp.wtype = \
-                wytypeLines[i].rstrip(util.defines.CHAR_SPLIT_ENTER).split(util.defines.CHAR_SPLIT_TAB)[1]
+                wyTypeTemp.year = int(wytypeLines[i].rstrip(util.defines.CHAR_SPLIT_ENTER).split(util.defines.CHAR_SPLIT_TAB)[0])
+                wyTypeTemp.wtype = int(wytypeLines[i].rstrip(util.defines.CHAR_SPLIT_ENTER).split(util.defines.CHAR_SPLIT_TAB)[1])
+                wyTypeTemps.append((wyTypeTemp.year, wyTypeTemp.wtype))
+            self.wytype = dict(wyTypeTemps)
 
-                self.wytype.append(wyTypeTemp)
             return True
 
         else:
@@ -417,7 +711,6 @@ class CHydroSimulate:
         self.m_col = self.g_DemLayer.nCols
 
         self.pGridSoilInfo_SP_Sw = numpy.empty((self.m_row, self.m_col))
-
         self.pGridSoilInfo_SP_Wp = numpy.empty((self.m_row, self.m_col))
         self.pGridSoilInfo_SP_WFCS = numpy.empty((self.m_row, self.m_col))
         self.pGridSoilInfo_SP_Sat_K = numpy.empty((self.m_row, self.m_col))
@@ -450,7 +743,6 @@ class CHydroSimulate:
         self.m_GridRoutingQ = numpy.empty((self.m_row, self.m_col))
         self.m_NetPcp = numpy.empty((self.m_row, self.m_col))
 
-        t = 0
         for i in range(self.m_row):
             for j in range(self.m_col):
                 if (i * self.m_row + j + 1) % int(self.m_row * self.m_col / 10) == 0:
@@ -464,7 +756,6 @@ class CHydroSimulate:
                     self.m_iSoilOrd = int(self.g_SoilLayer.data[i][j])
                     soilTemp.ReadSoilFile(self.soilTypeName[str(int(self.m_iSoilOrd))] + '.sol')
                     self.pGridSoilInfo_SP_Sw[i][j] = soilTemp.SP_Sw
-
                     self.pGridSoilInfo_SP_Wp[i][j] = soilTemp.SP_Wp
                     self.pGridSoilInfo_SP_WFCS[i][j] = soilTemp.SP_WFCS
                     self.pGridSoilInfo_SP_Sat_K[i][j] = soilTemp.SP_Sat_K
@@ -477,17 +768,14 @@ class CHydroSimulate:
                     self.pGridSoilInfo_SP_Sat[i][j] = soilTemp.SP_Sat
                     self.pGridSoilInfo_TPercolation[i][j] = (soilTemp.SP_Sat - soilTemp.SP_Fc) / (soilTemp.SP_Sat_K)
                     self.pGridSoilInfo_SP_Temp[i][j] = 0.
-                    e_soil = time.clock()
-                    t = t + e_soil - s_soil
-                    # print("GetSoilTypeOrder time: %.6f" % t)
 
                     vegTemp = VegInfo(self.vegTypeName)
                     self.m_iVegOrd = self.g_VegLayer.data[i][j]
                     vegTemp.ReadVegFile(self.vegTypeName[str(int(self.m_iVegOrd))] + '.veg')
 
-                    self.pGridVegInfo[i][j] = vegTemp
         e = time.clock()
         print('\nFinished Load grid parameters：%.3f' % (e - s))
+
 
     def GridLayerInit_Horton(self):
         self.m_AET = numpy.empty((self.m_row, self.m_col))

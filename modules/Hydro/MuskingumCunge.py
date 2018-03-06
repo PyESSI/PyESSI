@@ -18,6 +18,8 @@ Class:
 """
 
 # load needed python modules
+
+import util.config
 import util.defines
 
 
