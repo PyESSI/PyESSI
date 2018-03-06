@@ -18,9 +18,7 @@ Class:
 import numpy
 import util.config
 import util.defines
-
 from util.fileIO import *
-
 from modules.Hydro.Hydro import *
 from util.dateTime import *
 from modules.Hydro.SoilPara import *
