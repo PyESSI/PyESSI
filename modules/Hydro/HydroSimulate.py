@@ -141,8 +141,6 @@ class CHydroSimulate:
         midOutEdate = util.config.strOutEDate
         self.middaily = dailyRange(midOutBdate, midOutEdate)
 
-
-
         totrec = dayCount
         self.m_pOutletQ = numpy.zeros(totrec)
         self.m_pOutletSurfQ = numpy.zeros(totrec)
@@ -299,7 +297,7 @@ class CHydroSimulate:
                         if self.m_GridSurfQ[row][col] < 0:
                             self.m_GridSurfQ[row][col] = 0.
                         if self.m_GridSurfQ[row][col] > 1e+10:
-                            print("hello")
+                            print('hello')
                         self.m_GridLateralQ[row][col] = 0.
                         self.m_GridBaseQ[row][col] = 0.
                         self.m_GridTotalQ[row][col] = self.m_GridSurfQ[row][col]
@@ -359,8 +357,7 @@ class CHydroSimulate:
             if self.m_iNodeNum == 1 or util.config.RiverRouteMethod == util.defines.ROUTE_PURE_LAG:
                 self.m_pOutletSurfQ = self.PureLagGridRouting(self.m_GridSurfQ, self.m_pOutletSurfQ, dhr, util.defines.RUNOFF_ELEMENT_SURFQ,
                                         curorder, totrec, dsnowfactor, self.wytype[int(theDay[0:4])])
-                self.m_pOutletLatQ = self.PureLagGridRouting(self.m_GridLateralQ, self.m_pOutletLatQ, dhr,
-                                        util.defines.RUNOFF_ELEMENT_LATERALQ,
+                self.m_pOutletLatQ = self.PureLagGridRouting(self.m_GridLateralQ, self.m_pOutletLatQ, dhr, util.defines.RUNOFF_ELEMENT_LATERALQ,
                                         curorder, totrec, dsnowfactor, self.wytype[int(theDay[0:4])])
                 self.m_pOutletBaseQ = self.PureLagGridRouting(self.m_GridBaseQ, self.m_pOutletBaseQ, dhr, util.defines.RUNOFF_ELEMENT_BASEQ,
                                         curorder, totrec, dsnowfactor, self.wytype[int(theDay[0:4])])
@@ -369,13 +366,13 @@ class CHydroSimulate:
                                             self.m_pOutletLatQ[curorder] + self.m_pOutletBaseQ[curorder] + \
                                             self.m_pOutletDeepBaseQ[curorder]
             else:
-                self.PureLagGridRouting_Node(self.m_GridSurfQ, self.m_pNodeSurfQ, dhr,
+                self.m_pNodeSurfQ = self.PureLagGridRouting_Node(self.m_GridSurfQ, self.m_pNodeSurfQ, dhr,
                                              util.defines.RUNOFF_ELEMENT_SURFQ,
                                              curorder, totrec, dsnowfactor, self.wytype[int(theDay[0:4])])
-                self.PureLagGridRouting_Node(self.m_GridLateralQ, self.m_pNodeLatQ, dhr,
+                self.m_pNodeLatQ = self.PureLagGridRouting_Node(self.m_GridLateralQ, self.m_pNodeLatQ, dhr,
                                              util.defines.RUNOFF_ELEMENT_LATERALQ,
                                              curorder, totrec, dsnowfactor, self.wytype[int(theDay[0:4])])
-                self.PureLagGridRouting_Node(self.m_GridBaseQ, self.m_pNodeBaseQ, dhr,
+                self.m_pNodeBaseQ = self.PureLagGridRouting_Node(self.m_GridBaseQ, self.m_pNodeBaseQ, dhr,
                                              util.defines.RUNOFF_ELEMENT_BASEQ,
                                              curorder, totrec, dsnowfactor, self.wytype[int(theDay[0:4])])
 
@@ -396,7 +393,7 @@ class CHydroSimulate:
                     for i in range(self.m_subNum):
                         self.m_pNodeOutQ[curorder][i] = self.m_pNodeSurfQ[curorder][i] * util.config.SurfQLinearFactor + \
                                                         self.m_pNodeLatQ[curorder][i] + self.m_pNodeBaseQ[curorder][i]
-                    self.MuskingumRiverRouting(24, self.m_pNodeOutQ, self.pRiverRoute.pRoute,
+                        self.pRiverRoute.pRoute, self.pRiverRoute.pPreRoute = self.MuskingumRiverRouting(24, self.m_pNodeOutQ, self.pRiverRoute.pRoute,
                                                self.pRiverRoute.pPreRoute, self.m_pX, self.m_pK, self.m_subNum,
                                                curorder)
                     self.m_pOutletQ[curorder] = self.pRiverRoute.pRoute[self.m_subNum - 1].dOutFlux + \
@@ -507,7 +504,6 @@ class CHydroSimulate:
     # +                        先合后演 +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     def MuskingumRiverRouting(self, dTLen, pNodeQ, pRoute, pPreRoute, pX, pK, NodeNum, curOrder):
-        bret = True
         for i in range(NodeNum):
             QOut = 0.
             if i == 0:
@@ -522,7 +518,7 @@ class CHydroSimulate:
             pPreRoute[i].dInFlux = pRoute[i].dInFlux
             pPreRoute[i].dOutFlux = pRoute[i].dOutFlux
             pRoute[i].bCal = False
-        return bret
+        return pRoute, pPreRoute
 
     # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +                                                        +
@@ -594,7 +590,7 @@ class CHydroSimulate:
                                 pRoute[LagOrder][subID] += dGridOut
                     else:
                         return False
-        return True
+        return pRoute
 
     # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +                                                        +
@@ -639,6 +635,7 @@ class CHydroSimulate:
                             dGridOut = snowfactor * GridQ[i][j] / (
                                 util.config.BaseQLoss * math.pow(self.g_RouteBaseQTime.data[i][j], 1))
                             pRoute[LagOrder] += dGridOut
+
                     else:
                         return False
 
@@ -662,7 +659,7 @@ class CHydroSimulate:
             return dret
         else:
             dret = (dmin + 3 * dmin) / 2. + (3 * dmin - dmin) / 2 * sin(2 * math.pi * (dn - 82) / 365)
-            return dret
+        return dret
 
     def GetVegAlbedo(self, mon, day=1):
         dret = 0.23

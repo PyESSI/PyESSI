@@ -287,6 +287,7 @@ class CGridWaterBalance:
     # +                                                        +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     def CalcRunoffElement(self):
+        iret = 0
         pGridSoilInfo = SoilInfo(self.soilTypename)
         pGridSoilInfo.ReadSoilFile(pGridSoilInfo.soilTypename[str(int(self.m_Soil))] + '.sol')
         dthet = pGridSoilInfo.SoilWaterDeficitContent()
