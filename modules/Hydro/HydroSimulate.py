@@ -752,7 +752,6 @@ class CHydroSimulate:
                 if not self.IfGridBeCalculated(i, j):
                     continue
                 if self.GetSoilTypeOrder(int(self.g_SoilLayer.data[i][j])):
-                    s_soil = time.clock()
                     soilTemp = SoilInfo(self.soilTypeName)
                     self.m_iSoilOrd = int(self.g_SoilLayer.data[i][j])
                     soilTemp.ReadSoilFile(self.soilTypeName[str(int(self.m_iSoilOrd))] + '.sol')
@@ -774,7 +773,6 @@ class CHydroSimulate:
                     self.m_iVegOrd = self.g_VegLayer.data[i][j]
                     vegTemp.ReadVegFile(self.vegTypeName[str(int(self.m_iVegOrd))] + '.veg')
                     self.pGridVegInfo[i][j] = vegTemp
-
 
         e = time.clock()
         print('\nFinished Load grid parameters：%.3f' % (e - s))
