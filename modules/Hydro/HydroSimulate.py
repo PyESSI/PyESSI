@@ -16,11 +16,10 @@ Class:
 
 # load needed python modules
 import numpy
+import time
 import util.config
 import util.defines
-
 from util.fileIO import *
-
 from modules.Hydro.Hydro import *
 from util.dateTime import *
 from modules.Hydro.SoilPara import *
@@ -85,7 +84,8 @@ class CHydroSimulate:
     # +                                                        +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     def LongTermRunoffSimulate(self):
-        print('LongTermRunoffSimulate')
+        print('[LongTermRunoffSimulate]')
+        CreateForld(util.config.workSpace + os.sep + "Output")
         if util.config.SurfRouteMethod == util.defines.ROUTE_MUSK_CONGE:
             if not self.ReadInRoutingPara():
                 raise Exception('Read In Routing Para!', self.ReadInRoutingPara)
@@ -100,6 +100,27 @@ class CHydroSimulate:
                 self.MuskRouteInit(self.m_iNodeNum)
 
         # 加载土壤、植被和DEM图层
+        SoilTypeTXT = util.config.workSpace + os.sep + 'LookupTable' + os.sep + 'SoilType.txt'
+        LulcTypeTXT = util.config.workSpace + os.sep + 'LookupTable' + os.sep + 'LulcType.txt'
+        if os.path.exists(SoilTypeTXT):
+            soilIdName = []
+            soilTypeInfos = open(SoilTypeTXT, 'r').readlines()
+            for i in range(len(soilTypeInfos)):
+                soilIdName.append((soilTypeInfos[i].split('\n')[0].split('\t')[0].strip(),
+                                   soilTypeInfos[i].split('\n')[0].split('\t')[1].strip()))
+            self.soilTypeName = dict(soilIdName)
+        else:
+            raise Exception("Can not find SoilType.txt")
+        if os.path.exists(LulcTypeTXT):
+            vegIdName = []
+            vegTypeInfos = open(LulcTypeTXT, 'r').readlines()
+            for i in range(len(vegTypeInfos)):
+                vegIdName.append((vegTypeInfos[i].split('\n')[0].split('\t')[0].strip(),
+                                  vegTypeInfos[i].split('\n')[0].split('\t')[1].strip()))
+            self.vegTypeName = dict(vegIdName)
+        else:
+            raise Exception("Can not find LulcType.txt")
+
         self.gridLayerInit()
         self.GridMemFreeAndNew()
         self.GridLayerInit_LongTerm()
@@ -107,6 +128,7 @@ class CHydroSimulate:
 
         self.m_SnowWater = numpy.zeros([self.m_row, self.m_col])
 
+        # 设置日期
         startDay = util.config.startTime
         endDay = util.config.endTime
 
@@ -151,7 +173,8 @@ class CHydroSimulate:
 
         ##水文过程循环
         for theDay in daily:
-            print('Calculating ' + theDay)
+            print('Calculating %s\t' % theDay, end='')
+            s_long = time.clock()
             iMonth = int(theDay[4:6])
 
             iniDateTemp = datetime.date(int(theDay[0:4]), 1, 1)
@@ -218,6 +241,9 @@ class CHydroSimulate:
 
             for row in range(self.m_row):
                 for col in range(self.m_col):
+                    if (row * self.m_row + col + 1) % int(self.m_row * self.m_col / 10) == 0:
+                        print("•", end='')
+                        sys.stdout.flush()
 
                     if not self.IfGridBeCalculated(row, col):
                         continue
@@ -245,20 +271,22 @@ class CHydroSimulate:
                     dhrIntensity = util.config.DailyMeanPcpTime
 
                     dintensity = curPcp[row][col] / dhrIntensity
-                    self.HortonInfil.SetGridPara(row, col, self.pGridSoilInfo_SP_Sw[row][col], 0.03)
+
+                    self.HortonInfil.SetGridPara(row, col, self.pGridSoilInfo_SP_Sw[row][col], 0.03,
+                                                 self.g_SoilLayer.data[row][col], self.soilTypeName)
 
                     self.HortonInfil.HortonExcessRunoff()
                     self.m_drateinf[row][col] = self.HortonInfil.m_dFt
 
-                    pGridSoilInfo = SoilInfo()
-                    pGridSoilInfo.ReadSoilFile(GetSoilTypeName(int(self.g_SoilLayer.data[row][col])) + '.sol')
+                    pGridSoilInfo = SoilInfo(self.soilTypeName)
+                    pGridSoilInfo.ReadSoilFile(self.soilTypeName[str(int(self.g_SoilLayer.data[row][col]))] + '.sol')
                     dthet = pGridSoilInfo.SoilWaterDeficitContent()
 
                     self.gridwb = CGridWaterBalance(self.g_DemLayer.data[row][col], self.g_SoilLayer.data[row][col],
                                                     self.g_VegLayer.data[row][col],
                                                     curPet[row][col], curPcp[row][col], curTmpmean[row][col],
                                                     curTmpmx[row][col], curTmpmn[row][col], curSlr[row][col],
-                                                    curHmd[row][col], curWnd[row][col])
+                                                    curHmd[row][col], curWnd[row][col], self.soilTypeName, self.vegTypeName)
 
                     self.gridwb.SetGridPara(dintensity, self.m_drateinf[row][col], i, j, dhrIntensity, theDay)
 
@@ -325,6 +353,7 @@ class CHydroSimulate:
 
                         if self.m_GridSurfQ[row][col] > 1e+10:
                             print("hello2")
+
 
             if self.m_iNodeNum == 1 or util.config.RiverRouteMethod == util.defines.ROUTE_PURE_LAG:
                 self.PureLagGridRouting(self.m_GridSurfQ, self.m_pOutletSurfQ, dhr, util.defines.RUNOFF_ELEMENT_SURFQ,
@@ -608,7 +637,9 @@ class CHydroSimulate:
                             pRoute[LagOrder] += dGridOut
                     else:
                         return False
+
         return True
+
 
     # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +                                                        +
@@ -617,7 +648,6 @@ class CHydroSimulate:
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
 
     def DDFSnowMelt(self, dtav, dtThresh, ddf, dtlen=24.0):
-        dret = 0.
         dret = ddf * (dtav - dtThresh) * dtlen
         return dret
 
@@ -633,8 +663,8 @@ class CHydroSimulate:
     def GetVegAlbedo(self, mon, day=1):
         dret = 0.23
         if mon >= 1 or mon <= 12:
-            vegTemp = VegInfo()
-            vegTemp.ReadVegFile(GetVegTypeName(int(self.m_iVegOrd)) + '.veg')
+            vegTemp = VegInfo(self.vegTypeName)
+            vegTemp.ReadVegFile(self.vegTypeName[str(int(self.m_iVegOrd))] + '.veg')
             dret = vegTemp.Albedo[mon - 1]
         return dret
 
@@ -654,13 +684,20 @@ class CHydroSimulate:
                 wyTypeTemp.wtype = int(wytypeLines[i].rstrip(util.defines.CHAR_SPLIT_ENTER).split(util.defines.CHAR_SPLIT_TAB)[1])
                 wyTypeTemps.append((wyTypeTemp.year, wyTypeTemp.wtype))
             self.wytype = dict(wyTypeTemps)
+
             return True
 
         else:
             return False
 
-    # 加载栅格参数
     def gridLayerInit(self):
+        '''
+        加载栅格参数
+        :return:
+        '''
+        print("Loading grid parameters...")
+        s = time.clock()
+
         DEMFolder = util.config.workSpace + os.sep + "DEM"
         DEMFile = DEMFolder + os.sep + util.config.DEMFileName
         LULCFile = DEMFolder + os.sep + util.config.LULCFileName
@@ -708,12 +745,16 @@ class CHydroSimulate:
 
         for i in range(self.m_row):
             for j in range(self.m_col):
+                if (i * self.m_row + j + 1) % int(self.m_row * self.m_col / 10) == 0:
+                    print("▋", end='')
+                    sys.stdout.flush()
                 if not self.IfGridBeCalculated(i, j):
                     continue
                 if self.GetSoilTypeOrder(int(self.g_SoilLayer.data[i][j])):
-                    soilTemp = SoilInfo()
+                    s_soil = time.clock()
+                    soilTemp = SoilInfo(self.soilTypeName)
                     self.m_iSoilOrd = int(self.g_SoilLayer.data[i][j])
-                    soilTemp.ReadSoilFile(GetSoilTypeName(int(self.m_iSoilOrd)) + '.sol')
+                    soilTemp.ReadSoilFile(self.soilTypeName[str(int(self.m_iSoilOrd))] + '.sol')
                     self.pGridSoilInfo_SP_Sw[i][j] = soilTemp.SP_Sw
                     self.pGridSoilInfo_SP_Wp[i][j] = soilTemp.SP_Wp
                     self.pGridSoilInfo_SP_WFCS[i][j] = soilTemp.SP_WFCS
@@ -728,12 +769,13 @@ class CHydroSimulate:
                     self.pGridSoilInfo_TPercolation[i][j] = (soilTemp.SP_Sat - soilTemp.SP_Fc) / (soilTemp.SP_Sat_K)
                     self.pGridSoilInfo_SP_Temp[i][j] = 0.
 
-                    vegTemp = VegInfo()
+                    vegTemp = VegInfo(self.vegTypeName)
                     self.m_iVegOrd = self.g_VegLayer.data[i][j]
-                    vegTemp.ReadVegFile(GetVegTypeName(int(self.m_iVegOrd)) + '.veg')
+                    vegTemp.ReadVegFile(self.vegTypeName[str(int(self.m_iVegOrd))] + '.veg')
 
-                    self.pGridVegInfo[i][j] = vegTemp
-        print('Gridlayer loaded')
+        e = time.clock()
+        print('\nFinished Load grid parameters：%.3f' % (e - s))
+
 
     def GridLayerInit_Horton(self):
         self.m_AET = numpy.empty((self.m_row, self.m_col))
@@ -814,7 +856,7 @@ class CHydroSimulate:
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     def GetSoilTypeOrder(self, sid):
         bret = False
-        soilname = GetSoilTypeName(int(sid))
+        soilname = self.soilTypeName[str(sid)]
         self.m_iSoilOrd = sid
         if soilname:
             bret = True
@@ -869,7 +911,7 @@ class CHydroSimulate:
             self.RoutePara.pCol = []
 
             for i in range(num):
-                if i % int(num / 100) == 0:
+                if i % int((num + 1) / 10) == 0:
                     print("▋", end='')
                     sys.stdout.flush()
 

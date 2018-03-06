@@ -12,8 +12,8 @@ Functions:
 
 #pyESSI Project Setup
 #[ProjectSetup]
+workSpace = r'D:\GaohrWS\DoctorWorks\DoctorWork\PyESSI\DCBAM'
 # workSpace = r'D:\pyESSITest\DCBAM'
-workSpace = r'D:\pyESSITest\DCBAM'
 mpiexeDir = r'"C:\Program Files\Microsoft MPI\Bin"'
 exeDir = None
 startTime = '19960101'  # 模拟起始日期

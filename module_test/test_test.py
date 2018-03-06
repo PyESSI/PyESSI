@@ -3,21 +3,26 @@ import os
 import time
 
 import numpy
-
-
 class A():
-    pass
+    def __init__(self):
+        self.a = 1
+        self.b = 1
+        self.c = 1
+        self.d = 1
+        self.e = 1
+        self.f = 1
+        self.g = 1
 
 
-a = []
-for i in range(2):
-    for j in range(3):
-        a.append(A)
+s = time.time()
+arr = []
+for i in range(5):
+        arr.append((i, A))
+e = time.time()
 
-# print(a)
-arr = numpy.array(a)
-arr = arr.reshape(2,3)
-# arr = list(a[0])
+ad = dict(arr)
+print(ad[3].c)
 
-print(arr)
+print("time: %.3f" % (e - s))
+
 

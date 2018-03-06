@@ -23,7 +23,6 @@ import util.config
 import util.defines
 
 
-
 class CMuskingumCunge:
     def SetRoutingPara(self, Vflow, dSlp, deltaX, deltaT, riverType, Q11, Q12, Q21, dq, dB, x, k):
         '''
