@@ -72,10 +72,12 @@ class CHortonInfil:
         dt0 = self.m_dPreSoilW / self.m_dF0
         dtmpsw = self.DTempSoilW(dt0)
         dthet = math.fabs(self.m_dPreSoilW - dtmpsw)
+        dt = 0.
         num = 0
 
         self.m_dFt = self.m_dF0 - self.m_dK * (dtmpsw - self.m_dFc * dt0)
-        dt0 += dthet / self.m_dFt
+        dt = dthet / self.m_dFt
+        dt0 = dt0 + dt
         dtmpsw = self.DTempSoilW(dt0)
         dthet = math.fabs(self.m_dPreSoilW - dtmpsw)
         num += 1
@@ -84,7 +86,8 @@ class CHortonInfil:
             if num > 500:
                 break
             self.m_dFt = self.m_dF0 - self.m_dK * (dtmpsw - self.m_dFc * dt0)
-            dt0 += dthet / self.m_dFt
+            dt = dthet / self.m_dFt
+            dt0 = dt0 + dt
             dtmpsw = self.DTempSoilW(dt0)
             dthet = math.fabs(self.m_dPreSoilW - dtmpsw)
             num += 1

@@ -538,27 +538,27 @@ class CHydroSimulate:
                         if LagOrder < int(totorder):
                             if self.g_RouteSurfQTime.data[i][j] <= 0:
                                 self.g_RouteSurfQTime.data[i][j] = 0.1
-                                dGridOut = snowfactor * GridQ[i][j] / (
-                                    dSurfQLoss * math.pow(self.g_RouteSurfQTime.data[i][j], 1))
-                                pRoute[LagOrder][subID] += dGridOut
+                            dGridOut = snowfactor * GridQ[i][j] / (
+                                dSurfQLoss * math.pow(self.g_RouteSurfQTime.data[i][j], 1))
+                            pRoute[LagOrder][subID] += dGridOut
                     elif QType == util.defines.RUNOFF_ELEMENT_LATERALQ:
                         LagTime = int(self.g_RouteLatQTime[i][j] / dTlen)
                         LagOrder = int(curorder + LagTime)
                         if LagOrder < int(totorder):
                             if self.g_RouteLatQTime.data[i][j] <= 0:
                                 self.g_RouteLatQTime.data[i][j] = 0.1
-                                dGridOut = snowfactor * GridQ[i][j] / (
-                                    util.config.LatQLoss * math.pow(self.g_RouteLatQTime.data[i][j], 1))
-                                pRoute[LagOrder][subID] += dGridOut
+                            dGridOut = snowfactor * GridQ[i][j] / (
+                                util.config.LatQLoss * math.pow(self.g_RouteLatQTime.data[i][j], 1))
+                            pRoute[LagOrder][subID] += dGridOut
                     elif QType == util.defines.RUNOFF_ELEMENT_BASEQ:
                         LagTime = int(self.g_RouteBaseQTime[i][j] / dTlen)
                         LagOrder = int(curorder + LagTime)
                         if LagOrder < int(totorder):
                             if self.g_RouteBaseQTime.data[i][j] <= 0:
                                 self.g_RouteBaseQTime.data[i][j] = 0.1
-                                dGridOut = snowfactor * GridQ[i][j] / (
-                                    util.config.LatQLoss * math.pow(self.g_RouteBaseQTime.data[i][j], 1))
-                                pRoute[LagOrder][subID] += dGridOut
+                            dGridOut = snowfactor * GridQ[i][j] / (
+                                util.config.LatQLoss * math.pow(self.g_RouteBaseQTime.data[i][j], 1))
+                            pRoute[LagOrder][subID] += dGridOut
                     else:
                         return False
         return pRoute

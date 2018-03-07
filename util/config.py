@@ -12,19 +12,19 @@ Functions:
 
 #pyESSI Project Setup
 #[ProjectSetup]
-workSpace = r'D:\GaohrWS\DoctorWorks\DoctorWork\PyESSI\DCBAM'
-# workSpace = r'D:\pyESSITest\DCBAM'
+# workSpace = r'D:\GaohrWS\DoctorWorks\DoctorWork\PyESSI\DCBAM'
+workSpace = r'D:\pyESSITest\SRB\DCBAM'
 mpiexeDir = r'"C:\Program Files\Microsoft MPI\Bin"'
 exeDir = None
-startTime = '19960101'  # 模拟起始日期
-endTime = '20001231'  # 模拟结束日期
+startTime = '20080701'  # 模拟起始日期
+endTime = '20080703'  # 模拟结束日期
 
 # pyESSI GridIO File
 # [GridIO]
-DEMFileName = 'YLXDem240.tif'  # 原始DEM文件名
+DEMFileName = 'srb10kmbuffer1km.tif'  # 原始DEM文件名
 # DEMFileName = 'dem.tif'
-LULCFileName = 'YLXLulc240.tif'  # LULC文件名
-SoilFileName = 'YLXSoil240.tif'  # Soil文件名
+LULCFileName = 'srb10kmbuffer_modislulc1km.tif'  # LULC文件名
+SoilFileName = 'srb10kmbuffer_soil1km.tif'  # Soil文件名
 outlet = "outlet.shp"  # 出水口shpfile
 
 # PyESSI Model Running Parameters
@@ -84,8 +84,8 @@ petdata = 1  # 潜在蒸散发数据
 
 # PyESSI Model MidGridOut Parameters
 # [MidGridOut]
-strOutBDate = '19960101'  # 中间结果输出起始日期
-strOutEDate = '20001231'  # 中间结果输出结束日期
+strOutBDate = '20080701'  # 中间结果输出起始日期
+strOutEDate = '20080703'  # 中间结果输出结束日期
 iPcp = 0  # 降雨量
 iTempMax = 0  # 最高气温
 iTempMin = 0  # 最低气温
@@ -94,14 +94,14 @@ iSlr = 0  # 太阳辐射
 iHmd = 0  # 相对湿度
 iWnd = 0  # 平均风速
 iPET = 0  # 潜在蒸散量
-iAET = 1  # 实际蒸散量
+iAET = 0  # 实际蒸散量
 iCI = 0  # 冠层截留
 iSnowWater = 0  # 雪水当量
 iAI = 0  # 干旱指数
 iRouteOut = 0  # 栅格汇流演算结果
 iSurfQ = 1  # 时段地表径流
-iLatQ = 0  # 时段壤中径流
-iBaseQ = 0  # 时段地下径流
+iLatQ = 1  # 时段壤中径流
+iBaseQ = 1  # 时段地下径流
 iInfilRate = 0  # 时段土壤下渗率
 iWaterYieldType = 1  # 栅格产流类型
 iProfileSoilWater = 0  # 土层剖面含水量
