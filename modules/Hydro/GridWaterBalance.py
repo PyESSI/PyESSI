@@ -35,6 +35,7 @@ from modules.Climate.PETInPristley import *
 from modules.Climate.PETInHargreaves import *
 from modules.Climate.PETInBeDruin import *
 from modules.Climate.PETInFAOPM import *
+from modules.Hydro.Hydro import gSoil_GridLayerPara, gVeg_GridLayerPara
 
 
 
@@ -57,7 +58,7 @@ from modules.Climate.PETInFAOPM import *
 # +														+
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 class CGridWaterBalance:
-    def __init__(self, stn, sfd, vtn, vfd):
+    def __init__(self):
         '''
         Set variance values
         :param soil: Soil type
@@ -67,18 +68,12 @@ class CGridWaterBalance:
         self.m_dGridLAI = 0.
         self.m_dRIntensity = 0.
 
-        self.soilTypename = stn
-        self.solFileDict = sfd
-        self.vegTypename = vtn
-        self.vegFileDict = vfd
-
-
     # /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +														+
     # +				功能：设置栅格计算参数					    +
     # +														+
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-    def SetGridPara(self, rint, dFp, year, dn, hr, curDate, elev, soil, veg, pet, pcp, tav, tmx, tmn, slr, hmd, wnd):
+    def SetGridPara(self, row, col, rint, dFp, year, dn, hr, curDate, elev, soil, veg, pet, pcp, tav, tmx, tmn, slr, hmd, wnd):
         '''
         :param curcol:
         :param rint:
@@ -88,6 +83,8 @@ class CGridWaterBalance:
         :param hr:
         :return:
         '''
+        self.currow = row
+        self.curcol = col
         self.m_dRIntensity = rint
         self.m_nYear = year
         self.m_nDn = dn
@@ -108,16 +105,16 @@ class CGridWaterBalance:
         self.m_hmd = hmd
         self.m_wnd = wnd
 
-        pGridSoilInfo = SoilInfo(self.soilTypename, self.solFileDict)
-        pGridSoilInfo.ReadSoilFile(pGridSoilInfo.soilTypename[str(int(self.m_Soil))] + '.sol')
-        self.m_dFc = pGridSoilInfo.SP_Stable_Fc
+        # pGridSoilInfo = SoilInfo(self.soilTypename, self.solFileDict)
+        # pGridSoilInfo.ReadSoilFile(pGridSoilInfo.soilTypename[str(int(self.m_Soil))] + '.sol')
+        self.m_dFc = gSoil_GridLayerPara["SP_Stable_Fc"][self.currow][self.curcol]
 
         if util.config.RunoffSimuType == util.defines.STORM_RUNOFF_SIMULATION:
             return
 
         self.m_nMon = int(curDate[4:6])
-        self.m_dGridLAI = self.DailyLai()
-        self.m_dGridCovDeg = self.DailyCoverDeg()
+        self.m_dGridLAI = self.DailyLai(self.currow, self.curcol)
+        self.m_dGridCovDeg = self.DailyCoverDeg(self.currow, self.curcol)
 
     # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +                                                        +
@@ -278,11 +275,26 @@ class CGridWaterBalance:
     # +            m_dFp - - 时段土壤下渗率；                    +
     # +                                                        +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
-    def CalcRunoffElement(self):
+    def CalcRunoffElement(self, row, col):
         iret = 0
-        pGridSoilInfo = SoilInfo(self.soilTypename, self.solFileDict)
-        pGridSoilInfo.ReadSoilFile(pGridSoilInfo.soilTypename[str(int(self.m_Soil))] + '.sol')
-        dthet = pGridSoilInfo.SoilWaterDeficitContent()
+        # pGridSoilInfo = SoilInfo(self.soilTypename, self.solFileDict)
+        # pGridSoilInfo.ReadSoilFile(pGridSoilInfo.soilTypename[str(int(self.m_Soil))] + '.sol')
+        # pGridSoilInfo.SP_Por = SP_Por
+        # pGridSoilInfo.rootdepth = rootdepth
+        # pGridSoilInfo.SP_Sw = SP_Sw
+        # pGridSoilInfo.SP_Fc = SP_Fc
+        # dthet = pGridSoilInfo.SoilWaterDeficitContent()
+        self.currow = row
+        self.curcol = col
+        self.SP_Por =  gSoil_GridLayerPara["SP_Por"][self.currow][self.curcol]
+        self.rootdepth = gSoil_GridLayerPara["rootdepth"][self.currow][self.curcol]
+        self.SP_Sw =  gSoil_GridLayerPara["SP_Sw"][self.currow][self.curcol]
+        self.SP_Wp =  gSoil_GridLayerPara["SP_Wp"][self.currow][self.curcol]
+        self.SP_Fc =  gSoil_GridLayerPara["SP_Fc"][self.currow][self.curcol]
+        self.SP_Init_F0 =  gSoil_GridLayerPara["SP_Init_F0"][self.currow][self.curcol]
+        self.TPercolation =  gSoil_GridLayerPara["TPercolation"][self.currow][self.curcol]
+
+        dthet = (1.0 - self.SP_Sw / self.SP_Fc) * self.SP_Por * self.rootdepth
         dPE = self.m_dNetRain - self.m_dAET
 
         dIFc = self.m_dRIntensity - self.m_dFc
@@ -356,30 +368,30 @@ class CGridWaterBalance:
                         self.m_dLateralQ = self.m_dTotalQ - self.m_dSurfQ - self.m_dBaseQ
                     iret = 8
 
-        pGridSoilInfo.SP_Sw += (dPE - self.m_dBaseQ - self.m_dSurfQ - self.m_dLateralQ)
-        if pGridSoilInfo.SP_Sw > pGridSoilInfo.SP_Wp:
+        self.SP_Sw += (dPE - self.m_dBaseQ - self.m_dSurfQ - self.m_dLateralQ)
+        if self.SP_Sw > self.SP_Wp:
             if iret == 3 or iret == 4 or iret == 7 or iret == 8:
-                dPerco = self.SWPercolation(pGridSoilInfo.SP_Sw, pGridSoilInfo.SP_Fc, self.m_dHr,
-                                            pGridSoilInfo.TPercolation)
+                dPerco = self.SWPercolation(self.SP_Sw, self.SP_Fc, self.m_dHr,
+                                            self.TPercolation)
                 if dPerco > 0:
-                    pGridSoilInfo.SP_Sw -= dPerco
+                    self.SP_Sw -= dPerco
                     self.m_dBaseQ += dPerco
 
                     dLatQ = dPerco * util.config.LatQOutFactor
                     self.m_dLateralQ += dLatQ
-                    pGridSoilInfo.SP_Sw -= dLatQ
+                    self.SP_Sw -= dLatQ
 
-            if pGridSoilInfo.SP_Sw > pGridSoilInfo.SP_Wp:
-                dRecharge = self.SWRecharge(pGridSoilInfo.SP_Sw, self.m_dHr, self.m_dFp, pGridSoilInfo.SP_Init_F0)
-                if dRecharge > pGridSoilInfo.SP_Sw - pGridSoilInfo.SP_Wp:
-                    dRecharge = pGridSoilInfo.SP_Sw - pGridSoilInfo.SP_Wp
-                self.dBaseQ = dRecharge * (1 - math.exp(-1 * (dRecharge / pGridSoilInfo.SP_Sw)))
+            if self.SP_Sw > self.SP_Wp:
+                dRecharge = self.SWRecharge(self.SP_Sw, self.m_dHr, self.m_dFp, self.SP_Init_F0)
+                if dRecharge > self.SP_Sw - self.SP_Wp:
+                    dRecharge = self.SP_Sw - self.SP_Wp
+                self.dBaseQ = dRecharge * (1 - math.exp(-1 * (dRecharge / self.SP_Sw)))
                 if self.dBaseQ < 0:
                     self.dBaseQ = 0.
                 self.m_dBaseQ += self.dBaseQ
-                pGridSoilInfo.SP_Sw -= self.dBaseQ
+                self.SP_Sw -= self.dBaseQ
         else:
-            pGridSoilInfo.SP_Sw = pGridSoilInfo.SP_Wp * 1.05
+            self.SP_Sw = self.SP_Wp * 1.05
 
         if self.m_dBaseQ < 0:
             print("计算的地下径流分量为负" + "GridWaterBalance")
@@ -387,6 +399,14 @@ class CGridWaterBalance:
             print("计算的地表径流分量为负" + "GridWaterBalance")
         if self.m_dLateralQ < 0:
             print("计算的壤中径流分量为负" + "GridWaterBalance")
+
+        gSoil_GridLayerPara["SP_Por"][self.currow][self.curcol] = self.SP_Por
+        gSoil_GridLayerPara["rootdepth"][self.currow][self.curcol] = self.rootdepth
+        gSoil_GridLayerPara["SP_Sw"][self.currow][self.curcol] = self.SP_Sw
+        gSoil_GridLayerPara["SP_Wp"][self.currow][self.curcol] = self.SP_Wp
+        gSoil_GridLayerPara["SP_Fc"][self.currow][self.curcol] = self.SP_Fc
+        gSoil_GridLayerPara["SP_Init_F0"][self.currow][self.curcol] = self.SP_Init_F0
+        gSoil_GridLayerPara["TPercolation"][self.currow][self.curcol] = self.TPercolation
 
         return iret
 
@@ -433,22 +453,22 @@ class CGridWaterBalance:
     # +                    功能：计算逐日LAI值                   +
     # +                                                        +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
-    def DailyLai(self):
+    def DailyLai(self, row, col):
+        self.currow = row
+        self.curcol = col
         dLai = 0.5
-        pGridVegInfo = VegInfo(self.vegTypename, self.vegFileDict)
-        pGridVegInfo.ReadVegFile(pGridVegInfo.vegTypename[str(int(self.m_Veg))] + '.veg')
 
         if util.config.DLAICalcMethod == util.defines.DAILY_LAI_CAL_SINE:
-            dmax = pGridVegInfo.LAIMX
-            dmin = pGridVegInfo.LAIMN
-            doffset = pGridVegInfo.doffset
+            dmax = gVeg_GridLayerPara["Veg"][self.currow][self.curcol].LAIMX
+            dmin = gVeg_GridLayerPara["Veg"][self.currow][self.curcol].LAIMN
+            doffset = gVeg_GridLayerPara["Veg"][self.currow][self.curcol].doffset
             dLai = (dmax + dmin) / 2. - (dmax - dmin) * math.sin(2 * math.pi * (self.m_nDn - doffset) / 365.) / 2.
         elif util.config.DLAICalcMethod == util.defines.DAILY_LAI_CAL_LINEAR:
-            dLai = pGridVegInfo.LAI[self.m_nMon - 1]
+            dLai = gVeg_GridLayerPara["Veg"][self.currow][self.curcol].LAI[self.m_nMon - 1]
         elif util.config.DLAICalcMethod == util.defines.DAILY_LAI_BY_MONTH:
-            dLai = pGridVegInfo.LAI[self.m_nMon - 1]
+            dLai = gVeg_GridLayerPara["Veg"][self.currow][self.curcol].LAI[self.m_nMon - 1]
         else:
-            dLai = pGridVegInfo.LAI[self.m_nMon - 1]
+            dLai = gVeg_GridLayerPara["Veg"][self.currow][self.curcol].LAI[self.m_nMon - 1]
 
         return dLai
 
@@ -457,11 +477,11 @@ class CGridWaterBalance:
     # +                功能：计算栅格逐日Albedo                  +
     # +                                                        +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
-    def DailyAlbedo(self):
-        pGridVegInfo = VegInfo(self.vegTypename, self.vegFileDict)
-        pGridVegInfo.ReadVegFile(pGridVegInfo.vegTypename[str(int(self.m_Veg))] + '.veg')
+    def DailyAlbedo(self, row, col):
+        self.currow = row
+        self.curcol = col
         dAlb = 0.23
-        dAlb = pGridVegInfo.Albedo[self.m_nMon - 1]
+        dAlb = gVeg_GridLayerPara["Veg"][self.currow][self.curcol].Albedo[self.m_nMon - 1]
 
         return dAlb
 
@@ -470,10 +490,10 @@ class CGridWaterBalance:
     # +                功能：计算栅格逐日盖度                     +
     # +                                                        +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
-    def DailyCoverDeg(self):
-        pGridVegInfo = VegInfo(self.vegTypename, self.vegFileDict)
-        pGridVegInfo.ReadVegFile(pGridVegInfo.vegTypename[str(int(self.m_Veg))] + '.veg')
+    def DailyCoverDeg(self, row, col):
+        self.currow = row
+        self.curcol = col
         dCovD = 0.
-        dCovD = pGridVegInfo.CoverDeg[self.m_nMon - 1]
+        dCovD = gVeg_GridLayerPara["Veg"][self.currow][self.curcol].CoverDeg[self.m_nMon - 1]
 
         return dCovD

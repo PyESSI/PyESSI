@@ -16,6 +16,7 @@ import math
 import util.config
 from modules.Hydro.SoilPara import *
 from util.fileIO import *
+from modules.Hydro.Hydro import gSoil_GridLayerPara
 
 
 # /*++++++++++++++++++++++++++++++++++++++++++++++++++++|
@@ -35,7 +36,7 @@ from util.fileIO import *
 # |++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
 class CHortonInfil:
-    def __init__(self, stn, sfd):
+    def __init__(self):
         self.m_dERR = 0.
         self.m_dK = 0.
         self.m_dFc = 0.
@@ -44,25 +45,22 @@ class CHortonInfil:
         self.m_dFt = 0  # 土壤水下渗量
         self.m_dPreSoilW = 0  # 初始土壤含水量
 
-        self.soilTypename = stn
-        self.solFileDict = sfd
-
-    def SetGridPara(self, dSoilW, dErr, soil):
+    def SetGridPara(self, row, col, dSoilW, dErr, soil):
         '''
         设置参数
         :param dSoilW:
         :param dErr:
         :return:
         '''
+        self.currow = row
+        self.curcol = col
         self.m_dPreSoilW = dSoilW
         self.m_dERR = dErr
         self.m_Soil = soil
 
-        pGridSoilInfo = SoilInfo(self.soilTypename, self.solFileDict)
-        pGridSoilInfo.ReadSoilFile(pGridSoilInfo.soilTypename[str(int(self.m_Soil))] + '.sol')
-        self.m_dK = pGridSoilInfo.Horton_K
-        self.m_dF0 = pGridSoilInfo.SP_Init_F0
-        self.m_dFc = pGridSoilInfo.SP_Stable_Fc
+        self.m_dK = gSoil_GridLayerPara["Horton_K"][self.currow][self.curcol]
+        self.m_dF0 = gSoil_GridLayerPara["SP_Init_F0"][self.currow][self.curcol]
+        self.m_dFc = gSoil_GridLayerPara["SP_Stable_Fc"][self.currow][self.curcol]
 
         return 0
 

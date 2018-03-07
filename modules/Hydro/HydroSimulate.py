@@ -64,18 +64,8 @@ class CHydroSimulate:
 
         self.middaily = []
 
-        self.soilTypeName = None
-        self.vegTypeName = None
-        self.solFile = {}
-        self.vegFile = {}
-
-        # 加载土壤、植被查找表
-        self.LoadLookupTable()
-        # 加载.sol和.veg信息
-        self.LoadSolVegFile()
-
-        self.HortonInfil = CHortonInfil(self.soilTypeName, self.solFile)
-        self.gridwb = CGridWaterBalance(self.soilTypeName, self.solFile, self.vegTypeName, self.vegFile)
+        self.HortonInfil = CHortonInfil()
+        self.gridwb = CGridWaterBalance()
 
         if util.config.RunoffSimuType == util.defines.LONGTERM_RUNOFF_SIMULATION:
             self.m_bDate = True
@@ -112,6 +102,16 @@ class CHydroSimulate:
                 self.MuskRouteInit(self.m_iNodeNum)
 
         ### 加载土壤、植被和DEM图层 ###
+        self.soilTypeName = None
+        self.vegTypeName = None
+        self.solFile = {}
+        self.vegFile = {}
+
+        # 加载土壤、植被查找表
+        self.LoadLookupTable()
+        # 加载.sol和.veg信息
+        self.LoadSolVegFile()
+
         # 栅格初始化
         self.gridLayerInit()
         self.GridMemFreeAndNew()
@@ -217,17 +217,17 @@ class CHydroSimulate:
 
                     dintensity = self.curPcp[row][col] / dhrIntensity
 
-                    self.HortonInfil.SetGridPara(self.pGridSoilInfo_SP_Sw[row][col], 0.03,
+                    self.HortonInfil.SetGridPara(row, col, self.pGridSoilInfo_SP_Sw[row][col], 0.03,
                                                  self.g_SoilLayer.data[row][col])
 
                     self.HortonInfil.HortonExcessRunoff()
                     self.m_drateinf[row][col] = self.HortonInfil.m_dFt
 
-                    pGridSoilInfo = SoilInfo(self.soilTypeName, self.solFile)
-                    pGridSoilInfo.ReadSoilFile(self.soilTypeName[str(int(self.g_SoilLayer.data[row][col]))] + '.sol')
-                    dthet = pGridSoilInfo.SoilWaterDeficitContent()
+                    # pGridSoilInfo = SoilInfo(self.soilTypeName, self.solFile)
+                    # pGridSoilInfo.ReadSoilFile(self.soilTypeName[str(int(self.g_SoilLayer.data[row][col]))] + '.sol')
+                    # dthet = pGridSoilInfo.SoilWaterDeficitContent()
 
-                    self.gridwb.SetGridPara(dintensity, self.m_drateinf[row][col], i, j, dhrIntensity, theDay,
+                    self.gridwb.SetGridPara(row, col, dintensity, self.m_drateinf[row][col], i, j, dhrIntensity, theDay,
                                             self.g_DemLayer.data[row][col], self.g_SoilLayer.data[row][col],
                                             self.g_VegLayer.data[row][col],
                                             self.curPet[row][col], self.curPcp[row][col], self.curTmpmean[row][col],
@@ -284,10 +284,10 @@ class CHydroSimulate:
                         self.gridwb.CalcNetRain()
                         self.m_CIDefict[row][col] = self.gridwb.m_dCIDeficit
                         self.m_NetPcp[row][col] = self.gridwb.m_dNetRain
-                        self.m_GridWaterYieldType[row][col] = self.gridwb.CalcRunoffElement()
+                        self.m_GridWaterYieldType[row][col] = self.gridwb.CalcRunoffElement(row, col)
                         self.m_SoilProfileWater[row][col] = self.pGridSoilInfo_SP_Sw[row][col]
 
-                        self.m_SoilAvgWater[row][col] = pGridSoilInfo.SoilAvgWater()
+                        self.m_SoilAvgWater[row][col] = self.pGridSoilInfo_SP_Sw[row][col] / self.pGridSoilInfo_rootdepth[row][col] * 100
                         self.m_GridTotalQ[row][col] = self.gridwb.m_dTotalQ
                         self.m_GridSurfQ[row][col] = self.gridwb.m_dSurfQ
                         self.m_GridLateralQ[row][col] = self.gridwb.m_dLateralQ
@@ -716,6 +716,23 @@ class CHydroSimulate:
                     self.m_iVegOrd = self.g_VegLayer.data[i][j]
                     vegTemp.ReadVegFile(self.vegTypeName[str(int(self.m_iVegOrd))] + '.veg')
                     self.pGridVegInfo[i][j] = vegTemp
+
+        gSoil_GridLayerPara["SP_Sw"] = self.pGridSoilInfo_SP_Sw
+        gSoil_GridLayerPara["SP_Wp"] = self.pGridSoilInfo_SP_Wp
+        gSoil_GridLayerPara["SP_WFCS"] = self.pGridSoilInfo_SP_WFCS
+        gSoil_GridLayerPara["SP_Sat_K"] = self.pGridSoilInfo_SP_Sat_K
+        gSoil_GridLayerPara["SP_Stable_Fc"] = self.pGridSoilInfo_SP_Stable_Fc
+        gSoil_GridLayerPara["SP_Init_F0"] = self.pGridSoilInfo_SP_Init_F0
+        gSoil_GridLayerPara["Horton_K"] = self.pGridSoilInfo_Horton_K
+        gSoil_GridLayerPara["rootdepth"] = self.pGridSoilInfo_rootdepth
+        gSoil_GridLayerPara["SP_Fc"] = self.pGridSoilInfo_SP_Fc
+        gSoil_GridLayerPara["SP_Sat"] = self.pGridSoilInfo_SP_Sat
+        gSoil_GridLayerPara["TPercolation"] = self.pGridSoilInfo_TPercolation
+        gSoil_GridLayerPara["SP_Temp"] = self.pGridSoilInfo_SP_Temp
+        gSoil_GridLayerPara["SP_Por"] = self.pGridSoilInfo_SP_Por
+
+        gVeg_GridLayerPara["Veg"] = self.pGridVegInfo
+
 
         e = time.clock()
         print('\nFinished Load grid parameters：%.3f' % (e - s))
