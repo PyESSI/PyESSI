@@ -76,3 +76,7 @@ class WaterYearType:
     def __init__(self):
         self.year = None
         self.wtype = None
+
+# 全局变量
+gSoil_GridLayerPara = {}
+gVeg_GridLayerPara = {}
