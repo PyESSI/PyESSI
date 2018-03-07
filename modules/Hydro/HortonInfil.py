@@ -58,9 +58,9 @@ class CHortonInfil:
         self.m_dERR = dErr
         self.m_Soil = soil
 
-        self.m_dK = gSoil_GridLayerPara["Horton_K"][self.currow][self.curcol]
-        self.m_dF0 = gSoil_GridLayerPara["SP_Init_F0"][self.currow][self.curcol]
-        self.m_dFc = gSoil_GridLayerPara["SP_Stable_Fc"][self.currow][self.curcol]
+        self.m_dK = gSoil_GridLayerPara.Horton_K[self.currow][self.curcol]
+        self.m_dF0 = gSoil_GridLayerPara.SP_Init_F0[self.currow][self.curcol]
+        self.m_dFc = gSoil_GridLayerPara.SP_Stable_Fc[self.currow][self.curcol]
 
         return 0
 

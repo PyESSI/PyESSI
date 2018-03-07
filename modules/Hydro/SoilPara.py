@@ -27,7 +27,6 @@ import util.config
 import math
 import time
 
-
 class SoilInfo:
     def __init__(self, stn, sfd):
         self.Soil_Name = ""
