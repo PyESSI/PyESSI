@@ -547,11 +547,11 @@ class CHydroSimulate:
         dGridOut = 0.
         subID = 0
         dSurfQLoss = 0.
-        if WaterYearType == util.defines.WATER_HIGH_YEAR:
+        if WaterYrType == util.defines.WATER_HIGH_YEAR:
             dSurfQLoss = util.config.HighWaterSurfQLoss
-        elif WaterYearType == util.defines.WATER_MID_YEAR:
+        elif WaterYrType == util.defines.WATER_MID_YEAR:
             dSurfQLoss = util.config.MidWaterSurfQLoss
-        elif WaterYearType == util.defines.WATER_LOW_YEAR:
+        elif WaterYrType == util.defines.WATER_LOW_YEAR:
             dSurfQLoss = util.config.LowWaterSurfQLoss
         else:
             dSurfQLoss = util.config.LowWaterSurfQLoss
@@ -601,11 +601,11 @@ class CHydroSimulate:
         LagTime = 0
         dGridOut = 0.
         dSurfQLoss = 0.
-        if WaterYearType == util.defines.WATER_HIGH_YEAR:
+        if WaterYrType == util.defines.WATER_HIGH_YEAR:
             dSurfQLoss = util.config.HighWaterSurfQLoss
-        elif WaterYearType == util.defines.WATER_MID_YEAR:
+        elif WaterYrType == util.defines.WATER_MID_YEAR:
             dSurfQLoss = util.config.MidWaterSurfQLoss
-        elif WaterYearType == util.defines.WATER_LOW_YEAR:
+        elif WaterYrType == util.defines.WATER_LOW_YEAR:
             dSurfQLoss = util.config.LowWaterSurfQLoss
         else:
             dSurfQLoss = util.config.LowWaterSurfQLoss
