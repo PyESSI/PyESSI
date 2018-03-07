@@ -29,7 +29,7 @@ import time
 
 
 class SoilInfo:
-    def __init__(self, stn):
+    def __init__(self, stn, sfd):
         self.Soil_Name = ""
         self.Soil_id = 0
         self.iLayer = 0
@@ -74,6 +74,7 @@ class SoilInfo:
         self.albedo = 0.23
 
         self.soilTypename = stn
+        self.solFileDict = sfd
 
         # 这三个变量是否有需要定义？？
         self.SL_StaInfil = []
@@ -87,8 +88,7 @@ class SoilInfo:
         :param soilFilename:
         :return:
         '''
-        s = time.clock()
-        soilInfos = open(util.config.workSpace + os.sep + 'Soil' + os.sep + soilFilename, 'r').readlines()
+        soilInfos = self.solFileDict[soilFilename]
         self.Soil_Name = soilInfos[0].split('\n')[0].strip().split()[1]
         self.iLayer = int(soilInfos[1].split('\n')[0].strip().split()[1])
         self.rootdepth = float(soilInfos[2].split('\n')[0].strip().split()[1])
@@ -112,9 +112,6 @@ class SoilInfo:
 
         self.CalcSoilPara()
         self.TPercolation = (self.SP_Sat - self.SP_Fc) / self.SP_Sat_K
-
-        e = time.clock()
-        # print("ReadSoilFile time: %.6f" % (e - s))
 
     # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +                                                        +

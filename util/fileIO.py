@@ -162,6 +162,23 @@ def CreateForld(forldPath):
     if not os.path.isdir(forldPath):
         os.makedirs(forldPath)
 
+def getFileList(dataDir, ftype):
+    '''
+    :param dataDir: 文件夹路径
+    :param ftype: 数据文件后缀，(.*)
+    :return: 文件全路径，文件名（不加后缀）
+    '''
+    fileFullPathList = []
+    fileNameList = []
+    filenameList = os.listdir(dataDir)
+    for fn in filenameList:
+        file_name, file_ext = os.path.splitext(fn)
+        if file_ext == ftype:
+            fileFullPathList.append(dataDir + os.sep + fn)
+            fileNameList.append(file_name)
+    return fileFullPathList, fileNameList
+
+
 
 # if __name__ == "__main__":
 #     r = r"D:\GaohrWS\DoctorWorks\DoctorWork\PyESSI\DCBAM\test\watershed.tif"

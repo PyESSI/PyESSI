@@ -19,7 +19,7 @@ import math
 
 import util.config
 from modules.Hydro.SoilPara import *
-from util.fileIO import *
+from modules.Hydro.Hydro import gSoil_GridLayerPara
 
 
 # /*++++++++++++++++++++++++++++++++++++++++++++++++++++|
@@ -39,7 +39,7 @@ from util.fileIO import *
 # |++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
 class CGreenAmptInfil:
-    def SetGridPara(self, currow, curcol, timelen, Prerateinf, Precumr, Prerintns, Precuminf, Preexcum, pcp, Cp, soil, stn):
+    def SetGridPara(self, currow, curcol, timelen, Prerateinf, Precumr, Prerintns, Precuminf, Preexcum, pcp, Cp, soil):
         '''
         功能:    -- 设置Green - Ampt法计算参数
         :param currow:
@@ -67,17 +67,21 @@ class CGreenAmptInfil:
         self.m_dEhc = self.EffHydroConductivity(Cp)
 
         self.m_Soil = soil
-        self.soilTypename = stn
 
-    def GreenAmptExcessRunoff(self):
+    def GreenAmptExcessRunoff(self, row, col):
         self.m_dSoilw = 0.
         self.m_dSurfQ = 0.
+        self.m_row = row
+        self.m_col = col
 
-        pGridSoilInfo = SoilInfo(self.soilTypename)
-        pGridSoilInfo.ReadSoilFile(pGridSoilInfo.soilTypename(str(int(self.m_Soil))) + '.sol')
-        dthet = pGridSoilInfo.SoilWaterDeficitPercent()
+        self.SP_Por = gSoil_GridLayerPara["SP_Por"][self.m_row][self.m_col]
+        self.SP_Sw = gSoil_GridLayerPara["SP_Sw"][self.m_row][self.m_col]
+        self.SP_Fc = gSoil_GridLayerPara["SP_Fc"][self.m_row][self.m_col]
+        self.SP_WFCS = gSoil_GridLayerPara["SP_WFCS"][self.m_row][self.m_col]
+
+        dthet = (1.0 - self.SP_Sw / self.SP_Fc) * self.SP_Por
         psidt = 0.
-        psidt = dthet * pGridSoilInfo.SP_WFCS
+        psidt = dthet * self.SP_WFCS
 
         drateinf = 0.
         drintns = 0.
@@ -160,19 +164,26 @@ class CGreenAmptInfil:
             self.m_dPrecuminf = dcuminf
             self.m_dPreexcum = dexcum
 
-    def EffHydroConductivity(self, Cp=-1.):
+        gSoil_GridLayerPara["SP_Por"][self.m_row][self.m_col] = self.SP_Por
+        gSoil_GridLayerPara["SP_Sw"][self.m_row][self.m_col] = self.SP_Sw
+        gSoil_GridLayerPara["SP_Fc"][self.m_row][self.m_col] = self.SP_Fc
+        gSoil_GridLayerPara["SP_WFCS"][self.m_row][self.m_col] = self.SP_WFCS
+
+    def EffHydroConductivity(self, row, col, Cp=-1.):
         '''
         :param Cp:
         :return:
         '''
-        pGridSoilInfo = SoilInfo(self.soilTypename)
-        pGridSoilInfo.ReadSoilFile(pGridSoilInfo.soilTypename(str(int(self.m_Soil))) + '.sol')
+        self.m_row = row
+        self.m_col = col
+
+        self.SP_Sat_K = gSoil_GridLayerPara["SP_Sat_K"][self.m_row][self.m_col]
 
         dehc = 0.
         if Cp == -1.:
-            dehc = pGridSoilInfo.SP_Sat_K / 2.
+            dehc = self.SP_Sat_K / 2.
         else:
-            dehc = pGridSoilInfo.SP_Sat_K / (1 + math.exp(0.2 * Cp))
+            dehc = self.SP_Sat_K / (1 + math.exp(0.2 * Cp))
 
         if dehc <= 0.:
             dehc = 0.001
