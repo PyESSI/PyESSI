@@ -196,73 +196,65 @@ class CHydroSimulate:
                     dsnowfactor = 1.
 
                     if util.config.tmpmeandata == 1:
-                        if self.curTmpmean[row][col] < util.config.SnowTemperature:
-                            self.m_SnowWater[row][col] += self.curPcp[row][col]
-                            self.curPcp[row][col] = 0.
+                        if gClimate_GridLayer.Tav[row][col] < util.config.SnowTemperature:
+                            self.m_SnowWater[row][col] += gClimate_GridLayer.Pcp[row][col]
+                            gClimate_GridLayer.Pcp[row][col] = 0.
 
                             dsnowfactor = 0.15
                         else:
                             if self.m_SnowWater[row][col] > 0:
-                                smelt = self.DDFSnowMelt(self.curTmpmean[row][col], util.config.SnowTemperature,
+                                smelt = self.DDFSnowMelt(gClimate_GridLayer.Tav[row][col],
+                                                         util.config.SnowTemperature,
                                                          util.config.DDF, util.config.DailyMeanPcpTime)
                                 if self.m_SnowWater[row][col] < smelt:
                                     smelt = self.m_SnowWater[row][col]
                                     self.m_SnowWater[row][col] = 0.
                                 else:
                                     self.m_SnowWater[row][col] -= smelt
-                                self.curPcp[row][col] += smelt
+                                gClimate_GridLayer.Pcp[row][col] += smelt
                                 dsnowfactor = 0.3
 
                     dhrIntensity = util.config.DailyMeanPcpTime
 
-                    dintensity = self.curPcp[row][col] / dhrIntensity
+                    dintensity = gClimate_GridLayer.Pcp[row][col] / dhrIntensity
 
-                    self.HortonInfil.SetGridPara(row, col, self.pGridSoilInfo_SP_Sw[row][col], 0.03,
+                    self.HortonInfil.SetGridPara(row, col, gSoil_GridLayerPara.SP_Sw[row][col], 0.03,
                                                  self.g_SoilLayer.data[row][col])
 
                     self.HortonInfil.HortonExcessRunoff()
-                    self.m_drateinf[row][col] = self.HortonInfil.m_dFt
+                    gOut_GridLayer.drateinf[row][col] = self.HortonInfil.m_dFt
 
-                    # pGridSoilInfo = SoilInfo(self.soilTypeName, self.solFile)
-                    # pGridSoilInfo.ReadSoilFile(self.soilTypeName[str(int(self.g_SoilLayer.data[row][col]))] + '.sol')
-                    # dthet = pGridSoilInfo.SoilWaterDeficitContent()
-
-                    self.gridwb.SetGridPara(row, col, dintensity, self.m_drateinf[row][col], i, j, dhrIntensity, theDay,
-                                            self.g_DemLayer.data[row][col], self.g_SoilLayer.data[row][col],
-                                            self.g_VegLayer.data[row][col],
-                                            self.curPet[row][col], self.curPcp[row][col], self.curTmpmean[row][col],
-                                            self.curTmpmx[row][col], self.curTmpmn[row][col], self.curSlr[row][col],
-                                            self.curHmd[row][col], self.curWnd[row][col])
+                    self.gridwb.SetGridPara(row, col, dintensity, gOut_GridLayer.drateinf[row][col], i, j, dhrIntensity, theDay)
                     dalb = self.GetVegAlbedo(iMonth)
                     self.gridwb.CalcPET(dalb, theDay)
 
                     if not self.g_StrahlerRivNet.data[row][col] == 0:
-                        self.m_GridSurfQ[row][col] = self.curPcp[row][col] - self.gridwb.m_dPET
-                        if self.m_GridSurfQ[row][col] < 0:
-                            self.m_GridSurfQ[row][col] = 0.
-                        if self.m_GridSurfQ[row][col] > 1e+10:
+                        gOut_GridLayer.SurfQ[row][col] = gClimate_GridLayer.Pcp[row][col] - self.gridwb.m_dPET
+                        if gOut_GridLayer.SurfQ[row][col] < 0:
+                            gOut_GridLayer.SurfQ[row][col] = 0.
+                        if gOut_GridLayer.SurfQ[row][col] > 1e+10:
                             print('hello')
-                        self.m_GridLateralQ[row][col] = 0.
-                        self.m_GridBaseQ[row][col] = 0.
-                        self.m_GridTotalQ[row][col] = self.m_GridSurfQ[row][col]
-                        self.m_AET[row][col] = self.gridwb.m_dPET
-                        self.m_CI[row][col] = 0.
-                        self.m_CIDefict[row][col] = 0.
-                        self.m_NetPcp[row][col] = self.m_GridSurfQ[row][col]
-                        self.m_GridWaterYieldType[row][col] = 0
-                        self.m_SoilProfileWater[row][col] = 0.
-                        self.m_SoilAvgWater[row][col] = 0.
+                        gOut_GridLayer.LateralQ[row][col] = 0.
+                        gOut_GridLayer.BaseQ[row][col] = 0.
+                        gOut_GridLayer.TotalQ[row][col] = gOut_GridLayer.SurfQ[row][col]
+                        gOut_GridLayer.AET[row][col] = self.gridwb.m_dPET
+                        gOut_GridLayer.CI[row][col] = 0.
+                        gOut_GridLayer.CIDefict[row][col] = 0.
+                        gOut_GridLayer.NetPcp[row][col] = gOut_GridLayer.SurfQ[row][col]
+                        gOut_GridLayer.WaterYieldType[row][col] = 0
+                        gOut_GridLayer.SoilProfileWater[row][col] = 0.
+                        gOut_GridLayer.SoilAvgWater[row][col] = 0.
 
                     else:
                         self.gridwb.CalcCI()
-                        self.m_CI[row][col] = self.gridwb.m_dCrownInterc
-                        if self.pGridSoilInfo_SP_Sw[row][col] / self.pGridSoilInfo_SP_Fc[row][col] > 0.8:
-                            if self.curPcp[row][col] > 0:
+                        gOut_GridLayer.CI[row][col] = self.gridwb.m_dCrownInterc
+                        if gSoil_GridLayerPara.SP_Sw[row][col] / gSoil_GridLayerPara.SP_Fc[row][col] > 0.8:
+                            if gClimate_GridLayer.Pcp[row][col] > 0:
                                 aetfactor = 0.6
                             else:
                                 aetfactor = 0.9
                         else:
-                            if self.curPcp[row][col] > 0:
+                            if gClimate_GridLayer.Pcp[row][col] > 0:
                                 aetfactor = 0.4
                             else:
                                 aetfactor = 0.6
@@ -270,54 +262,63 @@ class CHydroSimulate:
                         # //*************对蒸散发处理的特殊代码段 -- 计算实际蒸散发**************//
                         if util.config.PETMethod == util.defines.PET_REAL:
 
-                            self.gridwb.m_dAET = self.curPet[row][col] * aetfactor
-                            self.m_AET[row][col] = self.gridwb.m_dAET
+                            self.gridwb.m_dAET = gClimate_GridLayer.Pet[row][col] * aetfactor
+                            gOut_GridLayer.AET[row][col] = self.gridwb.m_dAET
                         else:
                             self.gridwb.CalcAET(dalb, theDay)
-                            if self.gridwb.m_dAET > self.curPet[row][col]:
-                                self.m_AET[row][col] = self.curPet[row][col] * math.exp(
-                                    -1 * self.curPet[row][col] / self.gridwb.m_dAET)
+                            if self.gridwb.m_dAET > gClimate_GridLayer.Pet[row][col]:
+                                gOut_GridLayer.AET[row][col] = gClimate_GridLayer.Pet[row][col] * math.exp(
+                                    -1 * gClimate_GridLayer.Pet[row][col] / self.gridwb.m_dAET)
                             if self.gridwb.m_dAET < 0:
-                                self.m_AET[row][col] = self.curPet[row][col] * 0.1
+                                gOut_GridLayer.AET[row][col] = gClimate_GridLayer.Pet[row][col] * 0.1
 
                         # // ** ** ** ** ** ** ** ** ** ** ** 对蒸散发处理的特殊代码段 ** ** ** ** ** ** ** ** ** ** **
                         self.gridwb.CalcNetRain()
-                        self.m_CIDefict[row][col] = self.gridwb.m_dCIDeficit
-                        self.m_NetPcp[row][col] = self.gridwb.m_dNetRain
-                        self.m_GridWaterYieldType[row][col] = self.gridwb.CalcRunoffElement(row, col)
-                        self.m_SoilProfileWater[row][col] = self.pGridSoilInfo_SP_Sw[row][col]
+                        gOut_GridLayer.CIDefict[row][col] = self.gridwb.m_dCIDeficit
+                        gOut_GridLayer.NetPcp[row][col] = self.gridwb.m_dNetRain
+                        gOut_GridLayer.WaterYieldType[row][col] = self.gridwb.CalcRunoffElement(row, col)
+                        gOut_GridLayer.SoilProfileWater[row][col] = gSoil_GridLayerPara.SP_Sw[row][col]
 
-                        self.m_SoilAvgWater[row][col] = self.pGridSoilInfo_SP_Sw[row][col] / self.pGridSoilInfo_rootdepth[row][col] * 100
-                        self.m_GridTotalQ[row][col] = self.gridwb.m_dTotalQ
-                        self.m_GridSurfQ[row][col] = self.gridwb.m_dSurfQ
-                        self.m_GridLateralQ[row][col] = self.gridwb.m_dLateralQ
-                        self.m_GridBaseQ[row][col] = self.gridwb.m_dBaseQ
+                        gOut_GridLayer.SoilAvgWater[row][col] = gSoil_GridLayerPara.SP_Sw[row][col] / \
+                                                        gSoil_GridLayerPara.rootdepth[row][col] * 100
+                        gOut_GridLayer.TotalQ[row][col] = self.gridwb.m_dTotalQ
+                        gOut_GridLayer.SurfQ[row][col] = self.gridwb.m_dSurfQ
+                        gOut_GridLayer.LateralQ[row][col] = self.gridwb.m_dLateralQ
+                        gOut_GridLayer.BaseQ[row][col] = self.gridwb.m_dBaseQ
 
-                        if self.m_GridSurfQ[row][col] > 1e+10:
+                        if gOut_GridLayer.SurfQ[row][col] > 1e+10:
                             print("hello2")
 
-
             if self.m_iNodeNum == 1 or util.config.RiverRouteMethod == util.defines.ROUTE_PURE_LAG:
-                self.m_pOutletSurfQ = self.PureLagGridRouting(self.m_GridSurfQ, self.m_pOutletSurfQ, dhr, util.defines.RUNOFF_ELEMENT_SURFQ,
-                                        curorder, totrec, dsnowfactor, self.wytype[int(theDay[0:4])])
-                self.m_pOutletLatQ = self.PureLagGridRouting(self.m_GridLateralQ, self.m_pOutletLatQ, dhr, util.defines.RUNOFF_ELEMENT_LATERALQ,
-                                        curorder, totrec, dsnowfactor, self.wytype[int(theDay[0:4])])
-                self.m_pOutletBaseQ = self.PureLagGridRouting(self.m_GridBaseQ, self.m_pOutletBaseQ, dhr, util.defines.RUNOFF_ELEMENT_BASEQ,
-                                        curorder, totrec, dsnowfactor, self.wytype[int(theDay[0:4])])
+                self.m_pOutletSurfQ = self.PureLagGridRouting(gOut_GridLayer.SurfQ, self.m_pOutletSurfQ, dhr,
+                                                              util.defines.RUNOFF_ELEMENT_SURFQ,
+                                                              curorder, totrec, dsnowfactor,
+                                                              self.wytype[int(theDay[0:4])])
+                self.m_pOutletLatQ = self.PureLagGridRouting(gOut_GridLayer.LateralQ, self.m_pOutletLatQ, dhr,
+                                                             util.defines.RUNOFF_ELEMENT_LATERALQ,
+                                                             curorder, totrec, dsnowfactor,
+                                                             self.wytype[int(theDay[0:4])])
+                self.m_pOutletBaseQ = self.PureLagGridRouting(gOut_GridLayer.BaseQ, self.m_pOutletBaseQ, dhr,
+                                                              util.defines.RUNOFF_ELEMENT_BASEQ,
+                                                              curorder, totrec, dsnowfactor,
+                                                              self.wytype[int(theDay[0:4])])
                 self.m_pOutletDeepBaseQ[curorder] = self.DeepBaseQSim(dn, util.config.DeepBaseQ)
                 self.m_pOutletQ[curorder] = self.m_pOutletSurfQ[curorder] * util.config.SurfQLinearFactor + \
                                             self.m_pOutletLatQ[curorder] + self.m_pOutletBaseQ[curorder] + \
                                             self.m_pOutletDeepBaseQ[curorder]
             else:
-                self.m_pNodeSurfQ = self.PureLagGridRouting_Node(self.m_GridSurfQ, self.m_pNodeSurfQ, dhr,
-                                             util.defines.RUNOFF_ELEMENT_SURFQ,
-                                             curorder, totrec, dsnowfactor, self.wytype[int(theDay[0:4])])
-                self.m_pNodeLatQ = self.PureLagGridRouting_Node(self.m_GridLateralQ, self.m_pNodeLatQ, dhr,
-                                             util.defines.RUNOFF_ELEMENT_LATERALQ,
-                                             curorder, totrec, dsnowfactor, self.wytype[int(theDay[0:4])])
-                self.m_pNodeBaseQ = self.PureLagGridRouting_Node(self.m_GridBaseQ, self.m_pNodeBaseQ, dhr,
-                                             util.defines.RUNOFF_ELEMENT_BASEQ,
-                                             curorder, totrec, dsnowfactor, self.wytype[int(theDay[0:4])])
+                self.m_pNodeSurfQ = self.PureLagGridRouting_Node(gOut_GridLayer.SurfQ, self.m_pNodeSurfQ, dhr,
+                                                                 util.defines.RUNOFF_ELEMENT_SURFQ,
+                                                                 curorder, totrec, dsnowfactor,
+                                                                 self.wytype[int(theDay[0:4])])
+                self.m_pNodeLatQ = self.PureLagGridRouting_Node(gOut_GridLayer.LateralQ, self.m_pNodeLatQ, dhr,
+                                                                util.defines.RUNOFF_ELEMENT_LATERALQ,
+                                                                curorder, totrec, dsnowfactor,
+                                                                self.wytype[int(theDay[0:4])])
+                self.m_pNodeBaseQ = self.PureLagGridRouting_Node(gOut_GridLayer.BaseQ, self.m_pNodeBaseQ, dhr,
+                                                                 util.defines.RUNOFF_ELEMENT_BASEQ,
+                                                                 curorder, totrec, dsnowfactor,
+                                                                 self.wytype[int(theDay[0:4])])
 
                 dSurf = 0.
                 dLat = 0.
@@ -336,19 +337,30 @@ class CHydroSimulate:
                     for i in range(self.m_subNum):
                         self.m_pNodeOutQ[curorder][i] = self.m_pNodeSurfQ[curorder][i] * util.config.SurfQLinearFactor + \
                                                         self.m_pNodeLatQ[curorder][i] + self.m_pNodeBaseQ[curorder][i]
-                        self.pRiverRoute.pRoute, self.pRiverRoute.pPreRoute = self.MuskingumRiverRouting(24, self.m_pNodeOutQ, self.pRiverRoute.pRoute,
-                                               self.pRiverRoute.pPreRoute, self.m_pX, self.m_pK, self.m_subNum,
-                                               curorder)
+                        self.pRiverRoute.pRoute, self.pRiverRoute.pPreRoute = self.MuskingumRiverRouting(24,
+                                                                                                         self.m_pNodeOutQ,
+                                                                                                         self.pRiverRoute.pRoute,
+                                                                                                         self.pRiverRoute.pPreRoute,
+                                                                                                         self.m_pX,
+                                                                                                         self.m_pK,
+                                                                                                         self.m_subNum,
+                                                                                                         curorder)
                     self.m_pOutletQ[curorder] = self.pRiverRoute.pRoute[self.m_subNum - 1].dOutFlux + \
                                                 self.m_pOutletDeepBaseQ[curorder]
+
                 elif util.config.RiverRouteMethod == ROUTE_MUSKINGUM_ROUTE_FIRST:
                     print('TODO')
+
                 else:
                     self.m_pOutletQ[curorder] = self.m_pOutletSurfQ[curorder] + self.m_pOutletLatQ[curorder] + \
                                                 self.m_pOutletBaseQ[curorder] + self.m_pOutletDeepBaseQ[curorder]
 
             curorder += 1
-            self.MidGridResultOut(theDay, self.curPcp, self.curPet, self.curWnd, self.curHmd, self.curSlr, self.curTmpmean, self.curTmpmn, self.curTmpmx)
+            self.MidGridResultOut(theDay,
+                                  gClimate_GridLayer.Pcp, gClimate_GridLayer.Pet,
+                                  gClimate_GridLayer.Wnd, gClimate_GridLayer.Hmd,
+                                  gClimate_GridLayer.Slr, gClimate_GridLayer.Tav,
+                                  gClimate_GridLayer.Tmn, gClimate_GridLayer.Tmx)
 
             self.RiverOutletQ_Hao(theDay, curorder - 1)
 
@@ -363,81 +375,97 @@ class CHydroSimulate:
         if self.wytype:
             self.wytype = None
 
-
     def MidGridResultOut(self, curDay, curPcp, curPet, curWnd, curHmd, curSlr, curTmpmean, curTmpmn, curTmpmx):
         if curDay in self.middaily:
             if util.config.iPcp == 1:
-                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'Pcp'+ curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, curPcp, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'Pcp' + curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, curPcp, self.g_DemLayer.geoTransform, self.g_DemLayer.srs,
+                            self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iPET == 1:
-                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'PET'+ curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, curPet, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'PET' + curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, curPet, self.g_DemLayer.geoTransform, self.g_DemLayer.srs,
+                            self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iWnd == 1:
-                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'Wnd'+ curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, curWnd, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'Wnd' + curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, curWnd, self.g_DemLayer.geoTransform, self.g_DemLayer.srs,
+                            self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iHmd == 1:
-                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'Hmd'+ curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, curHmd, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'Hmd' + curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, curHmd, self.g_DemLayer.geoTransform, self.g_DemLayer.srs,
+                            self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iSlr == 1:
-                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'Slr'+ curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, curSlr, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'Slr' + curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, curSlr, self.g_DemLayer.geoTransform, self.g_DemLayer.srs,
+                            self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iTempMean == 1:
-                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'TempMean'+ curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, curTmpmean, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'TempMean' + curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, curTmpmean, self.g_DemLayer.geoTransform,
+                            self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iTempMin == 1:
-                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'TempMin'+ curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, curTmpmn, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'TempMin' + curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, curTmpmn, self.g_DemLayer.geoTransform,
+                            self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iTempMax == 1:
-                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'TempMax'+ curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, curTmpmx, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
-
-
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'TempMax' + curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, curTmpmx, self.g_DemLayer.geoTransform,
+                            self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
 
             if util.config.iAET == 1:
-                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'AET'+ curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, self.m_AET, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'AET' + curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, gOut_GridLayer.AET, self.g_DemLayer.geoTransform,
+                            self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iCI == 1:
-                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'CI'+ curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, self.m_CI, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'CI' + curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, gOut_GridLayer.CI, self.g_DemLayer.geoTransform,
+                            self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iSnowWater == 1:
-                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'Snow'+ curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, self.m_SnowWater, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'Snow' + curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, self.m_SnowWater, self.g_DemLayer.geoTransform,
+                            self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iAI == 1:
-                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'AI'+ curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, self.m_AI, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'AI' + curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, gOut_GridLayer.AI, self.g_DemLayer.geoTransform,
+                            self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iRouteOut == 1:
-                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'GridRoute'+ curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, self.m_GridRoutingQ, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'GridRoute' + curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, gOut_GridLayer.RoutingQ, self.g_DemLayer.geoTransform,
+                            self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iSurfQ == 1:
-                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'SurfQ'+ curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, self.m_GridSurfQ, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'SurfQ' + curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, gOut_GridLayer.SurfQ, self.g_DemLayer.geoTransform,
+                            self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iLatQ == 1:
-                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'LatQ'+ curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, self.m_GridLateralQ, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'LatQ' + curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, gOut_GridLayer.LateralQ, self.g_DemLayer.geoTransform,
+                            self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iBaseQ == 1:
-                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'BaseQ'+ curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, self.m_GridBaseQ, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'BaseQ' + curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, gOut_GridLayer.BaseQ, self.g_DemLayer.geoTransform,
+                            self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iWaterYieldType == 1:
-                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'WYType'+ curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, self.m_GridWaterYieldType, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'WYType' + curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, gOut_GridLayer.WaterYieldType, self.g_DemLayer.geoTransform,
+                            self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iInfilRate == 1:
-                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'InfilRate'+ curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, self.m_drateinf, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'InfilRate' + curDay + '.tif'
+                writeRaster(filename, self.m_row, self.m_col, gOut_GridLayer.m_drateinf, self.g_DemLayer.geoTransform,
+                            self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iProfileSoilWater == 1:
                 filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'SoilProfileWater' + curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, self.m_SoilProfileWater, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
+                writeRaster(filename, self.m_row, self.m_col, gOut_GridLayer.SoilProfileWater, self.g_DemLayer.geoTransform,
+                            self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iAvgSoilWater == 1:
                 filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'SoilAvgWater' + curDay + '.tif'
-                writeRaster(filename, self.m_row, self.m_col, self.m_SoilAvgWater, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
-
-
+                writeRaster(filename, self.m_row, self.m_col, gOut_GridLayer.SoilAvgWater, self.g_DemLayer.geoTransform,
+                            self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
 
     def RiverOutletQ_Hao(self, curDay, curOrder):
-        outQ = open(util.config.workSpace + os.sep + 'Output' + os.sep + 'outQ.txt','a')
-        outQ.write("%s\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\n" % (curDay, self.m_pOutletQ[curOrder], self.m_pOutletSurfQ[curOrder], self.m_pOutletLatQ[curOrder], self.m_pOutletBaseQ[curOrder], self.m_pOutletDeepBaseQ[curOrder]))
+        outQ = open(util.config.workSpace + os.sep + 'Output' + os.sep + 'outQ.txt', 'a')
+        outQ.write("%s\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\n" % (
+        curDay, self.m_pOutletQ[curOrder], self.m_pOutletSurfQ[curOrder], self.m_pOutletLatQ[curOrder],
+        self.m_pOutletBaseQ[curOrder], self.m_pOutletDeepBaseQ[curOrder]))
 
         outQ.close()
-
 
     # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +                                                        +
@@ -565,14 +593,14 @@ class CHydroSimulate:
                                 dSurfQLoss * math.pow(self.g_RouteSurfQTime.data[i][j], 1))
                             pRoute[int(LagOrder)] += dGridOut
                     elif QType == util.defines.RUNOFF_ELEMENT_LATERALQ:
-                        LagTime =  int(self.g_RouteLatQTime.data[i][j] / dTlen)
+                        LagTime = int(self.g_RouteLatQTime.data[i][j] / dTlen)
                         LagOrder = int(curorder + LagTime)
                         if LagOrder < totorder:
                             dGridOut = snowfactor * GridQ[i][j] / (
                                 util.config.LatQLoss * math.pow(self.g_RouteLatQTime.data[i][j], 1))
                             pRoute[LagOrder] += dGridOut
                     elif QType == util.defines.RUNOFF_ELEMENT_BASEQ:
-                        LagTime =  int(self.g_RouteBaseQTime.data[i][j] / dTlen)
+                        LagTime = int(self.g_RouteBaseQTime.data[i][j] / dTlen)
                         LagOrder = int(curorder + LagTime)
                         if LagOrder < totorder:
                             dGridOut = snowfactor * GridQ[i][j] / (
@@ -583,7 +611,6 @@ class CHydroSimulate:
                         return False
 
         return pRoute
-
 
     # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +                                                        +
@@ -624,8 +651,10 @@ class CHydroSimulate:
             for i in range(len(wytypeLines)):
                 wyTypeTemp = WaterYearType()
 
-                wyTypeTemp.year = int(wytypeLines[i].rstrip(util.defines.CHAR_SPLIT_ENTER).split(util.defines.CHAR_SPLIT_TAB)[0])
-                wyTypeTemp.wtype = int(wytypeLines[i].rstrip(util.defines.CHAR_SPLIT_ENTER).split(util.defines.CHAR_SPLIT_TAB)[1])
+                wyTypeTemp.year = int(
+                    wytypeLines[i].rstrip(util.defines.CHAR_SPLIT_ENTER).split(util.defines.CHAR_SPLIT_TAB)[0])
+                wyTypeTemp.wtype = int(
+                    wytypeLines[i].rstrip(util.defines.CHAR_SPLIT_ENTER).split(util.defines.CHAR_SPLIT_TAB)[1])
                 wyTypeTemps.append((wyTypeTemp.year, wyTypeTemp.wtype))
             self.wytype = dict(wyTypeTemps)
 
@@ -651,41 +680,44 @@ class CHydroSimulate:
         self.g_VegLayer = readRaster(LULCFile)
         self.g_SoilLayer = readRaster(SoilFile)
 
+        gBase_GridLayer.DEM = self.g_DemLayer.data
+        gBase_GridLayer.Soil = self.g_SoilLayer.data
+        gBase_GridLayer.Veg = self.g_VegLayer.data
+
         self.m_row = self.g_DemLayer.nRows
         self.m_col = self.g_DemLayer.nCols
 
-        self.pGridSoilInfo_SP_Sw = numpy.zeros((self.m_row, self.m_col))
-        self.pGridSoilInfo_SP_Wp = numpy.zeros((self.m_row, self.m_col))
-        self.pGridSoilInfo_SP_WFCS = numpy.zeros((self.m_row, self.m_col))
-        self.pGridSoilInfo_SP_Sat_K = numpy.zeros((self.m_row, self.m_col))
-        self.pGridSoilInfo_SP_Stable_Fc = numpy.zeros((self.m_row, self.m_col))
-        self.pGridSoilInfo_SP_Init_F0 = numpy.zeros((self.m_row, self.m_col))
-        self.pGridSoilInfo_Horton_K = numpy.zeros((self.m_row, self.m_col))
-        self.pGridSoilInfo_SP_Por = numpy.zeros((self.m_row, self.m_col))
-        self.pGridSoilInfo_rootdepth = numpy.zeros((self.m_row, self.m_col))
-        self.pGridSoilInfo_SP_Fc = numpy.zeros((self.m_row, self.m_col))
-        self.pGridSoilInfo_SP_Sat = numpy.zeros((self.m_row, self.m_col))
-        self.pGridSoilInfo_TPercolation = numpy.zeros((self.m_row, self.m_col))
-        self.pGridSoilInfo_SP_Temp = numpy.zeros((self.m_row, self.m_col))
+        gSoil_GridLayerPara.SP_Sw = numpy.zeros((self.m_row, self.m_col))
+        gSoil_GridLayerPara.SP_Wp = numpy.zeros((self.m_row, self.m_col))
+        gSoil_GridLayerPara.SP_WFCS = numpy.zeros((self.m_row, self.m_col))
+        gSoil_GridLayerPara.SP_Sat_K = numpy.zeros((self.m_row, self.m_col))
+        gSoil_GridLayerPara.SP_Stable_Fc = numpy.zeros((self.m_row, self.m_col))
+        gSoil_GridLayerPara.SP_Init_F0 = numpy.zeros((self.m_row, self.m_col))
+        gSoil_GridLayerPara.Horton_K = numpy.zeros((self.m_row, self.m_col))
+        gSoil_GridLayerPara.SP_Por = numpy.zeros((self.m_row, self.m_col))
+        gSoil_GridLayerPara.rootdepth = numpy.zeros((self.m_row, self.m_col))
+        gSoil_GridLayerPara.SP_Fc = numpy.zeros((self.m_row, self.m_col))
+        gSoil_GridLayerPara.SP_Sat = numpy.zeros((self.m_row, self.m_col))
+        gSoil_GridLayerPara.TPercolation = numpy.zeros((self.m_row, self.m_col))
+        gSoil_GridLayerPara.SP_Temp = numpy.zeros((self.m_row, self.m_col))
 
         pGridVegInfoTemp = []
         vegTemp = None
         for i in range(self.m_row):
             for j in range(self.m_col):
                 pGridVegInfoTemp.append(vegTemp)
-
         self.pGridVegInfo = numpy.array(pGridVegInfoTemp).reshape(self.m_row, self.m_col)
 
-        self.m_GridTotalQ = numpy.zeros((self.m_row, self.m_col))
-        self.m_GridSurfQ = numpy.zeros((self.m_row, self.m_col))
-        self.m_GridLateralQ = numpy.zeros((self.m_row, self.m_col))
-        self.m_GridBaseQ = numpy.zeros((self.m_row, self.m_col))
-        self.m_GridTempVal = numpy.zeros((self.m_row, self.m_col))
-        self.m_GridWaterYieldType = numpy.zeros((self.m_row, self.m_col))
-        self.m_SoilProfileWater = numpy.zeros((self.m_row, self.m_col))
-        self.m_SoilAvgWater = numpy.zeros((self.m_row, self.m_col))
-        self.m_GridRoutingQ = numpy.zeros((self.m_row, self.m_col))
-        self.m_NetPcp = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.TotalQ = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.SurfQ = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.LateralQ = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.BaseQ = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.TempVal = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.WaterYieldType = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.SoilProfileWater = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.SoilAvgWater = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.RoutingQ = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.NetPcp = numpy.zeros((self.m_row, self.m_col))
 
         for i in range(self.m_row):
             for j in range(self.m_col):
@@ -698,100 +730,84 @@ class CHydroSimulate:
                     soilTemp = SoilInfo(self.soilTypeName, self.solFile)
                     self.m_iSoilOrd = int(self.g_SoilLayer.data[i][j])
                     soilTemp.ReadSoilFile(self.soilTypeName[str(int(self.m_iSoilOrd))] + '.sol')
-                    self.pGridSoilInfo_SP_Sw[i][j] = soilTemp.SP_Sw
-                    self.pGridSoilInfo_SP_Wp[i][j] = soilTemp.SP_Wp
-                    self.pGridSoilInfo_SP_WFCS[i][j] = soilTemp.SP_WFCS
-                    self.pGridSoilInfo_SP_Sat_K[i][j] = soilTemp.SP_Sat_K
-                    self.pGridSoilInfo_SP_Stable_Fc[i][j] = soilTemp.SP_Stable_Fc
-                    self.pGridSoilInfo_SP_Init_F0[i][j] = soilTemp.SP_Init_F0
-                    self.pGridSoilInfo_Horton_K[i][j] = soilTemp.Horton_K
-                    self.pGridSoilInfo_SP_Por[i][j] = soilTemp.SP_Por
-                    self.pGridSoilInfo_rootdepth[i][j] = soilTemp.rootdepth
-                    self.pGridSoilInfo_SP_Fc[i][j] = soilTemp.SP_Fc
-                    self.pGridSoilInfo_SP_Sat[i][j] = soilTemp.SP_Sat
-                    self.pGridSoilInfo_TPercolation[i][j] = (soilTemp.SP_Sat - soilTemp.SP_Fc) / (soilTemp.SP_Sat_K)
-                    self.pGridSoilInfo_SP_Temp[i][j] = 0.
+                    gSoil_GridLayerPara.SP_Sw[i][j] = soilTemp.SP_Sw
+                    gSoil_GridLayerPara.SP_Wp[i][j] = soilTemp.SP_Wp
+                    gSoil_GridLayerPara.SP_WFCS[i][j] = soilTemp.SP_WFCS
+                    gSoil_GridLayerPara.SP_Sat_K[i][j] = soilTemp.SP_Sat_K
+                    gSoil_GridLayerPara.SP_Stable_Fc[i][j] = soilTemp.SP_Stable_Fc
+                    gSoil_GridLayerPara.SP_Init_F0[i][j] = soilTemp.SP_Init_F0
+                    gSoil_GridLayerPara.Horton_K[i][j] = soilTemp.Horton_K
+                    gSoil_GridLayerPara.SP_Por[i][j] = soilTemp.SP_Por
+                    gSoil_GridLayerPara.rootdepth[i][j] = soilTemp.rootdepth
+                    gSoil_GridLayerPara.SP_Fc[i][j] = soilTemp.SP_Fc
+                    gSoil_GridLayerPara.SP_Sat[i][j] = soilTemp.SP_Sat
+                    gSoil_GridLayerPara.TPercolation[i][j] = (soilTemp.SP_Sat - soilTemp.SP_Fc) / (soilTemp.SP_Sat_K)
+                    gSoil_GridLayerPara.SP_Temp[i][j] = 0.
 
                     vegTemp = VegInfo(self.vegTypeName, self.vegFile)
                     self.m_iVegOrd = self.g_VegLayer.data[i][j]
                     vegTemp.ReadVegFile(self.vegTypeName[str(int(self.m_iVegOrd))] + '.veg')
                     self.pGridVegInfo[i][j] = vegTemp
 
-        gSoil_GridLayerPara["SP_Sw"] = self.pGridSoilInfo_SP_Sw
-        gSoil_GridLayerPara["SP_Wp"] = self.pGridSoilInfo_SP_Wp
-        gSoil_GridLayerPara["SP_WFCS"] = self.pGridSoilInfo_SP_WFCS
-        gSoil_GridLayerPara["SP_Sat_K"] = self.pGridSoilInfo_SP_Sat_K
-        gSoil_GridLayerPara["SP_Stable_Fc"] = self.pGridSoilInfo_SP_Stable_Fc
-        gSoil_GridLayerPara["SP_Init_F0"] = self.pGridSoilInfo_SP_Init_F0
-        gSoil_GridLayerPara["Horton_K"] = self.pGridSoilInfo_Horton_K
-        gSoil_GridLayerPara["rootdepth"] = self.pGridSoilInfo_rootdepth
-        gSoil_GridLayerPara["SP_Fc"] = self.pGridSoilInfo_SP_Fc
-        gSoil_GridLayerPara["SP_Sat"] = self.pGridSoilInfo_SP_Sat
-        gSoil_GridLayerPara["TPercolation"] = self.pGridSoilInfo_TPercolation
-        gSoil_GridLayerPara["SP_Temp"] = self.pGridSoilInfo_SP_Temp
-        gSoil_GridLayerPara["SP_Por"] = self.pGridSoilInfo_SP_Por
-
-        gVeg_GridLayerPara["Veg"] = self.pGridVegInfo
-
+        gVeg_GridLayerPara.Veg = self.pGridVegInfo
 
         e = time.clock()
         print('\nFinished Load grid parameters：%.3f' % (e - s))
 
-
     def GridLayerInit_Horton(self):
-        self.m_AET = numpy.zeros((self.m_row, self.m_col))
-        self.m_drateinf = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.AET = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.drateinf = numpy.zeros((self.m_row, self.m_col))
 
     def GridLayerInit_GreenAmpt(self):
         self.GridLayerInit_Horton()
-        self.m_drintns = numpy.zeros((self.m_row, self.m_col))
-        self.m_dcumr = numpy.zeros((self.m_row, self.m_col))
-        self.m_dcuminf = numpy.zeros((self.m_row, self.m_col))
-        self.m_dexcum = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.drintns = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.dcumr = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.dcuminf = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.dexcum = numpy.zeros((self.m_row, self.m_col))
 
     def GridLayerInit_LongTerm(self):
-        self.m_drateinf = numpy.zeros((self.m_row, self.m_col))
-        self.m_AET = numpy.zeros((self.m_row, self.m_col))
-        self.m_CI = numpy.zeros((self.m_row, self.m_col))
-        self.m_SnowWater = numpy.zeros((self.m_row, self.m_col))
-        self.m_CIDefict = numpy.zeros((self.m_row, self.m_col))
-        self.m_AI = numpy.zeros((self.m_row, self.m_col))
-        self.m_NetPcp = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.drateinf = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.AET = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.CI = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.SnowWater = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.CIDefict = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.AI = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.NetPcp = numpy.zeros((self.m_row, self.m_col))
 
     def GridMemFreeAndNew(self):
-        self.m_GridTotalQ = numpy.zeros((self.m_row, self.m_col))
-        self.m_GridSurfQ = numpy.zeros((self.m_row, self.m_col))
-        self.m_GridLateralQ = numpy.zeros((self.m_row, self.m_col))
-        self.m_GridBaseQ = numpy.zeros((self.m_row, self.m_col))
-        self.m_GridRoutingQ = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.TotalQ = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.SurfQ = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.LateralQ = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.BaseQ = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.RoutingQ = numpy.zeros((self.m_row, self.m_col))
 
-        self.m_NetPcp = numpy.zeros((self.m_row, self.m_col))
-        self.m_GridWaterYieldType = numpy.zeros((self.m_row, self.m_col))
-        self.m_SoilProfileWater = numpy.zeros((self.m_row, self.m_col))
-        self.m_SoilAvgWater = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.NetPcp = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.WaterYieldType = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.SoilProfileWater = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.SoilAvgWater = numpy.zeros((self.m_row, self.m_col))
 
     def GridMemFreeAndNew_Horton(self):
-        self.m_AET = numpy.zeros((self.m_row, self.m_col))
-        self.m_drateinf = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.AET = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.drateinf = numpy.zeros((self.m_row, self.m_col))
 
     def GridMemFreeAndNew_LongTerm(self):
-        self.m_drateinf = numpy.zeros((self.m_row, self.m_col))
-        self.m_drintns = numpy.zeros((self.m_row, self.m_col))
-        self.m_dcumr = numpy.zeros((self.m_row, self.m_col))
-        self.m_dcuminf = numpy.zeros((self.m_row, self.m_col))
-        self.m_dexcum = numpy.zeros((self.m_row, self.m_col))
-        self.m_AI = numpy.zeros((self.m_row, self.m_col))
-        self.m_CI = numpy.zeros((self.m_row, self.m_col))
-        self.m_SnowWater = numpy.zeros((self.m_row, self.m_col))
-        self.m_CIDefict = numpy.zeros((self.m_row, self.m_col))
-        self.m_AET = numpy.zeros((self.m_row, self.m_col))
-        self.m_NetPcp = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.drateinf = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.drintns = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.dcumr = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.dcuminf = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.dexcum = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.AI = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.CI = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.SnowWater = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.CIDefict = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.AET = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.NetPcp = numpy.zeros((self.m_row, self.m_col))
 
     def GridMemFreeAndNew_GreenAmpt(self):
-        self.m_AI = numpy.zeros((self.m_row, self.m_col))
-        self.m_CI = numpy.zeros((self.m_row, self.m_col))
-        self.m_CIDefict = numpy.zeros((self.m_row, self.m_col))
-        self.m_AET = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.AI = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.CI = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.CIDefict = numpy.zeros((self.m_row, self.m_col))
+        gOut_GridLayer.AET = numpy.zeros((self.m_row, self.m_col))
 
     # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +                                                        +
@@ -1003,7 +1019,6 @@ class CHydroSimulate:
     def MuskRouteInit(self, nodenum):
         self.pRiverRoute = CMuskRouteFlux()
 
-
         for i in range(nodenum):
             newRouteFlux = RouteFlux()
             self.pRiverRoute.pRoute.append(newRouteFlux)
@@ -1060,49 +1075,62 @@ class CHydroSimulate:
         加载逐日驱动数据
         :return:
         '''
+        if self.m_row == 0 or self.m_col == 0:
+            raise Exception("row or col can not be zero!", self.m_row, self.m_col)
+
         if util.config.pcpdata == 1:
-            self.curPcp = readRaster(
+            curPcp = readRaster(
                 util.config.workSpace + os.sep + 'Forcing' + os.sep + 'pcpdata' + os.sep + theDay + '.tif').data
         else:
-            self.curPcp = numpy.zeros((self.m_row, self.m_col))
+            curPcp = numpy.zeros((self.m_row, self.m_col))
 
         if util.config.petdata == 1:
-            self.curPet = readRaster(
+            curPet = readRaster(
                 util.config.workSpace + os.sep + 'Forcing' + os.sep + 'petdata' + os.sep + theDay + '.tif').data
         else:
-            self.curPet = numpy.zeros((self.m_row, self.m_col))
+            curPet = numpy.zeros((self.m_row, self.m_col))
 
         if util.config.tmpmeandata == 1:
-            self.curTmpmean = readRaster(
+            curTmpmean = readRaster(
                 util.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmpmeandata' + os.sep + theDay + '.tif').data
         else:
-            self.curTmpmean = numpy.zeros((self.m_row, self.m_col))
+            curTmpmean = numpy.zeros((self.m_row, self.m_col))
 
         if util.config.tmpmxdata == 1:
-            self.curTmpmx = readRaster(
+            curTmpmx = readRaster(
                 util.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmpmxdata' + os.sep + theDay + '.tif').data
         else:
-            self.curTmpmx = numpy.zeros((self.m_row, self.m_col))
+            curTmpmx = numpy.zeros((self.m_row, self.m_col))
 
         if util.config.tmpmndata == 1:
-            self.curTmpmn = readRaster(
+            curTmpmn = readRaster(
                 util.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmpmndata' + os.sep + theDay + '.tif').data
         else:
-            self.curTmpmn = numpy.zeros((self.m_row, self.m_col))
+            curTmpmn = numpy.zeros((self.m_row, self.m_col))
 
         if util.config.wnddata == 1:
-            self.curWnd = readRaster(
+            curWnd = readRaster(
                 util.config.workSpace + os.sep + 'Forcing' + os.sep + 'wnddata' + os.sep + theDay + '.tif').data
         else:
-            self.curWnd = numpy.zeros((self.m_row, self.m_col))
+            curWnd = numpy.zeros((self.m_row, self.m_col))
 
         if util.config.hmddata == 1:
-            self.curHmd = readRaster(
+            curHmd = readRaster(
                 util.config.workSpace + os.sep + 'Forcing' + os.sep + 'hmddata' + os.sep + theDay + '.tif').data
         else:
-            self.curHmd = numpy.zeros((self.m_row, self.m_col))
+            curHmd = numpy.zeros((self.m_row, self.m_col))
         if util.config.slrdata == 1:
-            self.curSlr = readRaster(
+            curSlr = readRaster(
                 util.config.workSpace + os.sep + 'Forcing' + os.sep + 'slrdata' + os.sep + theDay + '.tif').data
         else:
-            self.curSlr = numpy.zeros((self.m_row, self.m_col))
+            curSlr = numpy.zeros((self.m_row, self.m_col))
+
+        # 将驱动数据加入全局变量，逐时间步长更新
+        gClimate_GridLayer.Pcp = curPcp
+        gClimate_GridLayer.Pet = curPet
+        gClimate_GridLayer.Tav = curTmpmean
+        gClimate_GridLayer.Tmx = curTmpmx
+        gClimate_GridLayer.Tmn = curTmpmn
+        gClimate_GridLayer.Wnd = curWnd
+        gClimate_GridLayer.Hmd = curHmd
+        gClimate_GridLayer.Slr = curSlr

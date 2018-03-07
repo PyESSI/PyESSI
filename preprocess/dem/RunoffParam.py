@@ -23,6 +23,7 @@ import os
 import sys
 import math
 import numpy
+import numba
 from util.fileIO import *
 from preprocess.dem.utils_dem import *
 
@@ -97,7 +98,7 @@ class RunoffParam:
         self.watershedData = readRaster(flowDirFile).data
         self.rows = readRaster(flowDirFile).nRows
         self.cols = readRaster(flowDirFile).nCols
-        self.geotrans = readRaster(flowDirFile).geotrans
+        self.geotrans = readRaster(flowDirFile).geoTransform
         self.srs = readRaster(flowDirFile).srs
         self.noDataValue = readRaster(flowDirFile).noDataValue
         print(self.noDataValue)

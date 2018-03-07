@@ -77,6 +77,76 @@ class WaterYearType:
         self.year = None
         self.wtype = None
 
+
 # 全局变量
-gSoil_GridLayerPara = {}
-gVeg_GridLayerPara = {}
+class gBase_GridLayer:
+    def __init__(self):
+        self.DEM = None
+        self.Soil = None
+        self.Veg = None
+
+
+class gSoil_GridLayerPara:
+    def __init__(self):
+        self.SP_Sw = None
+        self.SP_Wp = None
+        self.SP_WFCS = None
+        self.SP_Sat_K = None
+        self.SP_Stable_Fc = None
+        self.SP_Init_F0 = None
+        self.Horton_K = None
+        self.rootdepth = None
+        self.SP_Fc = None
+        self.SP_Sat = None
+        self.TPercolation = None
+        self.SP_Temp = None
+        self.SP_Por = None
+    
+    
+class gVeg_GridLayerPara:
+    def __init__(self):
+        self.Veg = None
+
+
+class gClimate_GridLayer:
+    def __init__(self):
+        self.Pcp = None
+        self.Pet = None
+        self.Tav = None
+        self.Tmx = None
+        self.Tmn = None
+        self.Wnd = None
+        self.Hmd = None
+        self.Slr = None
+
+
+class gOut_GridLayer:
+    def __init__(self):
+        self.TotalQ = None
+        self.SurfQ = None
+        self.LateralQ = None
+        self.BaseQ = None
+        self.TempVal = None
+        self.WaterYieldType = None
+        self.SoilProfileWater = None
+        self.SoilAvgWater = None
+        self.RoutingQ = None
+        self.NetPcp = None
+        self.drateinf = None
+        self.drintns = None
+        self.dcumr = None
+        self.dcuminf = None
+        self.dexcum = None
+        self.AI = None
+        self.CI = None
+        self.SnowWater = None
+        self.CIDefict = None
+        self.AET = None
+        self.NetPcp = None
+        
+
+gBase_GridLayer = gBase_GridLayer()
+gSoil_GridLayerPara = gSoil_GridLayerPara()
+gVeg_GridLayerPara = gVeg_GridLayerPara()
+gClimate_GridLayer = gClimate_GridLayer()
+gOut_GridLayer = gOut_GridLayer()

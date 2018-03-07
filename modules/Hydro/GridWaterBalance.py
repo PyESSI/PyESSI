@@ -35,8 +35,7 @@ from modules.Climate.PETInPristley import *
 from modules.Climate.PETInHargreaves import *
 from modules.Climate.PETInBeDruin import *
 from modules.Climate.PETInFAOPM import *
-from modules.Hydro.Hydro import gSoil_GridLayerPara, gVeg_GridLayerPara
-
+from modules.Hydro.Hydro import gSoil_GridLayerPara, gVeg_GridLayerPara, gBase_GridLayer, gClimate_GridLayer
 
 
 # /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -73,7 +72,7 @@ class CGridWaterBalance:
     # +				功能：设置栅格计算参数					    +
     # +														+
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-    def SetGridPara(self, row, col, rint, dFp, year, dn, hr, curDate, elev, soil, veg, pet, pcp, tav, tmx, tmn, slr, hmd, wnd):
+    def SetGridPara(self, row, col, rint, dFp, year, dn, hr, curDate):
         '''
         :param curcol:
         :param rint:
@@ -92,22 +91,22 @@ class CGridWaterBalance:
         self.m_dHr = hr
 
         # 当前栅格值
-        self.m_dHeight = elev
-        self.m_Soil = soil
-        self.m_Veg = veg
+        self.m_dHeight = gBase_GridLayer.DEM[self.currow][self.curcol]
+        self.m_Soil = gBase_GridLayer.Soil[self.currow][self.curcol]
+        self.m_Veg = gBase_GridLayer.Veg[self.currow][self.curcol]
 
-        self.m_dPET = pet
-        self.m_dPcp = pcp
-        self.m_dTav = tav
-        self.m_dTmx = tmx
-        self.m_dTmn = tmn
-        self.m_slr = slr
-        self.m_hmd = hmd
-        self.m_wnd = wnd
+        self.m_dPET = gClimate_GridLayer.Pet[self.currow][self.curcol]
+        self.m_dPcp = gClimate_GridLayer.Pcp[self.currow][self.curcol]
+        self.m_dTav = gClimate_GridLayer.Tav[self.currow][self.curcol]
+        self.m_dTmx = gClimate_GridLayer.Tmx[self.currow][self.curcol]
+        self.m_dTmn = gClimate_GridLayer.Tmn[self.currow][self.curcol]
+        self.m_slr = gClimate_GridLayer.Slr[self.currow][self.curcol]
+        self.m_hmd = gClimate_GridLayer.Hmd[self.currow][self.curcol]
+        self.m_wnd = gClimate_GridLayer.Wnd[self.currow][self.curcol]
 
         # pGridSoilInfo = SoilInfo(self.soilTypename, self.solFileDict)
         # pGridSoilInfo.ReadSoilFile(pGridSoilInfo.soilTypename[str(int(self.m_Soil))] + '.sol')
-        self.m_dFc = gSoil_GridLayerPara["SP_Stable_Fc"][self.currow][self.curcol]
+        self.m_dFc = gSoil_GridLayerPara.SP_Stable_Fc[self.currow][self.curcol]
 
         if util.config.RunoffSimuType == util.defines.STORM_RUNOFF_SIMULATION:
             return
@@ -279,13 +278,13 @@ class CGridWaterBalance:
         iret = 0
         self.currow = row
         self.curcol = col
-        self.SP_Por =  gSoil_GridLayerPara["SP_Por"][self.currow][self.curcol]
-        self.rootdepth = gSoil_GridLayerPara["rootdepth"][self.currow][self.curcol]
-        self.SP_Sw =  gSoil_GridLayerPara["SP_Sw"][self.currow][self.curcol]
-        self.SP_Wp =  gSoil_GridLayerPara["SP_Wp"][self.currow][self.curcol]
-        self.SP_Fc =  gSoil_GridLayerPara["SP_Fc"][self.currow][self.curcol]
-        self.SP_Init_F0 =  gSoil_GridLayerPara["SP_Init_F0"][self.currow][self.curcol]
-        self.TPercolation =  gSoil_GridLayerPara["TPercolation"][self.currow][self.curcol]
+        self.SP_Por = gSoil_GridLayerPara.SP_Por[self.currow][self.curcol]
+        self.rootdepth = gSoil_GridLayerPara.rootdepth[self.currow][self.curcol]
+        self.SP_Sw = gSoil_GridLayerPara.SP_Sw[self.currow][self.curcol]
+        self.SP_Wp = gSoil_GridLayerPara.SP_Wp[self.currow][self.curcol]
+        self.SP_Fc = gSoil_GridLayerPara.SP_Fc[self.currow][self.curcol]
+        self.SP_Init_F0 = gSoil_GridLayerPara.SP_Init_F0[self.currow][self.curcol]
+        self.TPercolation = gSoil_GridLayerPara.TPercolation[self.currow][self.curcol]
 
         dthet = (1.0 - self.SP_Sw / self.SP_Fc) * self.SP_Por * self.rootdepth
         dPE = self.m_dNetRain - self.m_dAET
@@ -393,13 +392,13 @@ class CGridWaterBalance:
         if self.m_dLateralQ < 0:
             print("计算的壤中径流分量为负" + "GridWaterBalance")
 
-        gSoil_GridLayerPara["SP_Por"][self.currow][self.curcol] = self.SP_Por
-        gSoil_GridLayerPara["rootdepth"][self.currow][self.curcol] = self.rootdepth
-        gSoil_GridLayerPara["SP_Sw"][self.currow][self.curcol] = self.SP_Sw
-        gSoil_GridLayerPara["SP_Wp"][self.currow][self.curcol] = self.SP_Wp
-        gSoil_GridLayerPara["SP_Fc"][self.currow][self.curcol] = self.SP_Fc
-        gSoil_GridLayerPara["SP_Init_F0"][self.currow][self.curcol] = self.SP_Init_F0
-        gSoil_GridLayerPara["TPercolation"][self.currow][self.curcol] = self.TPercolation
+        gSoil_GridLayerPara.SP_Por[self.currow][self.curcol] = self.SP_Por
+        gSoil_GridLayerPara.rootdepth[self.currow][self.curcol] = self.rootdepth
+        gSoil_GridLayerPara.SP_Sw[self.currow][self.curcol] = self.SP_Sw
+        gSoil_GridLayerPara.SP_Wp[self.currow][self.curcol] = self.SP_Wp
+        gSoil_GridLayerPara.SP_Fc[self.currow][self.curcol] = self.SP_Fc
+        gSoil_GridLayerPara.SP_Init_F0[self.currow][self.curcol] = self.SP_Init_F0
+        gSoil_GridLayerPara.TPercolation[self.currow][self.curcol] = self.TPercolation
 
         return iret
 
@@ -452,16 +451,16 @@ class CGridWaterBalance:
         dLai = 0.5
 
         if util.config.DLAICalcMethod == util.defines.DAILY_LAI_CAL_SINE:
-            dmax = gVeg_GridLayerPara["Veg"][self.currow][self.curcol].LAIMX
-            dmin = gVeg_GridLayerPara["Veg"][self.currow][self.curcol].LAIMN
-            doffset = gVeg_GridLayerPara["Veg"][self.currow][self.curcol].doffset
+            dmax = gVeg_GridLayerPara.Veg[self.currow][self.curcol].LAIMX
+            dmin = gVeg_GridLayerPara.Veg[self.currow][self.curcol].LAIMN
+            doffset = gVeg_GridLayerPara.Veg[self.currow][self.curcol].doffset
             dLai = (dmax + dmin) / 2. - (dmax - dmin) * math.sin(2 * math.pi * (self.m_nDn - doffset) / 365.) / 2.
         elif util.config.DLAICalcMethod == util.defines.DAILY_LAI_CAL_LINEAR:
-            dLai = gVeg_GridLayerPara["Veg"][self.currow][self.curcol].LAI[self.m_nMon - 1]
+            dLai = gVeg_GridLayerPara.Veg[self.currow][self.curcol].LAI[self.m_nMon - 1]
         elif util.config.DLAICalcMethod == util.defines.DAILY_LAI_BY_MONTH:
-            dLai = gVeg_GridLayerPara["Veg"][self.currow][self.curcol].LAI[self.m_nMon - 1]
+            dLai = gVeg_GridLayerPara.Veg[self.currow][self.curcol].LAI[self.m_nMon - 1]
         else:
-            dLai = gVeg_GridLayerPara["Veg"][self.currow][self.curcol].LAI[self.m_nMon - 1]
+            dLai = gVeg_GridLayerPara.Veg[self.currow][self.curcol].LAI[self.m_nMon - 1]
 
         return dLai
 
@@ -474,7 +473,7 @@ class CGridWaterBalance:
         self.currow = row
         self.curcol = col
         dAlb = 0.23
-        dAlb = gVeg_GridLayerPara["Veg"][self.currow][self.curcol].Albedo[self.m_nMon - 1]
+        dAlb = gVeg_GridLayerPara.Veg[self.currow][self.curcol].Albedo[self.m_nMon - 1]
 
         return dAlb
 
@@ -487,6 +486,6 @@ class CGridWaterBalance:
         self.currow = row
         self.curcol = col
         dCovD = 0.
-        dCovD = gVeg_GridLayerPara["Veg"][self.currow][self.curcol].CoverDeg[self.m_nMon - 1]
+        dCovD = gVeg_GridLayerPara.Veg[self.currow][self.curcol].CoverDeg[self.m_nMon - 1]
 
         return dCovD
