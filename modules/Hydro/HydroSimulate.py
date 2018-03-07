@@ -412,13 +412,13 @@ class CHydroSimulate:
                 filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'SurfQ'+ curDay + '.tif'
                 writeRaster(filename, self.m_row, self.m_col, self.m_GridSurfQ, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iLatQ == 1:
-                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'WYType'+ curDay + '.tif'
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'LatQ'+ curDay + '.tif'
                 writeRaster(filename, self.m_row, self.m_col, self.m_GridLateralQ, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iBaseQ == 1:
-                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'LatQ'+ curDay + '.tif'
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'BaseQ'+ curDay + '.tif'
                 writeRaster(filename, self.m_row, self.m_col, self.m_GridBaseQ, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iWaterYieldType == 1:
-                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'BaseQ'+ curDay + '.tif'
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'WYType'+ curDay + '.tif'
                 writeRaster(filename, self.m_row, self.m_col, self.m_GridWaterYieldType, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iInfilRate == 1:
                 filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'InfilRate'+ curDay + '.tif'
@@ -427,7 +427,7 @@ class CHydroSimulate:
                 filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'SoilProfileWater' + curDay + '.tif'
                 writeRaster(filename, self.m_row, self.m_col, self.m_SoilProfileWater, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
             if util.config.iAvgSoilWater == 1:
-                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'oilAvgWater' + curDay + '.tif'
+                filename = util.config.workSpace + os.sep + 'Output' + os.sep + 'SoilAvgWater' + curDay + '.tif'
                 writeRaster(filename, self.m_row, self.m_col, self.m_SoilAvgWater, self.g_DemLayer.geoTransform, self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
 
 
@@ -510,27 +510,27 @@ class CHydroSimulate:
                         if LagOrder < int(totorder):
                             if self.g_RouteSurfQTime.data[i][j] <= 0:
                                 self.g_RouteSurfQTime.data[i][j] = 0.1
-                                dGridOut = snowfactor * GridQ[i][j] / (
+                            dGridOut = snowfactor * GridQ[i][j] / (
                                 dSurfQLoss * math.pow(self.g_RouteSurfQTime.data[i][j], 1))
-                                pRoute[LagOrder][subID] += dGridOut
+                            pRoute[LagOrder][subID] += dGridOut
                     elif QType == util.defines.RUNOFF_ELEMENT_LATERALQ:
                         LagTime = int(self.g_RouteLatQTime[i][j] / dTlen)
                         LagOrder = int(curorder + LagTime)
                         if LagOrder < int(totorder):
                             if self.g_RouteLatQTime.data[i][j] <= 0:
                                 self.g_RouteLatQTime.data[i][j] = 0.1
-                                dGridOut = snowfactor * GridQ[i][j] / (
+                            dGridOut = snowfactor * GridQ[i][j] / (
                                 util.config.LatQLoss * math.pow(self.g_RouteLatQTime.data[i][j], 1))
-                                pRoute[LagOrder][subID] += dGridOut
+                            pRoute[LagOrder][subID] += dGridOut
                     elif QType == util.defines.RUNOFF_ELEMENT_BASEQ:
                         LagTime = int(self.g_RouteBaseQTime[i][j] / dTlen)
                         LagOrder = int(curorder + LagTime)
                         if LagOrder < int(totorder):
                             if self.g_RouteBaseQTime.data[i][j] <= 0:
                                 self.g_RouteBaseQTime.data[i][j] = 0.1
-                                dGridOut = snowfactor * GridQ[i][j] / (
+                            dGridOut = snowfactor * GridQ[i][j] / (
                                 util.config.LatQLoss * math.pow(self.g_RouteBaseQTime.data[i][j], 1))
-                                pRoute[LagOrder][subID] += dGridOut
+                            pRoute[LagOrder][subID] += dGridOut
                     else:
                         return False
         return pRoute

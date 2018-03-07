@@ -277,13 +277,6 @@ class CGridWaterBalance:
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     def CalcRunoffElement(self, row, col):
         iret = 0
-        # pGridSoilInfo = SoilInfo(self.soilTypename, self.solFileDict)
-        # pGridSoilInfo.ReadSoilFile(pGridSoilInfo.soilTypename[str(int(self.m_Soil))] + '.sol')
-        # pGridSoilInfo.SP_Por = SP_Por
-        # pGridSoilInfo.rootdepth = rootdepth
-        # pGridSoilInfo.SP_Sw = SP_Sw
-        # pGridSoilInfo.SP_Fc = SP_Fc
-        # dthet = pGridSoilInfo.SoilWaterDeficitContent()
         self.currow = row
         self.curcol = col
         self.SP_Por =  gSoil_GridLayerPara["SP_Por"][self.currow][self.curcol]

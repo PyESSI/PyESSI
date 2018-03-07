@@ -171,13 +171,13 @@ class SoilInfo:
         if self.SP_Sw < self.SP_Wp:
             self.SP_Sw = self.SP_Wp * 1.05
 
-        f = 6.5309 - 7.32561 * self.SL_Por[0] + 0.001583 * pow(self.SL_Clay[0], 2)
-        + 3.809479 * pow(self.SL_Por[0], 2) + 0.000344 * self.SL_Sand[0] * self.SL_Clay[0]
-        - 0.049837 * self.SL_Por[0] * self.SL_Sand[0] + 0.001608 * pow(self.SL_Por[0], 2) * pow(self.SL_Sand[0], 2)
-        + 0.001602 * pow(self.SL_Por[0], 2) * pow(self.SL_Clay[0], 2)
-        - 0.0000136 * pow(self.SL_Sand[0], 2) * self.SL_Clay[0]
-        - 0.003479 * pow(self.SL_Clay[0], 2) * self.SL_Por[0]
-        - 0.000799 * pow(self.SL_Sand[0], 2) * self.SL_Por[0]
+        f = 6.5309 - 7.32561 * self.SL_Por[0] + 0.001583 * math.pow(self.SL_Clay[0], 2)
+        + 3.809479 * math.pow(self.SL_Por[0], 2) + 0.000344 * self.SL_Sand[0] * self.SL_Clay[0]
+        - 0.049837 * self.SL_Por[0] * self.SL_Sand[0] + 0.001608 * math.pow(self.SL_Por[0], 2) * math.pow(self.SL_Sand[0], 2)
+        + 0.001602 * math.pow(self.SL_Por[0], 2) * math.pow(self.SL_Clay[0], 2)
+        - 0.0000136 * math.pow(self.SL_Sand[0], 2) * self.SL_Clay[0]
+        - 0.003479 * math.pow(self.SL_Clay[0], 2) * self.SL_Por[0]
+        - 0.000799 * math.pow(self.SL_Sand[0], 2) * self.SL_Por[0]
 
         self.SP_WFCS = 10. * math.exp(f)
 
