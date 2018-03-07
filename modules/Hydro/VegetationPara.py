@@ -22,7 +22,7 @@ import util.config
 
 
 class VegInfo:
-    def __init__(self, vtn):
+    def __init__(self, vtn, vfd):
         self.Veg_Name = ""
         self.Albedo = []
         self.LAI = []
@@ -34,9 +34,10 @@ class VegInfo:
         self.dManning_n = 0.05
 
         self.vegTypename = vtn
+        self.vegFileDict = vfd
 
     def ReadVegFile(self, vegFilename):
-        vegInfos = open(util.config.workSpace + os.sep + 'Vegetation' + os.sep + vegFilename, 'r').readlines()
+        vegInfos = self.vegFileDict[vegFilename]
         self.Veg_Name = vegInfos[0].split('\n')[0].split(':')[1].strip()
         self.LAIMX = float(vegInfos[1].split('\n')[0].split(':')[1].strip())
         self.LAIMN = float(vegInfos[2].split('\n')[0].split(':')[1].strip())

@@ -35,34 +35,30 @@ from util.fileIO import *
 # |++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
 class CHortonInfil:
-    def __init__(self):
+    def __init__(self, stn, sfd):
         self.m_dERR = 0.
         self.m_dK = 0.
         self.m_dFc = 0.
         self.m_dF0 = 0.
-        self.m_currow = 0
-        self.m_curcol = 0
 
         self.m_dFt = 0  # 土壤水下渗量
         self.m_dPreSoilW = 0  # 初始土壤含水量
 
-    def SetGridPara(self, currow, curcol, dSoilW, dErr, soil, soilTypename):
+        self.soilTypename = stn
+        self.solFileDict = sfd
+
+    def SetGridPara(self, dSoilW, dErr, soil):
         '''
         设置参数
-        :param currow:
-        :param curcol:
         :param dSoilW:
         :param dErr:
         :return:
         '''
-        self.m_currow = currow
-        self.m_curcol = curcol
         self.m_dPreSoilW = dSoilW
         self.m_dERR = dErr
         self.m_Soil = soil
-        self.soilTypename = soilTypename
 
-        pGridSoilInfo = SoilInfo(self.soilTypename)
+        pGridSoilInfo = SoilInfo(self.soilTypename, self.solFileDict)
         pGridSoilInfo.ReadSoilFile(pGridSoilInfo.soilTypename[str(int(self.m_Soil))] + '.sol')
         self.m_dK = pGridSoilInfo.Horton_K
         self.m_dF0 = pGridSoilInfo.SP_Init_F0

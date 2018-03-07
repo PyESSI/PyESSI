@@ -61,9 +61,21 @@ class CHydroSimulate:
 
         self.m_row = 0
         self.m_col = 0
+
         self.middaily = []
 
-        self.HortonInfil = CHortonInfil()
+        self.soilTypeName = None
+        self.vegTypeName = None
+        self.solFile = {}
+        self.vegFile = {}
+
+        # 加载土壤、植被查找表
+        self.LoadLookupTable()
+        # 加载.sol和.veg信息
+        self.LoadSolVegFile()
+
+        self.HortonInfil = CHortonInfil(self.soilTypeName, self.solFile)
+        self.gridwb = CGridWaterBalance(self.soilTypeName, self.solFile, self.vegTypeName, self.vegFile)
 
         if util.config.RunoffSimuType == util.defines.LONGTERM_RUNOFF_SIMULATION:
             self.m_bDate = True
@@ -99,28 +111,8 @@ class CHydroSimulate:
             if self.m_iNodeNum > 1:
                 self.MuskRouteInit(self.m_iNodeNum)
 
-        # 加载土壤、植被和DEM图层
-        SoilTypeTXT = util.config.workSpace + os.sep + 'LookupTable' + os.sep + 'SoilType.txt'
-        LulcTypeTXT = util.config.workSpace + os.sep + 'LookupTable' + os.sep + 'LulcType.txt'
-        if os.path.exists(SoilTypeTXT):
-            soilIdName = []
-            soilTypeInfos = open(SoilTypeTXT, 'r').readlines()
-            for i in range(len(soilTypeInfos)):
-                soilIdName.append((soilTypeInfos[i].split('\n')[0].split('\t')[0].strip(),
-                                   soilTypeInfos[i].split('\n')[0].split('\t')[1].strip()))
-            self.soilTypeName = dict(soilIdName)
-        else:
-            raise Exception("Can not find SoilType.txt")
-        if os.path.exists(LulcTypeTXT):
-            vegIdName = []
-            vegTypeInfos = open(LulcTypeTXT, 'r').readlines()
-            for i in range(len(vegTypeInfos)):
-                vegIdName.append((vegTypeInfos[i].split('\n')[0].split('\t')[0].strip(),
-                                  vegTypeInfos[i].split('\n')[0].split('\t')[1].strip()))
-            self.vegTypeName = dict(vegIdName)
-        else:
-            raise Exception("Can not find LulcType.txt")
-
+        ### 加载土壤、植被和DEM图层 ###
+        # 栅格初始化
         self.gridLayerInit()
         self.GridMemFreeAndNew()
         self.GridLayerInit_LongTerm()
@@ -149,7 +141,6 @@ class CHydroSimulate:
         self.m_pOutletDeepBaseQ = numpy.zeros(totrec)
 
         dthet = None
-        dCp = None
         dsnowfactor = None
         aetfactor = 0.
         curorder = 0
@@ -180,62 +171,18 @@ class CHydroSimulate:
 
             dayCountTemp = endDateTemp.toordinal() - iniDateTemp.toordinal() + 1
 
+            # 初始化数值
             i = int(theDay[0:4])
             j = dayCountTemp
 
             dn = j
-
             dintensity = 0.
             dhr = 24.
             dhrIntensity = 0.
             dPE = 0.
 
-            if util.config.pcpdata == 1:
-                self.curPcp = readRaster(
-                    util.config.workSpace + os.sep + 'Forcing' + os.sep + 'pcpdata' + os.sep + theDay + '.tif').data
-            else:
-                self.curPcp = numpy.zeros((self.m_row, self.m_col))
-
-            if util.config.petdata == 1:
-                self.curPet = readRaster(
-                    util.config.workSpace + os.sep + 'Forcing' + os.sep + 'petdata' + os.sep + theDay + '.tif').data
-            else:
-                self.curPet = numpy.zeros((self.m_row, self.m_col))
-
-            if util.config.tmpmeandata == 1:
-                self.curTmpmean = readRaster(
-                    util.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmpmeandata' + os.sep + theDay + '.tif').data
-            else:
-                self.curTmpmean = numpy.zeros((self.m_row, self.m_col))
-
-            if util.config.tmpmxdata == 1:
-                self.curTmpmx = readRaster(
-                    util.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmpmxdata' + os.sep + theDay + '.tif').data
-            else:
-                self.curTmpmx = numpy.zeros((self.m_row, self.m_col))
-
-            if util.config.tmpmndata == 1:
-                self.curTmpmn = readRaster(
-                    util.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmpmndata' + os.sep + theDay + '.tif').data
-            else:
-                self.curTmpmn = numpy.zeros((self.m_row, self.m_col))
-
-            if util.config.wnddata == 1:
-                self.curWnd = readRaster(
-                    util.config.workSpace + os.sep + 'Forcing' + os.sep + 'wnddata' + os.sep + theDay + '.tif').data
-            else:
-                self.curWnd = numpy.zeros((self.m_row, self.m_col))
-
-            if util.config.hmddata == 1:
-                self.curHmd = readRaster(
-                    util.config.workSpace + os.sep + 'Forcing' + os.sep + 'hmddata' + os.sep + theDay + '.tif').data
-            else:
-                self.curHmd = numpy.zeros((self.m_row, self.m_col))
-            if util.config.slrdata == 1:
-                self.curSlr = readRaster(
-                    util.config.workSpace + os.sep + 'Forcing' + os.sep + 'slrdata' + os.sep + theDay + '.tif').data
-            else:
-                self.curSlr = numpy.zeros((self.m_row, self.m_col))
+            # 加载逐日驱动数据
+            self.LoadForcingData(theDay)
 
             for row in range(self.m_row):
                 for col in range(self.m_col):
@@ -270,26 +217,23 @@ class CHydroSimulate:
 
                     dintensity = self.curPcp[row][col] / dhrIntensity
 
-                    self.HortonInfil.SetGridPara(row, col, self.pGridSoilInfo_SP_Sw[row][col], 0.03,
-                                                 self.g_SoilLayer.data[row][col], self.soilTypeName)
+                    self.HortonInfil.SetGridPara(self.pGridSoilInfo_SP_Sw[row][col], 0.03,
+                                                 self.g_SoilLayer.data[row][col])
 
                     self.HortonInfil.HortonExcessRunoff()
                     self.m_drateinf[row][col] = self.HortonInfil.m_dFt
 
-                    pGridSoilInfo = SoilInfo(self.soilTypeName)
+                    pGridSoilInfo = SoilInfo(self.soilTypeName, self.solFile)
                     pGridSoilInfo.ReadSoilFile(self.soilTypeName[str(int(self.g_SoilLayer.data[row][col]))] + '.sol')
                     dthet = pGridSoilInfo.SoilWaterDeficitContent()
 
-                    self.gridwb = CGridWaterBalance(self.g_DemLayer.data[row][col], self.g_SoilLayer.data[row][col],
-                                                    self.g_VegLayer.data[row][col],
-                                                    self.curPet[row][col], self.curPcp[row][col], self.curTmpmean[row][col],
-                                                    self.curTmpmx[row][col], self.curTmpmn[row][col], self.curSlr[row][col],
-                                                    self.curHmd[row][col], self.curWnd[row][col], self.soilTypeName, self.vegTypeName)
-
-                    self.gridwb.SetGridPara(dintensity, self.m_drateinf[row][col], i, j, dhrIntensity, theDay)
-
+                    self.gridwb.SetGridPara(dintensity, self.m_drateinf[row][col], i, j, dhrIntensity, theDay,
+                                            self.g_DemLayer.data[row][col], self.g_SoilLayer.data[row][col],
+                                            self.g_VegLayer.data[row][col],
+                                            self.curPet[row][col], self.curPcp[row][col], self.curTmpmean[row][col],
+                                            self.curTmpmx[row][col], self.curTmpmn[row][col], self.curSlr[row][col],
+                                            self.curHmd[row][col], self.curWnd[row][col])
                     dalb = self.GetVegAlbedo(iMonth)
-
                     self.gridwb.CalcPET(dalb, theDay)
 
                     if not self.g_StrahlerRivNet.data[row][col] == 0:
@@ -547,11 +491,11 @@ class CHydroSimulate:
         dGridOut = 0.
         subID = 0
         dSurfQLoss = 0.
-        if WaterYearType == util.defines.WATER_HIGH_YEAR:
+        if WaterYrType == util.defines.WATER_HIGH_YEAR:
             dSurfQLoss = util.config.HighWaterSurfQLoss
-        elif WaterYearType == util.defines.WATER_MID_YEAR:
+        elif WaterYrType == util.defines.WATER_MID_YEAR:
             dSurfQLoss = util.config.MidWaterSurfQLoss
-        elif WaterYearType == util.defines.WATER_LOW_YEAR:
+        elif WaterYrType == util.defines.WATER_LOW_YEAR:
             dSurfQLoss = util.config.LowWaterSurfQLoss
         else:
             dSurfQLoss = util.config.LowWaterSurfQLoss
@@ -601,11 +545,11 @@ class CHydroSimulate:
         LagTime = 0
         dGridOut = 0.
         dSurfQLoss = 0.
-        if WaterYearType == util.defines.WATER_HIGH_YEAR:
+        if WaterYrType == util.defines.WATER_HIGH_YEAR:
             dSurfQLoss = util.config.HighWaterSurfQLoss
-        elif WaterYearType == util.defines.WATER_MID_YEAR:
+        elif WaterYrType == util.defines.WATER_MID_YEAR:
             dSurfQLoss = util.config.MidWaterSurfQLoss
-        elif WaterYearType == util.defines.WATER_LOW_YEAR:
+        elif WaterYrType == util.defines.WATER_LOW_YEAR:
             dSurfQLoss = util.config.LowWaterSurfQLoss
         else:
             dSurfQLoss = util.config.LowWaterSurfQLoss
@@ -663,7 +607,7 @@ class CHydroSimulate:
     def GetVegAlbedo(self, mon, day=1):
         dret = 0.23
         if mon >= 1 or mon <= 12:
-            vegTemp = VegInfo(self.vegTypeName)
+            vegTemp = VegInfo(self.vegTypeName, self.vegFile)
             vegTemp.ReadVegFile(self.vegTypeName[str(int(self.m_iVegOrd))] + '.veg')
             dret = vegTemp.Albedo[mon - 1]
         return dret
@@ -710,18 +654,18 @@ class CHydroSimulate:
         self.m_row = self.g_DemLayer.nRows
         self.m_col = self.g_DemLayer.nCols
 
-        self.pGridSoilInfo_SP_Sw = numpy.empty((self.m_row, self.m_col))
-        self.pGridSoilInfo_SP_Wp = numpy.empty((self.m_row, self.m_col))
-        self.pGridSoilInfo_SP_WFCS = numpy.empty((self.m_row, self.m_col))
-        self.pGridSoilInfo_SP_Sat_K = numpy.empty((self.m_row, self.m_col))
-        self.pGridSoilInfo_SP_Stable_Fc = numpy.empty((self.m_row, self.m_col))
-        self.pGridSoilInfo_SP_Init_F0 = numpy.empty((self.m_row, self.m_col))
-        self.pGridSoilInfo_Horton_K = numpy.empty((self.m_row, self.m_col))
-        self.pGridSoilInfo_SP_Por = numpy.empty((self.m_row, self.m_col))
-        self.pGridSoilInfo_rootdepth = numpy.empty((self.m_row, self.m_col))
-        self.pGridSoilInfo_SP_Fc = numpy.empty((self.m_row, self.m_col))
-        self.pGridSoilInfo_SP_Sat = numpy.empty((self.m_row, self.m_col))
-        self.pGridSoilInfo_TPercolation = numpy.empty((self.m_row, self.m_col))
+        self.pGridSoilInfo_SP_Sw = numpy.zeros((self.m_row, self.m_col))
+        self.pGridSoilInfo_SP_Wp = numpy.zeros((self.m_row, self.m_col))
+        self.pGridSoilInfo_SP_WFCS = numpy.zeros((self.m_row, self.m_col))
+        self.pGridSoilInfo_SP_Sat_K = numpy.zeros((self.m_row, self.m_col))
+        self.pGridSoilInfo_SP_Stable_Fc = numpy.zeros((self.m_row, self.m_col))
+        self.pGridSoilInfo_SP_Init_F0 = numpy.zeros((self.m_row, self.m_col))
+        self.pGridSoilInfo_Horton_K = numpy.zeros((self.m_row, self.m_col))
+        self.pGridSoilInfo_SP_Por = numpy.zeros((self.m_row, self.m_col))
+        self.pGridSoilInfo_rootdepth = numpy.zeros((self.m_row, self.m_col))
+        self.pGridSoilInfo_SP_Fc = numpy.zeros((self.m_row, self.m_col))
+        self.pGridSoilInfo_SP_Sat = numpy.zeros((self.m_row, self.m_col))
+        self.pGridSoilInfo_TPercolation = numpy.zeros((self.m_row, self.m_col))
         self.pGridSoilInfo_SP_Temp = numpy.zeros((self.m_row, self.m_col))
 
         pGridVegInfoTemp = []
@@ -732,16 +676,16 @@ class CHydroSimulate:
 
         self.pGridVegInfo = numpy.array(pGridVegInfoTemp).reshape(self.m_row, self.m_col)
 
-        self.m_GridTotalQ = numpy.empty((self.m_row, self.m_col))
-        self.m_GridSurfQ = numpy.empty((self.m_row, self.m_col))
-        self.m_GridLateralQ = numpy.empty((self.m_row, self.m_col))
-        self.m_GridBaseQ = numpy.empty((self.m_row, self.m_col))
-        self.m_GridTempVal = numpy.empty((self.m_row, self.m_col))
-        self.m_GridWaterYieldType = numpy.empty((self.m_row, self.m_col))
-        self.m_SoilProfileWater = numpy.empty((self.m_row, self.m_col))
-        self.m_SoilAvgWater = numpy.empty((self.m_row, self.m_col))
-        self.m_GridRoutingQ = numpy.empty((self.m_row, self.m_col))
-        self.m_NetPcp = numpy.empty((self.m_row, self.m_col))
+        self.m_GridTotalQ = numpy.zeros((self.m_row, self.m_col))
+        self.m_GridSurfQ = numpy.zeros((self.m_row, self.m_col))
+        self.m_GridLateralQ = numpy.zeros((self.m_row, self.m_col))
+        self.m_GridBaseQ = numpy.zeros((self.m_row, self.m_col))
+        self.m_GridTempVal = numpy.zeros((self.m_row, self.m_col))
+        self.m_GridWaterYieldType = numpy.zeros((self.m_row, self.m_col))
+        self.m_SoilProfileWater = numpy.zeros((self.m_row, self.m_col))
+        self.m_SoilAvgWater = numpy.zeros((self.m_row, self.m_col))
+        self.m_GridRoutingQ = numpy.zeros((self.m_row, self.m_col))
+        self.m_NetPcp = numpy.zeros((self.m_row, self.m_col))
 
         for i in range(self.m_row):
             for j in range(self.m_col):
@@ -751,7 +695,7 @@ class CHydroSimulate:
                 if not self.IfGridBeCalculated(i, j):
                     continue
                 if self.GetSoilTypeOrder(int(self.g_SoilLayer.data[i][j])):
-                    soilTemp = SoilInfo(self.soilTypeName)
+                    soilTemp = SoilInfo(self.soilTypeName, self.solFile)
                     self.m_iSoilOrd = int(self.g_SoilLayer.data[i][j])
                     soilTemp.ReadSoilFile(self.soilTypeName[str(int(self.m_iSoilOrd))] + '.sol')
                     self.pGridSoilInfo_SP_Sw[i][j] = soilTemp.SP_Sw
@@ -768,7 +712,7 @@ class CHydroSimulate:
                     self.pGridSoilInfo_TPercolation[i][j] = (soilTemp.SP_Sat - soilTemp.SP_Fc) / (soilTemp.SP_Sat_K)
                     self.pGridSoilInfo_SP_Temp[i][j] = 0.
 
-                    vegTemp = VegInfo(self.vegTypeName)
+                    vegTemp = VegInfo(self.vegTypeName, self.vegFile)
                     self.m_iVegOrd = self.g_VegLayer.data[i][j]
                     vegTemp.ReadVegFile(self.vegTypeName[str(int(self.m_iVegOrd))] + '.veg')
                     self.pGridVegInfo[i][j] = vegTemp
@@ -778,39 +722,39 @@ class CHydroSimulate:
 
 
     def GridLayerInit_Horton(self):
-        self.m_AET = numpy.empty((self.m_row, self.m_col))
-        self.m_drateinf = numpy.empty((self.m_row, self.m_col))
+        self.m_AET = numpy.zeros((self.m_row, self.m_col))
+        self.m_drateinf = numpy.zeros((self.m_row, self.m_col))
 
     def GridLayerInit_GreenAmpt(self):
         self.GridLayerInit_Horton()
-        self.m_drintns = numpy.empty((self.m_row, self.m_col))
-        self.m_dcumr = numpy.empty((self.m_row, self.m_col))
-        self.m_dcuminf = numpy.empty((self.m_row, self.m_col))
-        self.m_dexcum = numpy.empty((self.m_row, self.m_col))
+        self.m_drintns = numpy.zeros((self.m_row, self.m_col))
+        self.m_dcumr = numpy.zeros((self.m_row, self.m_col))
+        self.m_dcuminf = numpy.zeros((self.m_row, self.m_col))
+        self.m_dexcum = numpy.zeros((self.m_row, self.m_col))
 
     def GridLayerInit_LongTerm(self):
-        self.m_drateinf = numpy.empty((self.m_row, self.m_col))
-        self.m_AET = numpy.empty((self.m_row, self.m_col))
-        self.m_CI = numpy.empty((self.m_row, self.m_col))
-        self.m_SnowWater = numpy.empty((self.m_row, self.m_col))
-        self.m_CIDefict = numpy.empty((self.m_row, self.m_col))
-        self.m_AI = numpy.empty((self.m_row, self.m_col))
-        self.m_NetPcp = numpy.empty((self.m_row, self.m_col))
+        self.m_drateinf = numpy.zeros((self.m_row, self.m_col))
+        self.m_AET = numpy.zeros((self.m_row, self.m_col))
+        self.m_CI = numpy.zeros((self.m_row, self.m_col))
+        self.m_SnowWater = numpy.zeros((self.m_row, self.m_col))
+        self.m_CIDefict = numpy.zeros((self.m_row, self.m_col))
+        self.m_AI = numpy.zeros((self.m_row, self.m_col))
+        self.m_NetPcp = numpy.zeros((self.m_row, self.m_col))
 
     def GridMemFreeAndNew(self):
-        self.m_GridTotalQ = numpy.empty((self.m_row, self.m_col))
-        self.m_GridSurfQ = numpy.empty((self.m_row, self.m_col))
-        self.m_GridLateralQ = numpy.empty((self.m_row, self.m_col))
-        self.m_GridBaseQ = numpy.empty((self.m_row, self.m_col))
-        self.m_GridRoutingQ = numpy.empty((self.m_row, self.m_col))
+        self.m_GridTotalQ = numpy.zeros((self.m_row, self.m_col))
+        self.m_GridSurfQ = numpy.zeros((self.m_row, self.m_col))
+        self.m_GridLateralQ = numpy.zeros((self.m_row, self.m_col))
+        self.m_GridBaseQ = numpy.zeros((self.m_row, self.m_col))
+        self.m_GridRoutingQ = numpy.zeros((self.m_row, self.m_col))
 
-        self.m_NetPcp = numpy.empty((self.m_row, self.m_col))
-        self.m_GridWaterYieldType = numpy.empty((self.m_row, self.m_col))
-        self.m_SoilProfileWater = numpy.empty((self.m_row, self.m_col))
-        self.m_SoilAvgWater = numpy.empty((self.m_row, self.m_col))
+        self.m_NetPcp = numpy.zeros((self.m_row, self.m_col))
+        self.m_GridWaterYieldType = numpy.zeros((self.m_row, self.m_col))
+        self.m_SoilProfileWater = numpy.zeros((self.m_row, self.m_col))
+        self.m_SoilAvgWater = numpy.zeros((self.m_row, self.m_col))
 
     def GridMemFreeAndNew_Horton(self):
-        self.m_AET = numpy.empty((self.m_row, self.m_col))
+        self.m_AET = numpy.zeros((self.m_row, self.m_col))
         self.m_drateinf = numpy.zeros((self.m_row, self.m_col))
 
     def GridMemFreeAndNew_LongTerm(self):
@@ -822,15 +766,15 @@ class CHydroSimulate:
         self.m_AI = numpy.zeros((self.m_row, self.m_col))
         self.m_CI = numpy.zeros((self.m_row, self.m_col))
         self.m_SnowWater = numpy.zeros((self.m_row, self.m_col))
-        self.m_CIDefict = numpy.empty((self.m_row, self.m_col))
-        self.m_AET = numpy.empty((self.m_row, self.m_col))
-        self.m_NetPcp = numpy.empty((self.m_row, self.m_col))
+        self.m_CIDefict = numpy.zeros((self.m_row, self.m_col))
+        self.m_AET = numpy.zeros((self.m_row, self.m_col))
+        self.m_NetPcp = numpy.zeros((self.m_row, self.m_col))
 
     def GridMemFreeAndNew_GreenAmpt(self):
-        self.m_AI = numpy.empty((self.m_row, self.m_col))
-        self.m_CI = numpy.empty((self.m_row, self.m_col))
-        self.m_CIDefict = numpy.empty((self.m_row, self.m_col))
-        self.m_AET = numpy.empty((self.m_row, self.m_col))
+        self.m_AI = numpy.zeros((self.m_row, self.m_col))
+        self.m_CI = numpy.zeros((self.m_row, self.m_col))
+        self.m_CIDefict = numpy.zeros((self.m_row, self.m_col))
+        self.m_AET = numpy.zeros((self.m_row, self.m_col))
 
     # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +                                                        +
@@ -1053,3 +997,95 @@ class CHydroSimulate:
             self.pRiverRoute.pRoute[i].dOutFlux = 0.
             self.pRiverRoute.pPreRoute[i].dInFlux = 0.
             self.pRiverRoute.pPreRoute[i].dOutFlux = 0.
+
+    def LoadLookupTable(self):
+        '''
+        Load Soil and Veg Lookup Table
+        :return:
+        '''
+        SoilTypeTXT = util.config.workSpace + os.sep + 'LookupTable' + os.sep + 'SoilType.txt'
+        LulcTypeTXT = util.config.workSpace + os.sep + 'LookupTable' + os.sep + 'LulcType.txt'
+        if os.path.exists(SoilTypeTXT):
+            soilIdName = []
+            soilTypeInfos = open(SoilTypeTXT, 'r').readlines()
+            for i in range(len(soilTypeInfos)):
+                soilIdName.append((soilTypeInfos[i].split('\n')[0].split('\t')[0].strip(),
+                                   soilTypeInfos[i].split('\n')[0].split('\t')[1].strip()))
+            self.soilTypeName = dict(soilIdName)
+        else:
+            raise Exception("Can not find SoilType.txt")
+        if os.path.exists(LulcTypeTXT):
+            vegIdName = []
+            vegTypeInfos = open(LulcTypeTXT, 'r').readlines()
+            for i in range(len(vegTypeInfos)):
+                vegIdName.append((vegTypeInfos[i].split('\n')[0].split('\t')[0].strip(),
+                                  vegTypeInfos[i].split('\n')[0].split('\t')[1].strip()))
+            self.vegTypeName = dict(vegIdName)
+        else:
+            raise Exception("Can not find LulcType.txt")
+
+    def LoadSolVegFile(self):
+        '''
+        加载.sol和.veg信息
+        :return:
+        '''
+        solFileList, solFileName = getFileList(util.config.workSpace + os.sep + "Soil", ".sol")
+        vegFileList, vegFileName = getFileList(util.config.workSpace + os.sep + "Vegetation", ".veg")
+        for s in range(len(solFileList)):
+            solFileInfo = open(solFileList[s], 'r').readlines()
+            self.solFile[solFileName[s] + ".sol"] = solFileInfo
+        for v in range(len(vegFileList)):
+            vegFileInfo = open(vegFileList[v], 'r').readlines()
+            self.vegFile[vegFileName[v] + ".veg"] = vegFileInfo
+
+    def LoadForcingData(self, theDay):
+        '''
+        加载逐日驱动数据
+        :return:
+        '''
+        if util.config.pcpdata == 1:
+            self.curPcp = readRaster(
+                util.config.workSpace + os.sep + 'Forcing' + os.sep + 'pcpdata' + os.sep + theDay + '.tif').data
+        else:
+            self.curPcp = numpy.zeros((self.m_row, self.m_col))
+
+        if util.config.petdata == 1:
+            self.curPet = readRaster(
+                util.config.workSpace + os.sep + 'Forcing' + os.sep + 'petdata' + os.sep + theDay + '.tif').data
+        else:
+            self.curPet = numpy.zeros((self.m_row, self.m_col))
+
+        if util.config.tmpmeandata == 1:
+            self.curTmpmean = readRaster(
+                util.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmpmeandata' + os.sep + theDay + '.tif').data
+        else:
+            self.curTmpmean = numpy.zeros((self.m_row, self.m_col))
+
+        if util.config.tmpmxdata == 1:
+            self.curTmpmx = readRaster(
+                util.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmpmxdata' + os.sep + theDay + '.tif').data
+        else:
+            self.curTmpmx = numpy.zeros((self.m_row, self.m_col))
+
+        if util.config.tmpmndata == 1:
+            self.curTmpmn = readRaster(
+                util.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmpmndata' + os.sep + theDay + '.tif').data
+        else:
+            self.curTmpmn = numpy.zeros((self.m_row, self.m_col))
+
+        if util.config.wnddata == 1:
+            self.curWnd = readRaster(
+                util.config.workSpace + os.sep + 'Forcing' + os.sep + 'wnddata' + os.sep + theDay + '.tif').data
+        else:
+            self.curWnd = numpy.zeros((self.m_row, self.m_col))
+
+        if util.config.hmddata == 1:
+            self.curHmd = readRaster(
+                util.config.workSpace + os.sep + 'Forcing' + os.sep + 'hmddata' + os.sep + theDay + '.tif').data
+        else:
+            self.curHmd = numpy.zeros((self.m_row, self.m_col))
+        if util.config.slrdata == 1:
+            self.curSlr = readRaster(
+                util.config.workSpace + os.sep + 'Forcing' + os.sep + 'slrdata' + os.sep + theDay + '.tif').data
+        else:
+            self.curSlr = numpy.zeros((self.m_row, self.m_col))

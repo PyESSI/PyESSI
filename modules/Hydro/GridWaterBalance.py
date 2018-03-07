@@ -7,10 +7,10 @@ Created Feb 2018
 Class:
     CGridWaterBalance
      functions:
-        SetGridPara(self, currow, curcol, rint, dFp, year, dn, hr, curForcingFilename)
+        SetGridPara(self, currow, curcol, rint, dFp, year, dn, hr, curDate)
         CalcCI(self)
-        CalcPET(self,dalbedo,curForcingFilename)
-        CalcAET(self, dalbedo, curForcingFilename)
+        CalcPET(self,dalbedo,curDate)
+        CalcAET(self, dalbedo, curDate)
         CompleAET(self,dalbedo =0.23)
         CalcAI(self)
         CalcNetRain(self)
@@ -57,24 +57,42 @@ from modules.Climate.PETInFAOPM import *
 # +														+
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 class CGridWaterBalance:
-    def __init__(self, elev, soil, veg, pet, pcp, tav, tmx, tmn, slr, hmd, wnd, stn, vtn):
+    def __init__(self, stn, sfd, vtn, vfd):
         '''
         Set variance values
-        :param elev: DEM
         :param soil: Soil type
         :param veg: LUCC type
-        :param pet:
-        :param pcp:
-        :param tav:
-        :param tmx:
-        :param tmn:
-        :param slr:
-        :param hmd:
-        :param wnd:
         '''
         self.m_dCrownInterc = 0.
         self.m_dGridLAI = 0.
         self.m_dRIntensity = 0.
+
+        self.soilTypename = stn
+        self.solFileDict = sfd
+        self.vegTypename = vtn
+        self.vegFileDict = vfd
+
+
+    # /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    # +														+
+    # +				功能：设置栅格计算参数					    +
+    # +														+
+    # +++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+    def SetGridPara(self, rint, dFp, year, dn, hr, curDate, elev, soil, veg, pet, pcp, tav, tmx, tmn, slr, hmd, wnd):
+        '''
+        :param curcol:
+        :param rint:
+        :param dFp:
+        :param year:
+        :param dn:
+        :param hr:
+        :return:
+        '''
+        self.m_dRIntensity = rint
+        self.m_nYear = year
+        self.m_nDn = dn
+        self.m_dFp = dFp
+        self.m_dHr = hr
 
         # 当前栅格值
         self.m_dHeight = elev
@@ -90,40 +108,14 @@ class CGridWaterBalance:
         self.m_hmd = hmd
         self.m_wnd = wnd
 
-        self.soilTypename = stn
-        self.vegTypename = vtn
-
-    # /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    # +														+
-    # +				功能：设置栅格计算参数					    +
-    # +														+
-    # +++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-    def SetGridPara(self, rint, dFp, year, dn, hr, curForcingFilename):
-        '''
-        :param curcol:
-        :param rint:
-        :param dFp:
-        :param year:
-        :param dn:
-        :param hr:
-        :return:
-        '''
-
-        self.m_dRIntensity = rint
-        self.m_nYear = year
-        self.m_nDn = dn
-        self.m_dFp = dFp
-        self.m_dHr = hr
-
-
-        pGridSoilInfo = SoilInfo(self.soilTypename)
+        pGridSoilInfo = SoilInfo(self.soilTypename, self.solFileDict)
         pGridSoilInfo.ReadSoilFile(pGridSoilInfo.soilTypename[str(int(self.m_Soil))] + '.sol')
         self.m_dFc = pGridSoilInfo.SP_Stable_Fc
 
         if util.config.RunoffSimuType == util.defines.STORM_RUNOFF_SIMULATION:
             return
 
-        self.m_nMon = int(curForcingFilename[4:6])
+        self.m_nMon = int(curDate[4:6])
         self.m_dGridLAI = self.DailyLai()
         self.m_dGridCovDeg = self.DailyCoverDeg()
 
@@ -142,7 +134,7 @@ class CGridWaterBalance:
     # +                功能：计算栅格潜在蒸散量                   +
     # +                                                        +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
-    def CalcPET(self, dalbedo, curForcingFilename):
+    def CalcPET(self, dalbedo, curDate):
         tmpmxPath = util.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmpmxdata'
         tmpmnPath = util.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmpmndata'
         slrPath = util.config.workSpace + os.sep + 'Forcing' + os.sep + 'slrdata'
@@ -152,56 +144,56 @@ class CGridWaterBalance:
         ## 判断选择的方法 ##
         if util.config.PETMethod == util.defines.PET_REAL:
             return 0
-        if not os.path.exists(tmpmxPath + os.sep + curForcingFilename + '.tif') or not os.path.exists(
-                                tmpmnPath + os.sep + curForcingFilename + '.tif'):
+        if not os.path.exists(tmpmxPath + os.sep + curDate + '.tif') or not os.path.exists(
+                                tmpmnPath + os.sep + curDate + '.tif'):
             return 0
         dRLong = 0
         dRShort = 0
 
         if util.config.PETMethod == util.defines.PET_PRISTLEY_TAYLOR:
-            if not os.path.exists(slrPath + os.sep + curForcingFilename + '.tif') or not os.path.exists(
-                                    hmdPath + os.sep + curForcingFilename + '.tif'):
+            if not os.path.exists(slrPath + os.sep + curDate + '.tif') or not os.path.exists(
+                                    hmdPath + os.sep + curDate + '.tif'):
                 return 0
-            prist = CPETInPristley(self.m_dTav, self.m_dHeight, curForcingFilename + '.tif')
+            prist = CPETInPristley(self.m_dTav, self.m_dHeight, curDate + '.tif')
             dRLong = prist.NetLongWaveRadiationRHmd(self.m_slr, self.m_hmd)
             dRShort = prist.NetShortWaveRadiation(dalbedo, self.m_slr)
             self.m_dPET = prist.PETByPristley(1.26, 0)
 
         elif util.config.PETMethod == util.defines.PET_HARGREAVES:
-            if not os.path.exists(slrPath + os.sep + curForcingFilename + '.tif') or not os.path.exists(
-                                    hmdPath + os.sep + curForcingFilename + '.tif'):
+            if not os.path.exists(slrPath + os.sep + curDate + '.tif') or not os.path.exists(
+                                    hmdPath + os.sep + curDate + '.tif'):
                 return 0
-            har = CPETInHargreaves(self.m_dTav, self.m_dHeight, self.m_dTmx, self.m_dTmn, curForcingFilename + '.tif')
+            har = CPETInHargreaves(self.m_dTav, self.m_dHeight, self.m_dTmx, self.m_dTmn, curDate + '.tif')
             dRLong = har.NetLongWaveRadiationRHmd(self.m_slr, self.m_hmd)
             dRShort = har.NetShortWaveRadiation(dalbedo, self.m_slr)
             self.m_dPET = har.PETByHarg()
 
 
         elif util.config.PETMethod == util.defines.PET_FAO_PENMAN_MONTEITH:
-            if not os.path.exists(slrPath + os.sep + curForcingFilename) or not os.path.exists(
-                                    hmdPath + os.sep + curForcingFilename) or not os.path.exists(
-                                wndPath + os.sep + curForcingFilename):
+            if not os.path.exists(slrPath + os.sep + curDate) or not os.path.exists(
+                                    hmdPath + os.sep + curDate) or not os.path.exists(
+                                wndPath + os.sep + curDate):
                 return 0
-            faopm = CPETInFAOPM(self.m_dTav, self.m_dHeight, self.m_dTmx, self.m_dTmn, curForcingFilename)
+            faopm = CPETInFAOPM(self.m_dTav, self.m_dHeight, self.m_dTmx, self.m_dTmn, curDate)
             dRLong = faopm.NetLongWaveRadiationRHmd(self.m_slr, self.m_hmd)
             dRShort = faopm.NetShortWaveRadiation(dalbedo, self.m_slr)
             self.m_dPET = faopm.PETByRAVP(self.m_wnd, self.m_hmd)
 
 
         elif util.config.PETMethod == util.defines.PET_DEBRUIN:
-            if not os.path.exists(slrPath + os.sep + curForcingFilename) or not os.path.exists(
-                                    hmdPath + os.sep + curForcingFilename):
+            if not os.path.exists(slrPath + os.sep + curDate) or not os.path.exists(
+                                    hmdPath + os.sep + curDate):
                 return 0
-            debruin = CPETInDeBruin(self.m_dTav, self.m_dHeight, curForcingFilename)
+            debruin = CPETInDeBruin(self.m_dTav, self.m_dHeight, curDate)
             dRLong = debruin.NetLongWaveRadiationRHmd(self.m_slr, self.m_hmd)
             dRShort = debruin.NetShortWaveRadiation(dalbedo, self.m_slr)
             self.m_dPET = debruin.PETByDeBruin()
 
         else:
-            if not os.path.exists(slrPath + os.sep + curForcingFilename) or not os.path.exists(
-                                    hmdPath + os.sep + curForcingFilename):
+            if not os.path.exists(slrPath + os.sep + curDate) or not os.path.exists(
+                                    hmdPath + os.sep + curDate):
                 return 0
-            pm = CPETInPM(self.m_dTav, self.m_dHeight, curForcingFilename)
+            pm = CPETInPM(self.m_dTav, self.m_dHeight, curDate)
             dRLong = pm.NetLongWaveRadiationRHmd(self.m_slr, self.m_hmd)
             dRShort = pm.NetShortWaveRadiation(dalbedo, self.m_slr)
             self.m_dPET = pm.PETInPMByRHmd(self.m_wnd, self.m_hmd, 0)
@@ -215,7 +207,7 @@ class CGridWaterBalance:
     # +        目前只有互补相关理论法可以用。                    +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     # chen TODO
-    def CalcAET(self, dalbedo, curForcingFilename):
+    def CalcAET(self, dalbedo, curDate):
         self.m_dAET = 0.
         if self.m_dPET == 0:
             return
@@ -288,7 +280,7 @@ class CGridWaterBalance:
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     def CalcRunoffElement(self):
         iret = 0
-        pGridSoilInfo = SoilInfo(self.soilTypename)
+        pGridSoilInfo = SoilInfo(self.soilTypename, self.solFileDict)
         pGridSoilInfo.ReadSoilFile(pGridSoilInfo.soilTypename[str(int(self.m_Soil))] + '.sol')
         dthet = pGridSoilInfo.SoilWaterDeficitContent()
         dPE = self.m_dNetRain - self.m_dAET
@@ -359,7 +351,7 @@ class CGridWaterBalance:
                         if self.m_dBaseQ < 0:
                             self.m_dSurfQ = (dPE - dthet) * util.config.SurfQOutFactor
                             self.m_dBaseQ = (dPE - dthet) * (1 - util.config.SurfQOutFactor)
-                        self.m_dLateralQ = 0.
+                            self.m_dLateralQ = 0.
                     else:
                         self.m_dLateralQ = self.m_dTotalQ - self.m_dSurfQ - self.m_dBaseQ
                     iret = 8
@@ -443,7 +435,7 @@ class CGridWaterBalance:
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     def DailyLai(self):
         dLai = 0.5
-        pGridVegInfo = VegInfo(self.vegTypename)
+        pGridVegInfo = VegInfo(self.vegTypename, self.vegFileDict)
         pGridVegInfo.ReadVegFile(pGridVegInfo.vegTypename[str(int(self.m_Veg))] + '.veg')
 
         if util.config.DLAICalcMethod == util.defines.DAILY_LAI_CAL_SINE:
@@ -466,7 +458,7 @@ class CGridWaterBalance:
     # +                                                        +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     def DailyAlbedo(self):
-        pGridVegInfo = VegInfo(self.vegTypename)
+        pGridVegInfo = VegInfo(self.vegTypename, self.vegFileDict)
         pGridVegInfo.ReadVegFile(pGridVegInfo.vegTypename[str(int(self.m_Veg))] + '.veg')
         dAlb = 0.23
         dAlb = pGridVegInfo.Albedo[self.m_nMon - 1]
@@ -479,7 +471,7 @@ class CGridWaterBalance:
     # +                                                        +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     def DailyCoverDeg(self):
-        pGridVegInfo = VegInfo(self.vegTypename)
+        pGridVegInfo = VegInfo(self.vegTypename, self.vegFileDict)
         pGridVegInfo.ReadVegFile(pGridVegInfo.vegTypename[str(int(self.m_Veg))] + '.veg')
         dCovD = 0.
         dCovD = pGridVegInfo.CoverDeg[self.m_nMon - 1]
