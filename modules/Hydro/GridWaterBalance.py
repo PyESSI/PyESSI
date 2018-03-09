@@ -140,6 +140,7 @@ class CGridWaterBalance:
         ## 判断选择的方法 ##
         if util.config.PETMethod == util.defines.PET_REAL:
             self.m_dPET = gClimate_GridLayer.Pet[self.currow][self.curcol]
+            return 0
 
         if not os.path.exists(tmpmxPath + os.sep + curDate + '.tif') or not os.path.exists(
                                 tmpmnPath + os.sep + curDate + '.tif'):
