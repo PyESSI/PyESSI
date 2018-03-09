@@ -12,7 +12,6 @@ Functions:
 
 #pyESSI Project Setup
 #[ProjectSetup]
-<<<<<<< HEAD
 workSpace = r'D:\pyESSITest\DCBAM'
 mpiexeDir = r'"C:\Program Files\Microsoft MPI\Bin"'
 exeDir = None
@@ -24,22 +23,6 @@ endTime = '19960107'  # 模拟结束日期
 DEMFileName = 'dem_filename.tif'  # 原始DEM文件名
 LULCFileName = 'lulc_filename.tif'  # LULC文件名
 SoilFileName = 'soil_filename.tif'  # Soil文件名
-=======
-workSpace = r'D:\GaohrWS\DoctorWorks\DoctorWork\PyESSI\DCBAM'
-# workSpace = r'D:\pyESSITest\SRB\DCBAM'
-mpiexeDir = r'"C:\Program Files\Microsoft MPI\Bin"'
-exeDir = None
-
-startTime = '19960101'  # 模拟起始日期
-endTime = '20001231'  # 模拟结束日期
-
-# pyESSI GridIO File
-# [GridIO]
-DEMFileName = 'YLXDem240.tif'  # 原始DEM文件名
-# DEMFileName = 'dem.tif'
-LULCFileName = 'YLXLulc240.tif'  # LULC文件名
-SoilFileName = 'YLXSoil240.tif'  # Soil文件名
->>>>>>> upstream/master
 outlet = "outlet.shp"  # 出水口shpfile
 
 # PyESSI Model Running Parameters
@@ -100,11 +83,8 @@ petdata = 1  # 潜在蒸散发数据
 # PyESSI Model MidGridOut Parameters
 # [MidGridOut]
 strOutBDate = '19960101'  # 中间结果输出起始日期
-<<<<<<< HEAD
 strOutEDate = '19960107'  # 中间结果输出结束日期
-=======
-strOutEDate = '20001231'  # 中间结果输出结束日期
->>>>>>> upstream/master
+
 iPcp = 0  # 降雨量
 iTempMax = 0  # 最高气温
 iTempMin = 0  # 最低气温
