@@ -158,7 +158,7 @@ class SoilInfo:
             self.SL_HK.append((self.SL_Sat[i] - self.SL_P_Fc[i]) / self.SL_Sat_K[i])
             if self.SL_HK[i] < 1.:
                 self.SL_HK[i] = 1.
-                self.SP_Sw += self.SL_SW[i]
+            self.SP_Sw += self.SL_SW[i]
             acumudepth = self.SL_Z[i]
 
         self.SP_Por = sumpor / self.SL_Z[self.iLayer - 1]

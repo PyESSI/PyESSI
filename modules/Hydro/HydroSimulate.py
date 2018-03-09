@@ -218,8 +218,7 @@ class CHydroSimulate:
 
                     dintensity = gClimate_GridLayer.Pcp[row][col] / dhrIntensity
 
-                    self.HortonInfil.SetGridPara(row, col, gSoil_GridLayerPara.SP_Sw[row][col], 0.03,
-                                                 self.g_SoilLayer.data[row][col])
+                    self.HortonInfil.SetGridPara(row, col, gSoil_GridLayerPara.SP_Sw[row][col], 0.03)
 
                     self.HortonInfil.HortonExcessRunoff()
                     gOut_GridLayer.drateinf[row][col] = self.HortonInfil.m_dFt
@@ -265,7 +264,7 @@ class CHydroSimulate:
                             self.gridwb.m_dAET = gClimate_GridLayer.Pet[row][col] * aetfactor
                             gOut_GridLayer.AET[row][col] = self.gridwb.m_dAET
                         else:
-                            self.gridwb.CalcAET(dalb, theDay)
+                            self.gridwb.CalcAET(theDay, dalb)
                             if self.gridwb.m_dAET > gClimate_GridLayer.Pet[row][col]:
                                 gOut_GridLayer.AET[row][col] = gClimate_GridLayer.Pet[row][col] * math.exp(
                                     -1 * gClimate_GridLayer.Pet[row][col] / self.gridwb.m_dAET)
@@ -460,8 +459,9 @@ class CHydroSimulate:
                             self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
 
     def RiverOutletQ_Hao(self, curDay, curOrder):
-        outQ = open(util.config.workSpace + os.sep + 'Output' + os.sep + 'outQ.txt', 'a')
-        outQ.write("%s\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\n" % (
+        outQ = open(util.config.workSpace + os.sep + 'Output' + os.sep + '00' + os.sep + 'outQ.txt', 'a')
+        #outQ.write("Date\tTotalQ\tSurfQ\tLatQ\tBaseQ\tDeepBaseQ\n")
+        outQ.write("%s\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f\n" % (
         curDay, self.m_pOutletQ[curOrder], self.m_pOutletSurfQ[curOrder], self.m_pOutletLatQ[curOrder],
         self.m_pOutletBaseQ[curOrder], self.m_pOutletDeepBaseQ[curOrder]))
 

@@ -49,10 +49,10 @@ class CCanopyStorage:
         :param pcpcoeff:
         :return:
         '''
-        self.m_dPcpCoeff = dLai
-        self.m_dCd = dpcp
-        self.m_dPcp = dCd
-        self.m_dLAI = pcpcoeff
+        self.m_dPcpCoeff = pcpcoeff
+        self.m_dCd = dCd
+        self.m_dPcp = dpcp
+        self.m_dLAI =  dLai
         if self.m_dLAI <= 0:
             self.m_dLAI = 0.001
         if self.m_dCd <= 0:

@@ -31,7 +31,7 @@ class VegInfo:
         self.LAIMN = 0.
         self.doffset = 0.
         self.InitVWC = 0.
-        self.dManning_n = 0.05
+        self.dManning_n = 0.005
 
         self.vegTypename = vtn
         self.vegFileDict = vfd

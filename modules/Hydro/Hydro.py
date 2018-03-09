@@ -20,6 +20,8 @@ Functions:
 
 
 # load needed python modules
+import math
+
 
 
 class CMuskCungeRoutePara:
@@ -57,7 +59,7 @@ def HillSideQVelocity(dUnitQ, slp, manning_n):
     :param manning_n:
     :return:
     '''
-    dVflow = pow(dUnitQ, 0.4) * pow(slp, 0.3) / pow(manning_n, 0.6)
+    dVflow = math.pow(dUnitQ, 0.4) * math.pow(slp, 0.3) / math.pow(manning_n, 0.6)
     return dVflow
 
 
@@ -69,7 +71,7 @@ def ChannelQVelocity(dUnitQ, slp, manning_n):
     :param manning_n:
     :return:
     '''
-    dVflow = 0.489 * pow(dUnitQ, 0.25) * pow(slp, 0.375) / pow(manning_n, 0.75)
+    dVflow = 0.489 * math.pow(dUnitQ, 0.25) * math.pow(slp, 0.375) / math.pow(manning_n, 0.75)
     return dVflow
 
 class WaterYearType:

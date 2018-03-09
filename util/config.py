@@ -13,18 +13,18 @@ Functions:
 #pyESSI Project Setup
 #[ProjectSetup]
 # workSpace = r'D:\GaohrWS\DoctorWorks\DoctorWork\PyESSI\DCBAM'
-workSpace = r'D:\pyESSITest\SRB\DCBAM'
+workSpace = r'D:\pyESSITest\DCBAM_Naoli'
 mpiexeDir = r'"C:\Program Files\Microsoft MPI\Bin"'
 exeDir = None
-startTime = '20080701'  # 模拟起始日期
-endTime = '20080703'  # 模拟结束日期
+startTime = '20080101'  # 模拟起始日期
+endTime = '20141231'  # 模拟结束日期
 
 # pyESSI GridIO File
 # [GridIO]
-DEMFileName = 'srb10kmbuffer1km.tif'  # 原始DEM文件名
+DEMFileName = 'naoli.tif'  # 原始DEM文件名
 # DEMFileName = 'dem.tif'
-LULCFileName = 'srb10kmbuffer_modislulc1km.tif'  # LULC文件名
-SoilFileName = 'srb10kmbuffer_soil1km.tif'  # Soil文件名
+LULCFileName = 'new_new_naoli_lulc.tif'  # LULC文件名
+SoilFileName = 'naoliSoil.tif'  # Soil文件名
 outlet = "outlet.shp"  # 出水口shpfile
 
 # PyESSI Model Running Parameters
@@ -63,7 +63,7 @@ LMCTimeWeight = 0.10  # 壤中汇流时间差分权重
 LMCGridRTravelTime = 10.00  # 壤中汇流传播时间
 BMCTimeWeight = -0.60  # 地下汇流时间差分权重
 BMCGridRTravelTime = 4.00  # 地下汇流传播时间
-SurfQLinearFactor = 1.00  # 地表径流线性调节因子
+SurfQLinearFactor = 1  # 地表径流线性调节因子
 SurfQOutFactor = 0.90  # 地表径流出流系数
 LatQOutFactor = 0.50  # 壤中径流出流系数
 DailyMeanPcpTime = 2.00  # 日平均降雨时间长度
@@ -84,8 +84,8 @@ petdata = 1  # 潜在蒸散发数据
 
 # PyESSI Model MidGridOut Parameters
 # [MidGridOut]
-strOutBDate = '20080701'  # 中间结果输出起始日期
-strOutEDate = '20080703'  # 中间结果输出结束日期
+strOutBDate = '20080101'  # 中间结果输出起始日期
+strOutEDate = '20141231'  # 中间结果输出结束日期
 iPcp = 0  # 降雨量
 iTempMax = 0  # 最高气温
 iTempMin = 0  # 最低气温

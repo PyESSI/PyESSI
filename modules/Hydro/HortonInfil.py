@@ -36,16 +36,16 @@ from modules.Hydro.Hydro import gSoil_GridLayerPara
 # |++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
 class CHortonInfil:
-    def __init__(self):
-        self.m_dERR = 0.
-        self.m_dK = 0.
-        self.m_dFc = 0.
-        self.m_dF0 = 0.
+    # def __init__(self):
+    #     self.m_dERR = 0.
+    #     self.m_dK = 0.
+    #     self.m_dFc = 0.
+    #     self.m_dF0 = 0.
+    #
+    #     self.m_dFt = 0  # 土壤水下渗量
+    #     self.m_dPreSoilW = 0  # 初始土壤含水量
 
-        self.m_dFt = 0  # 土壤水下渗量
-        self.m_dPreSoilW = 0  # 初始土壤含水量
-
-    def SetGridPara(self, row, col, dSoilW, dErr, soil):
+    def SetGridPara(self, row, col, dSoilW, dErr):
         '''
         设置参数
         :param dSoilW:
@@ -56,13 +56,11 @@ class CHortonInfil:
         self.curcol = col
         self.m_dPreSoilW = dSoilW
         self.m_dERR = dErr
-        self.m_Soil = soil
 
         self.m_dK = gSoil_GridLayerPara.Horton_K[self.currow][self.curcol]
         self.m_dF0 = gSoil_GridLayerPara.SP_Init_F0[self.currow][self.curcol]
         self.m_dFc = gSoil_GridLayerPara.SP_Stable_Fc[self.currow][self.curcol]
 
-        return 0
 
     def HortonExcessRunoff(self):
         '''
@@ -75,16 +73,7 @@ class CHortonInfil:
         dt = 0.
         num = 0
 
-        self.m_dFt = self.m_dF0 - self.m_dK * (dtmpsw - self.m_dFc * dt0)
-        dt = dthet / self.m_dFt
-        dt0 = dt0 + dt
-        dtmpsw = self.DTempSoilW(dt0)
-        dthet = math.fabs(self.m_dPreSoilW - dtmpsw)
-        num += 1
-
-        while dthet > self.m_dERR:
-            if num > 500:
-                break
+        while True:
             self.m_dFt = self.m_dF0 - self.m_dK * (dtmpsw - self.m_dFc * dt0)
             dt = dthet / self.m_dFt
             dt0 = dt0 + dt
@@ -92,7 +81,13 @@ class CHortonInfil:
             dthet = math.fabs(self.m_dPreSoilW - dtmpsw)
             num += 1
 
-        return self.m_dFt
+            if num > 500:
+                break
+
+            if dthet <= self.m_dERR:
+                break
+
+
 
     def DTempSoilW(self, dt):
         '''
@@ -100,5 +95,6 @@ class CHortonInfil:
         :param dt:
         :return:
         '''
+        dret = 0.
         dret = self.m_dFc * dt + (1 - math.exp(-1 * self.m_dK * dt)) * (self.m_dF0 - self.m_dFc) / self.m_dK
         return dret
