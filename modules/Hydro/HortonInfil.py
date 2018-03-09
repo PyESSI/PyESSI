@@ -13,9 +13,7 @@ Revised:
 # load needed python modules
 import math
 
-import util.config
 from modules.Hydro.SoilPara import *
-from util.fileIO import *
 from modules.Hydro.Hydro import gSoil_GridLayerPara
 
 
@@ -45,7 +43,7 @@ class CHortonInfil:
         self.m_dFt = 0  # 土壤水下渗量
         self.m_dPreSoilW = 0  # 初始土壤含水量
 
-    def SetGridPara(self, row, col, dSoilW, dErr, soil):
+    def SetGridPara(self, row, col, dErr):
         '''
         设置参数
         :param dSoilW:
@@ -54,9 +52,8 @@ class CHortonInfil:
         '''
         self.currow = row
         self.curcol = col
-        self.m_dPreSoilW = dSoilW
+        self.m_dPreSoilW = gSoil_GridLayerPara.SP_Sw[row][col]
         self.m_dERR = dErr
-        self.m_Soil = soil
 
         self.m_dK = gSoil_GridLayerPara.Horton_K[self.currow][self.curcol]
         self.m_dF0 = gSoil_GridLayerPara.SP_Init_F0[self.currow][self.curcol]
@@ -75,16 +72,7 @@ class CHortonInfil:
         dt = 0.
         num = 0
 
-        self.m_dFt = self.m_dF0 - self.m_dK * (dtmpsw - self.m_dFc * dt0)
-        dt = dthet / self.m_dFt
-        dt0 = dt0 + dt
-        dtmpsw = self.DTempSoilW(dt0)
-        dthet = math.fabs(self.m_dPreSoilW - dtmpsw)
-        num += 1
-
-        while dthet > self.m_dERR:
-            if num > 500:
-                break
+        while True:
             self.m_dFt = self.m_dF0 - self.m_dK * (dtmpsw - self.m_dFc * dt0)
             dt = dthet / self.m_dFt
             dt0 = dt0 + dt
@@ -92,7 +80,12 @@ class CHortonInfil:
             dthet = math.fabs(self.m_dPreSoilW - dtmpsw)
             num += 1
 
-        return self.m_dFt
+            if num > 500:
+                print("霍顿下渗率计算迭代未收敛。")
+                break
+
+            if dthet <= self.m_dERR:
+                break
 
     def DTempSoilW(self, dt):
         '''
