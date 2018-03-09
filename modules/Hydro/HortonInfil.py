@@ -34,14 +34,14 @@ from modules.Hydro.Hydro import gSoil_GridLayerPara
 # |++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
 class CHortonInfil:
-    def __init__(self):
-        self.m_dERR = 0.
-        self.m_dK = 0.
-        self.m_dFc = 0.
-        self.m_dF0 = 0.
-
-        self.m_dFt = 0  # 土壤水下渗量
-        self.m_dPreSoilW = 0  # 初始土壤含水量
+    # def __init__(self):
+    #     self.m_dERR = 0.
+    #     self.m_dK = 0.
+    #     self.m_dFc = 0.
+    #     self.m_dF0 = 0.
+    #
+    #     self.m_dFt = 0  # 土壤水下渗量
+    #     self.m_dPreSoilW = 0  # 初始土壤含水量
 
     def SetGridPara(self, row, col, dErr):
         '''
@@ -59,7 +59,6 @@ class CHortonInfil:
         self.m_dF0 = gSoil_GridLayerPara.SP_Init_F0[self.currow][self.curcol]
         self.m_dFc = gSoil_GridLayerPara.SP_Stable_Fc[self.currow][self.curcol]
 
-        return 0
 
     def HortonExcessRunoff(self):
         '''
@@ -93,5 +92,6 @@ class CHortonInfil:
         :param dt:
         :return:
         '''
+        dret = 0.
         dret = self.m_dFc * dt + (1 - math.exp(-1 * self.m_dK * dt)) * (self.m_dF0 - self.m_dFc) / self.m_dK
         return dret

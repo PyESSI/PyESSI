@@ -109,6 +109,7 @@ class CGridWaterBalance:
         if util.config.RunoffSimuType == util.defines.STORM_RUNOFF_SIMULATION:
             return
 
+
         self.m_nMon = int(curDate[4:6])
         self.m_dGridLAI = self.DailyLai(self.currow, self.curcol)
         self.m_dGridCovDeg = self.DailyCoverDeg(self.currow, self.curcol)
@@ -129,6 +130,7 @@ class CGridWaterBalance:
     # +                                                        +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
     def CalcPET(self, dalbedo, curDate):
+        self.m_dPET = 0.
         tmpmxPath = util.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmpmxdata'
         tmpmnPath = util.config.workSpace + os.sep + 'Forcing' + os.sep + 'tmpmndata'
         slrPath = util.config.workSpace + os.sep + 'Forcing' + os.sep + 'slrdata'
@@ -137,12 +139,13 @@ class CGridWaterBalance:
 
         ## 判断选择的方法 ##
         if util.config.PETMethod == util.defines.PET_REAL:
-            return 0
+            self.m_dPET = gClimate_GridLayer.Pet[self.currow][self.curcol]
+
         if not os.path.exists(tmpmxPath + os.sep + curDate + '.tif') or not os.path.exists(
                                 tmpmnPath + os.sep + curDate + '.tif'):
             return 0
-        dRLong = 0
-        dRShort = 0
+        dRLong = 0.
+        dRShort = 0.
 
         if util.config.PETMethod == util.defines.PET_PRISTLEY_TAYLOR:
             if not os.path.exists(slrPath + os.sep + curDate + '.tif') or not os.path.exists(
@@ -164,28 +167,30 @@ class CGridWaterBalance:
 
 
         elif util.config.PETMethod == util.defines.PET_FAO_PENMAN_MONTEITH:
-            if not os.path.exists(slrPath + os.sep + curDate) or not os.path.exists(
-                                    hmdPath + os.sep + curDate) or not os.path.exists(
-                                wndPath + os.sep + curDate):
+            if not os.path.exists(slrPath + os.sep + curDate + '.tif') or not os.path.exists(
+                                    hmdPath + os.sep + curDate + '.tif') or not os.path.exists(
+                                wndPath + os.sep + curDate + '.tif'):
                 return 0
             faopm = CPETInFAOPM(self.m_dTav, self.m_dHeight, self.m_dTmx, self.m_dTmn, curDate)
             dRLong = faopm.NetLongWaveRadiationRHmd(self.m_slr, self.m_hmd)
             dRShort = faopm.NetShortWaveRadiation(dalbedo, self.m_slr)
-            self.m_dPET = faopm.PETByRAVP(self.m_wnd, self.m_hmd)
+            G = 0
+            self.m_dPET = faopm.PETByRAVP(self.m_wnd, self.m_hmd, G)
 
 
         elif util.config.PETMethod == util.defines.PET_DEBRUIN:
-            if not os.path.exists(slrPath + os.sep + curDate) or not os.path.exists(
-                                    hmdPath + os.sep + curDate):
+            if not os.path.exists(slrPath + os.sep + curDate + '.tif') or not os.path.exists(
+                                    hmdPath + os.sep + curDate + '.tif'):
                 return 0
             debruin = CPETInDeBruin(self.m_dTav, self.m_dHeight, curDate)
             dRLong = debruin.NetLongWaveRadiationRHmd(self.m_slr, self.m_hmd)
             dRShort = debruin.NetShortWaveRadiation(dalbedo, self.m_slr)
             self.m_dPET = debruin.PETByDeBruin()
-
+        elif  util.config.PETMethod == util.defines.PET_REAL:
+            self.m_dPET = gClimate_GridLayer.Pet[self.currow][self.curcol]
         else:
-            if not os.path.exists(slrPath + os.sep + curDate) or not os.path.exists(
-                                    hmdPath + os.sep + curDate):
+            if not os.path.exists(slrPath + os.sep + curDate + '.tif') or not os.path.exists(
+                                    hmdPath + os.sep + curDate + '.tif') or not os.path.exists(wndPath + os.sep + curDate + '.tif'):
                 return 0
             pm = CPETInPM(self.m_dTav, self.m_dHeight, curDate)
             dRLong = pm.NetLongWaveRadiationRHmd(self.m_slr, self.m_hmd)
@@ -200,18 +205,25 @@ class CGridWaterBalance:
     # +        由于Kojima法会出现比较大的空间不连续性，所以       +
     # +        目前只有互补相关理论法可以用。                    +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
-    # chen TODO
-    def CalcAET(self, dalbedo, curDate):
+    def CalcAET(self, curDate, dalbedo):
         self.m_dAET = 0.
         if self.m_dPET == 0:
             return
 
         if util.config.AETMethod == util.defines.AET_BY_CROP_COEFFICIENTS:
-            self.m_dAET = self.CompleAET(dalbedo)
+            self.m_dAET = self.CompleAET(curDate,dalbedo)
         elif util.config.AETMethod == util.defines.AET_BY_COMPRELATIONSHIP:
-            self.m_dAET = self.CompleAET(dalbedo)
+            self.m_dAET = self.CompleAET(curDate,dalbedo)
         elif util.config.AETMethod == util.defines.AET_BY_COMPRELA_AND_KOJIMA:
-            self.m_dAET = self.CompleAET(dalbedo)
+            dtempmean = gClimate_GridLayer.Tav[self.currow][self.curcol]
+            if dtempmean < 0:
+                waterv = CWaterVapor(dtempmean,500.)
+                dSatVap = waterv.SatuVapPressure()
+                dActVap = waterv.ActVapPressure(gClimate_GridLayer.Hmd[self.currow][self.curcol])
+                self.m_dAET = 0.001 * gClimate_GridLayer.Wnd[self.currow][self.curcol] * (dSatVap - dActVap) * 10 * 240
+            else:
+                self.m_dAET = self.CompleAET(curDate,dalbedo)
+
         else:
             return
 
@@ -220,9 +232,49 @@ class CGridWaterBalance:
     # +        功能：互补相关理论法计算实际蒸散发                  +
     # +                                                        +
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++ * /
-    # chen TODO
-    def CompleAET(self, dalbedo=0.23):
-        print('chen TODO')
+    def CompleAET(self, curDate, dalbedo=0.23):
+        self.m_dAET = 0.
+        dRLong = 0.
+        dRShort = 0.
+        dPrist = 0
+        dPM = 0
+        if util.config.PETMethod == util.defines.PET_PENMAN_MONTEITH:
+            prist = CPETInPristley(self.m_dTav, self.m_dHeight, curDate)
+            dRLong = prist.NetLongWaveRadiationRHmd(gClimate_GridLayer.Slr[self.currow][self.curcol],
+                                                    gClimate_GridLayer.Hmd[self.currow][self.curcol])
+            dRShort = prist.NetShortWaveRadiation(dalbedo, gClimate_GridLayer.Slr[self.currow][self.curcol])
+            dPrist = prist.PETByPristley(1.26, 0)
+            self.m_dAET = 2 * dPrist - self.m_dPET
+            self.m_dPETPristley = dPrist
+        elif util.config.PETMethod == util.defines.PET_PRISTLEY_TAYLOR:
+            pm = CPETInPM(self.m_dTav, self.m_dHeight, curDate)
+            dRLong = pm.NetLongWaveRadiationRHmd(gClimate_GridLayer.Slr[self.currow][self.curcol],
+                                                    gClimate_GridLayer.Hmd[self.currow][self.curcol])
+            dRShort = pm.NetShortWaveRadiation(dalbedo, gClimate_GridLayer.Slr[self.currow][self.curcol])
+            dPM = pm.PETInPMByRHmd(gClimate_GridLayer.Wnd[self.currow][self.curcol],
+                                   gClimate_GridLayer.Hmd[self.currow][self.curcol], 0)
+            self.m_dAET = 2 * self.m_dPET - dPM
+            self.m_dPETPristley = self.m_dPET
+        else:
+            prist = CPETInPristley(self.m_dTav, self.m_dHeight, curDate)
+            dRLong = prist.NetLongWaveRadiationRHmd(gClimate_GridLayer.Slr[self.currow][self.curcol],
+                                                    gClimate_GridLayer.Hmd[self.currow][self.curcol])
+            dRShort = prist.NetShortWaveRadiation(dalbedo, gClimate_GridLayer.Slr[self.currow][self.curcol])
+            dPrist = prist.PETByPristley(1.26, 0)
+
+
+            pm = CPETInPM(self.m_dTav, self.m_dHeight, curDate)
+            dRLong = pm.NetLongWaveRadiationRHmd(gClimate_GridLayer.Slr[self.currow][self.curcol],
+                                                    gClimate_GridLayer.Hmd[self.currow][self.curcol])
+            dRShort = pm.NetShortWaveRadiation(dalbedo, gClimate_GridLayer.Slr[self.currow][self.curcol])
+            dPM = pm.PETInPMByRHmd(gClimate_GridLayer.Wnd[self.currow][self.curcol],
+                                   gClimate_GridLayer.Hmd[self.currow][self.curcol], 0)
+            self.m_dAET = 2 * dPrist - dPM
+            self.m_dPETPristley = dPrist
+
+
+        return self.m_dAET
+
 
     # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +                                                        +
