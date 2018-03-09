@@ -18,24 +18,25 @@ Developer:
 **2.Project**<br>
 Please refer DEMO data for details.<br>
 ~~~
-+   ------DEM<br>
-+   ------Forcing<br>
-+   ------pcpdata<br>
-+   ------|------petdata<br>
-+   ------|------tmpmeandata<br>
-+   ------|------tmpmxdata<br>
-+   ------|------tmpmndata<br>
-+   ------|------slrdata<br>
-+   ------|------hmddata<br>
-+   ------|------wnddata<br>
-+   ------LookupTable<br>
-+   ------|------LulcType.txt<br>
-+   ------|------soiltype.txt<br>
-+   ------Output<br>
-+   ------Soil<br>
-+   ------|------*.sol<br>
-+   ------Vegetation<br>
-+   ------|------*.veg<br>
++   /Demo
++   ------/DEM
++   ------/Forcing
++   ------/pcpdata
++   ------/------/petdata
++   ------/------/tmpmeandata
++   ------/------/tmpmxdata
++   ------/------/tmpmndata
++   ------/------/slrdata
++   ------/------/hmddata
++   ------/-----/wnddata
++   ------/LookupTable
++   ------/------/LulcType.txt
++   ------/------/soiltype.txt
++   ------/Output
++   ------/Soil
++   ------/------/*.sol
++   ------/Vegetation
++   ------/------/*.veg
 ~~~
 
 **3.Config.py**<br>
