@@ -64,6 +64,11 @@ class CHydroSimulate:
 
         self.middaily = []
 
+        self.soilTypeName = None
+        self.vegTypeName = None
+        self.solFile = {}
+        self.vegFile = {}
+
         self.HortonInfil = CHortonInfil()
         self.gridwb = CGridWaterBalance()
 
@@ -102,11 +107,6 @@ class CHydroSimulate:
                 self.MuskRouteInit(self.m_iNodeNum)
 
         ### 加载土壤、植被和DEM图层 ###
-        self.soilTypeName = None
-        self.vegTypeName = None
-        self.solFile = {}
-        self.vegFile = {}
-
         # 加载土壤、植被查找表
         self.LoadLookupTable()
         # 加载.sol和.veg信息
@@ -224,13 +224,11 @@ class CHydroSimulate:
                     dhrIntensity = util.config.DailyMeanPcpTime
 
                     dintensity = gClimate_GridLayer.Pcp[row][col] / dhrIntensity
-
-                    self.HortonInfil.SetGridPara(row, col, gSoil_GridLayerPara.SP_Sw[row][col], 0.03)
-
+                    self.HortonInfil.SetGridPara(row, col, 0.03)
                     self.HortonInfil.HortonExcessRunoff()
                     gOut_GridLayer.drateinf[row][col] = self.HortonInfil.m_dFt
 
-                    self.gridwb.SetGridPara(row, col, dintensity, gOut_GridLayer.drateinf[row][col], i, j, dhrIntensity, theDay)
+                    self.gridwb.SetGridPara(row, col, dintensity, i, j, dhrIntensity, theDay)
                     dalb = self.GetVegAlbedo(iMonth)
                     self.gridwb.CalcPET(dalb, theDay)
 

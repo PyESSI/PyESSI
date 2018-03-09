@@ -31,46 +31,46 @@ class SoilInfo:
     def __init__(self, stn, sfd):
         self.Soil_Name = ""
         self.Soil_id = 0
-        self.iLayer = 0
-        self.rootdepth = 0.
+        self.iLayer = 0  # 土壤层数
+        self.rootdepth = 0.  # 根区深度
 
-        self.SP_BD = 0.
-        self.SP_Por = 0.
-        self.SP_Fc = 0.
-        self.SP_Sat = 0.
-        self.SP_Sw = 0.
-        self.SP_Wp = 0.
-        self.SP_Arid = 0.
-        self.Horton_K = 0.05
+        self.SP_BD = 0.  # 土壤剖面平均湿容重 g·cm-3
+        self.SP_Por = 0.  # 土壤剖面平均孔隙率 %
+        self.SP_Fc = 0.  # 田间持水量时土壤含水量 mm
+        self.SP_Sat = 0.  # 土壤饱和时土壤含水量 mm
+        self.SP_Sw = 0.  # 土壤实际含水量 mm
+        self.SP_Wp = 0.  # 枯萎点时土壤含水量 mm
+        self.SP_Arid = 0.  # 土壤干湿指标值
+        self.Horton_K = 0.05  # 霍顿下渗曲线系数
 
-        self.TPercolation = 0.
-        self.SP_Temp = 0.
+        self.TPercolation = 0.  # 渗流阈值
+        self.SP_Temp = 0.  #
 
-        self.SP_Sat_K = 0.
+        self.SP_Sat_K = 0.  # 土壤剖面平均饱和导水率
 
         self.SL_ID = []
-        self.SL_Z = []
-        self.SL_BD = []
-        self.SL_AWC = []
-        self.SL_Sat_K = []
-        self.SL_Stable_F = []
-        self.SL_Org_C = []
-        self.SL_Clay = []
-        self.SL_Silt = []
-        self.SL_Sand = []
-        self.SL_Rock = []
-        self.SL_Init_F = []
-        self.SL_bFillOK = []
+        self.SL_Z = []  # 土层深度 mm
+        self.SL_BD = []  # 土壤湿容重 g·cm-3
+        self.SL_AWC = []  # 有效持水量 mm H2O / mm soil
+        self.SL_Sat_K = []  # 饱和导水率 mm/hr
+        self.SL_Stable_F = []  # 稳定下渗率系数
+        self.SL_Org_C = []  # 有机物含量 %
+        self.SL_Clay = []  # 土壤中粉粒含量组成 %
+        self.SL_Silt = []  # 土壤中粘粒含量组成 %
+        self.SL_Sand = []  # 土壤中砂粒含量组成 %
+        self.SL_Rock = []  # 土壤中砾石含量组成 %
+        self.SL_Init_F = []  #
+        self.SL_bFillOK = []  #
 
-        self.SL_HK = []
-        self.SL_P_Fc = []
-        self.SL_Por = []
-        self.SL_SW = []
-        self.SL_Wp = []
-        self.SL_Sat = []
-        self.SL_FcRatio = []
-        self.SL_WpRatio = []
-        self.albedo = 0.23
+        self.SL_HK = []  # 土壤水力传导率系数
+        self.SL_P_Fc = []  # 田间持水量时植被可吸收水量 mm
+        self.SL_Por = []  # 土层孔隙率 %
+        self.SL_SW = []  # 土层每日实际可供水量 mm
+        self.SL_Wp = []  # 枯萎点时土层含水量
+        self.SL_Sat = []  # 土壤水饱和时土层可供水量 mm
+        self.SL_FcRatio = []  #
+        self.SL_WpRatio = []  #
+        self.albedo = 0.23  #
 
         self.soilTypename = stn
         self.solFileDict = sfd

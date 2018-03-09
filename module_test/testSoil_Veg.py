@@ -3,9 +3,14 @@
 
 from modules.Hydro.SoilPara import *
 from modules.Hydro.VegetationPara import *
+from modules.Hydro.HydroSimulate import CHydroSimulate
 
-veg1 = VegInfo()
-veg1.ReadVegFile(GetVegTypeName(12)+'.veg')
+h = CHydroSimulate()
+h.LoadLookupTable()
+h.LoadSolVegFile()
+
+veg1 = VegInfo(h.vegTypeName, h.vegFile)
+veg1.ReadVegFile('PINE.veg')
 
 print(veg1.Veg_Name)
 print(veg1.LAIMX)
@@ -17,8 +22,8 @@ print(veg1.Albedo)
 print(veg1.CoverDeg)
 
 
-soil1 = SoilInfo()
-soil1.ReadSoilFile(GetSoilTypeName(151)+'.sol')
+soil1 = SoilInfo(h.soilTypeName, h.solFile)
+soil1.ReadSoilFile('HJCT.sol')
 print(soil1.Soil_Name)
 print(soil1.iLayer)
 print(soil1.rootdepth)

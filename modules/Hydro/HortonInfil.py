@@ -13,9 +13,7 @@ Revised:
 # load needed python modules
 import math
 
-import util.config
 from modules.Hydro.SoilPara import *
-from util.fileIO import *
 from modules.Hydro.Hydro import gSoil_GridLayerPara
 
 
@@ -45,7 +43,7 @@ class CHortonInfil:
     #     self.m_dFt = 0  # 土壤水下渗量
     #     self.m_dPreSoilW = 0  # 初始土壤含水量
 
-    def SetGridPara(self, row, col, dSoilW, dErr):
+    def SetGridPara(self, row, col, dErr):
         '''
         设置参数
         :param dSoilW:
@@ -54,7 +52,7 @@ class CHortonInfil:
         '''
         self.currow = row
         self.curcol = col
-        self.m_dPreSoilW = dSoilW
+        self.m_dPreSoilW = gSoil_GridLayerPara.SP_Sw[row][col]
         self.m_dERR = dErr
 
         self.m_dK = gSoil_GridLayerPara.Horton_K[self.currow][self.curcol]
@@ -82,12 +80,11 @@ class CHortonInfil:
             num += 1
 
             if num > 500:
+                print("霍顿下渗率计算迭代未收敛。")
                 break
 
             if dthet <= self.m_dERR:
                 break
-
-
 
     def DTempSoilW(self, dt):
         '''
