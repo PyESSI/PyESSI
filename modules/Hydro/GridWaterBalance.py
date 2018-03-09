@@ -35,7 +35,7 @@ from modules.Climate.PETInPristley import *
 from modules.Climate.PETInHargreaves import *
 from modules.Climate.PETInBeDruin import *
 from modules.Climate.PETInFAOPM import *
-from modules.Hydro.Hydro import gSoil_GridLayerPara, gVeg_GridLayerPara, gBase_GridLayer, gClimate_GridLayer
+from modules.Hydro.Hydro import gSoil_GridLayerPara, gVeg_GridLayerPara, gBase_GridLayer, gClimate_GridLayer, gOut_GridLayer
 
 
 # /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -72,7 +72,7 @@ class CGridWaterBalance:
     # +				功能：设置栅格计算参数					    +
     # +														+
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-    def SetGridPara(self, row, col, rint, dFp, year, dn, hr, curDate):
+    def SetGridPara(self, row, col, rint, year, dn, hr, curDate):
         '''
         :param curcol:
         :param rint:
@@ -87,7 +87,7 @@ class CGridWaterBalance:
         self.m_dRIntensity = rint
         self.m_nYear = year
         self.m_nDn = dn
-        self.m_dFp = dFp
+        self.m_dFp = gOut_GridLayer.drateinf[row][col]
         self.m_dHr = hr
 
         # 当前栅格值
@@ -104,8 +104,6 @@ class CGridWaterBalance:
         self.m_hmd = gClimate_GridLayer.Hmd[self.currow][self.curcol]
         self.m_wnd = gClimate_GridLayer.Wnd[self.currow][self.curcol]
 
-        # pGridSoilInfo = SoilInfo(self.soilTypename, self.solFileDict)
-        # pGridSoilInfo.ReadSoilFile(pGridSoilInfo.soilTypename[str(int(self.m_Soil))] + '.sol')
         self.m_dFc = gSoil_GridLayerPara.SP_Stable_Fc[self.currow][self.curcol]
 
         if util.config.RunoffSimuType == util.defines.STORM_RUNOFF_SIMULATION:
@@ -286,6 +284,7 @@ class CGridWaterBalance:
         self.SP_Init_F0 = gSoil_GridLayerPara.SP_Init_F0[self.currow][self.curcol]
         self.TPercolation = gSoil_GridLayerPara.TPercolation[self.currow][self.curcol]
 
+        # dthet 土壤水赤字量
         dthet = (1.0 - self.SP_Sw / self.SP_Fc) * self.SP_Por * self.rootdepth
         dPE = self.m_dNetRain - self.m_dAET
 
@@ -363,8 +362,7 @@ class CGridWaterBalance:
         self.SP_Sw += (dPE - self.m_dBaseQ - self.m_dSurfQ - self.m_dLateralQ)
         if self.SP_Sw > self.SP_Wp:
             if iret == 3 or iret == 4 or iret == 7 or iret == 8:
-                dPerco = self.SWPercolation(self.SP_Sw, self.SP_Fc, self.m_dHr,
-                                            self.TPercolation)
+                dPerco = self.SWPercolation(self.SP_Sw, self.SP_Fc, self.m_dHr, self.TPercolation)
                 if dPerco > 0:
                     self.SP_Sw -= dPerco
                     self.m_dBaseQ += dPerco
