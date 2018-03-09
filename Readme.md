@@ -3,7 +3,7 @@
 ---
 ![Logo of ESSI](https://raw.githubusercontent.com/gaohr/MyImages/master/imgs/study/gaohr/ESSI/ESSI_ss.jpg "Logo of ESSI")
 
-Developer:
+Developers:
 
 + Hao Chen & Huiran Gao
 
@@ -39,7 +39,7 @@ Please refer DEMO data for details.<br>
 +   ------/------/*.veg
 ~~~
 
-**3.Config.py**<br>
+**3.util/Config.py**<br>
 + Model parameters setup accordingly<br> 
 including:<br> 
   + workSpace<br>
