@@ -1,7 +1,7 @@
 ## PyESSI V1.0 Released
 ### Python in ESSI (Distributed Hydrological Model )
 ---
-![Logo of ESSI](https://raw.githubusercontent.com/gaohr/MyImages/master/imgs/study/gaohr/ESSI/ESSI_s.jpg "Logo of ESSI")
+![Logo of ESSI](https://raw.githubusercontent.com/gaohr/MyImages/master/imgs/study/gaohr/ESSI/ESSI_ss.jpg "Logo of ESSI")
 
 Developer:
 
