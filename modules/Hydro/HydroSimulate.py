@@ -140,6 +140,11 @@ class CHydroSimulate:
         self.m_pOutletBaseQ = numpy.zeros(totrec)
         self.m_pOutletDeepBaseQ = numpy.zeros(totrec)
 
+        self.m_pNodeSurfQ = numpy.zeros((totrec, self.m_subNum))
+        self.m_pNodeLatQ = numpy.zeros((totrec, self.m_subNum))
+        self.m_pNodeBaseQ = numpy.zeros((totrec, self.m_subNum))
+        self.m_pNodeOutQ = numpy.zeros((totrec, self.m_subNum))
+
         dthet = None
         dsnowfactor = None
         aetfactor = 0.
@@ -161,13 +166,11 @@ class CHydroSimulate:
             self.wytype = dict(wyTypeTemps)
 
         ##模拟径流结果输出
-        self.outQ = open(util.config.workSpace + os.sep + 'Output' + os.sep + 'outQ.txt', 'a')
-        self.outQ.write("Date\tTotalQ\tSurfQ\tLatQ\tBaseQ\tDeepBaseQ\n")
-        self.outQ.close()
+        outQ = open(util.config.workSpace + os.sep + 'Output' + os.sep + 'outQ.txt', 'a')
+        outQ.write("Date\tTotalQ\tSurfQ\tLatQ\tBaseQ\tDeepBaseQ\n")
+        outQ.close()
 
         ##水文过程循环
-
-
         for theDay in daily:
             print('Calculating %s\t' % theDay, end='')
             s_long = time.clock()
@@ -224,6 +227,7 @@ class CHydroSimulate:
                     dhrIntensity = util.config.DailyMeanPcpTime
 
                     dintensity = gClimate_GridLayer.Pcp[row][col] / dhrIntensity
+
                     self.HortonInfil.SetGridPara(row, col, 0.03)
                     self.HortonInfil.HortonExcessRunoff()
                     gOut_GridLayer.drateinf[row][col] = self.HortonInfil.m_dFt
@@ -279,7 +283,7 @@ class CHydroSimulate:
                         # // ** ** ** ** ** ** ** ** ** ** ** 对蒸散发处理的特殊代码段 ** ** ** ** ** ** ** ** ** ** **
                         self.gridwb.CalcNetRain()
                         gOut_GridLayer.CIDefict[row][col] = self.gridwb.m_dCIDeficit
-                        gOut_GridLayer.NetPcp[row][col] = self.gridwb.m_dNetRain
+                        gOut_GridLayer.NetPcp[row][col] = self.gridwb.m_dNetRain  # 是否减去实际蒸散发？？？
                         gOut_GridLayer.WaterYieldType[row][col] = self.gridwb.CalcRunoffElement(row, col)
                         gOut_GridLayer.SoilProfileWater[row][col] = gSoil_GridLayerPara.SP_Sw[row][col]
 
@@ -368,11 +372,8 @@ class CHydroSimulate:
 
             self.RiverOutletQ_Hao(theDay, curorder - 1)
 
-
             e_long = time.clock()
             print("\ttime: %.3f" % (e_long - s_long))
-
-
 
         if util.config.RiverRouteMethod == util.defines.ROUTE_MUSKINGUM_COMBINE_FIRST or util.config.RiverRouteMethod == util.defines.ROUTE_MUSKINGUM_ROUTE_FIRST:
             if self.m_pX:
@@ -467,14 +468,12 @@ class CHydroSimulate:
                             self.g_DemLayer.srs, self.g_DemLayer.noDataValue, gdal.GDT_Float32)
 
 
-
-
     def RiverOutletQ_Hao(self, curDay, curOrder):
-        self.outQ = open(util.config.workSpace + os.sep + 'Output' + os.sep + 'outQ.txt', 'a')
-        self.outQ.write("%s\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f\n" % (
+        outQ = open(util.config.workSpace + os.sep + 'Output' + os.sep + 'outQ.txt', 'a')
+        outQ.write("%s\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\n" % (
         curDay, self.m_pOutletQ[curOrder], self.m_pOutletSurfQ[curOrder], self.m_pOutletLatQ[curOrder],
         self.m_pOutletBaseQ[curOrder], self.m_pOutletDeepBaseQ[curOrder]))
-        self.outQ.close()
+        outQ.close()
 
     # / *+++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # +                                                        +
@@ -542,7 +541,7 @@ class CHydroSimulate:
                 if self.g_BasinBoundary.data[i][j] == 1.:
                     subID = int(self.g_SubWaterShed.data[i][j] - 1)
                     if QType == util.defines.RUNOFF_ELEMENT_SURFQ:
-                        LagTime = int(self.g_RouteSurfQTime[i][j] / dTlen)
+                        LagTime = int(self.g_RouteSurfQTime.data[i][j] / dTlen)
                         LagOrder = int(curorder + LagTime)
                         if LagOrder < int(totorder):
                             if self.g_RouteSurfQTime.data[i][j] <= 0:
@@ -551,7 +550,7 @@ class CHydroSimulate:
                                 dSurfQLoss * math.pow(self.g_RouteSurfQTime.data[i][j], 1))
                             pRoute[LagOrder][subID] += dGridOut
                     elif QType == util.defines.RUNOFF_ELEMENT_LATERALQ:
-                        LagTime = int(self.g_RouteLatQTime[i][j] / dTlen)
+                        LagTime = int(self.g_RouteLatQTime.data[i][j] / dTlen)
                         LagOrder = int(curorder + LagTime)
                         if LagOrder < int(totorder):
                             if self.g_RouteLatQTime.data[i][j] <= 0:
@@ -560,7 +559,7 @@ class CHydroSimulate:
                                 util.config.LatQLoss * math.pow(self.g_RouteLatQTime.data[i][j], 1))
                             pRoute[LagOrder][subID] += dGridOut
                     elif QType == util.defines.RUNOFF_ELEMENT_BASEQ:
-                        LagTime = int(self.g_RouteBaseQTime[i][j] / dTlen)
+                        LagTime = int(self.g_RouteBaseQTime.data[i][j] / dTlen)
                         LagOrder = int(curorder + LagTime)
                         if LagOrder < int(totorder):
                             if self.g_RouteBaseQTime.data[i][j] <= 0:
@@ -643,10 +642,7 @@ class CHydroSimulate:
     def GetVegAlbedo(self, row, col, mon, day=1):
         dret = 0.23
         if mon >= 1 or mon <= 12:
-            # vegTemp = VegInfo(self.vegTypeName, self.vegFile)
-            # vegTemp.ReadVegFile(self.vegTypeName[str(int(self.m_iVegOrd))] + '.veg')
             dret = gVeg_GridLayerPara.Veg[row][col].Albedo[mon - 1]
-            #dret = vegTemp.Albedo[mon - 1]
         return dret
 
     def ReadWaterYearType(self):
@@ -660,7 +656,6 @@ class CHydroSimulate:
             wyTypeTemps = []
             for i in range(len(wytypeLines)):
                 wyTypeTemp = WaterYearType()
-
                 wyTypeTemp.year = int(
                     wytypeLines[i].rstrip(util.defines.CHAR_SPLIT_ENTER).split(util.defines.CHAR_SPLIT_TAB)[0])
                 wyTypeTemp.wtype = int(
@@ -975,7 +970,7 @@ class CHydroSimulate:
             raise Exception("Can not find subbasin file!", subbasinFile)
         else:
             self.g_SubWaterShed = readRaster(subbasinFile)
-            self.m_subNum = numpy.max(self.g_SubWaterShed.data)
+            self.m_subNum = int(numpy.max(self.g_SubWaterShed.data))
 
         if not os.path.exists(streamOrderFile):
             raise Exception("Can not find streamOrder file!", streamOrderFile)
@@ -1006,6 +1001,7 @@ class CHydroSimulate:
         :return:
         '''
         self.m_MuskCoeffFile = util.config.workSpace + os.sep + "DEM" + os.sep + util.config.MuskCoeffFile
+        print(self.m_MuskCoeffFile)
         if not os.path.exists(self.m_MuskCoeffFile):
             return False
 
