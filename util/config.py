@@ -13,24 +13,24 @@ Functions:
 #pyESSI Project Setup
 #[ProjectSetup]
 # workSpace = r'D:\GaohrWS\DoctorWorks\DoctorWork\PyESSI\DCBAM'
-workSpace = r'D:\pyESSITest\DCBAM_aa'
+workSpace = r'F:\ESSI_srb_nrb\NRB'
 mpiexeDir = r'"C:\Program Files\Microsoft MPI\Bin"'
 exeDir = None
-startTime = '19960101'  # 模拟起始日期
-endTime = '20001231'  # 模拟结束日期
+startTime = '20080101'  # 模拟起始日期
+endTime = '20161231'  # 模拟结束日期
 
 # pyESSI GridIO File
 # [GridIO]
-DEMFileName = 'YLXDem240.tif'  # 原始DEM文件名
+DEMFileName = 'nenjiang10kmbuffer_1km.tif'  # 原始DEM文件名
 # DEMFileName = 'dem.tif'
-LULCFileName = 'YLXLulc240.tif'  # LULC文件名
-SoilFileName = 'YLXSoil240.tif'  # Soil文件名
+LULCFileName = 'nenjiang10kmbuffer_modis2008lulc_1km.tif'  # LULC文件名
+SoilFileName = 'nenjiang10kmbuffer_hwsdsoil_1km.tif'  # Soil文件名
 outlet = "outlet.shp"  # 出水口shpfile
 
 # PyESSI Model Running Parameters
 # [RunPara]
 PETMethod = 4  # 潜在蒸散发计算方法
-AETMethod = 2  # 实际蒸散发计算方法
+AETMethod = 3  # 实际蒸散发计算方法
 InterpMethod = 1  # 空间插值离散方法
 AIMethod = 1  # 干旱指数计算方法
 DLAICalcMethod = 2  # 逐日LAI计算方法
@@ -38,20 +38,20 @@ RunoffSimuType = 2  # 降雨径流过程计算类型
 SurfRouteMethod = 1  # 地表径流汇流演算方法
 LatRouteMethod = 1  # 壤中径流汇流演算方法
 BaseRouteMethod = 1  # 地下径流汇流演算方法
-RiverRouteMethod = 1  # 河道汇流演算方法
+RiverRouteMethod = 2  # 河道汇流演算方法
 InfilCurveType = 1  # 下渗曲线类型
 
 # PyESSI Model Input Parameters
 # [InputPara]
-GSKv = 2500.00  # 地表径流滞时演算速度系数
-GLKv = 800.00  # 壤中径流滞时演算速度系数
-GBKv = 400.00  # 地下径流滞时演算速度系数
+GSKv = 6000.00  # 地表径流滞时演算速度系数
+GLKv = 3000.00  # 壤中径流滞时演算速度系数
+GBKv = 2400.00  # 地下径流滞时演算速度系数
 GRKv = 0.00  # 河道径流滞时演算速度系数
-LowWaterSurfQLoss = 90.00  # 枯水期地表径流损失系数
-MidWaterSurfQLoss = 70.00  # 平水期地表径流损失系数
-HighWaterSurfQLoss = 45.00  # 丰水期地表径流损失系数
+LowWaterSurfQLoss = 10.00  # 枯水期地表径流损失系数
+MidWaterSurfQLoss = 15.00  # 平水期地表径流损失系数
+HighWaterSurfQLoss = 30.00  # 丰水期地表径流损失系数
 LatQLoss = 30.00  # 壤中径流传输损失系数
-BaseQLoss = 90.00  # 地下径流传输损失系数
+BaseQLoss = 45.00  # 地下径流传输损失系数
 RiverQLoss = 0.00  # 河道径流传输损失系数
 RiverProType = 2  # 栅格河道断面类型
 RiverProWidth = 60.00  # 栅格河道断面宽度
@@ -63,13 +63,13 @@ LMCTimeWeight = 0.10  # 壤中汇流时间差分权重
 LMCGridRTravelTime = 10.00  # 壤中汇流传播时间
 BMCTimeWeight = -0.60  # 地下汇流时间差分权重
 BMCGridRTravelTime = 4.00  # 地下汇流传播时间
-SurfQLinearFactor = 0.01  # 地表径流线性调节因子
+SurfQLinearFactor = 0.9  # 地表径流线性调节因子
 SurfQOutFactor = 0.90  # 地表径流出流系数
 LatQOutFactor = 0.50  # 壤中径流出流系数
-DailyMeanPcpTime = 3.00  # 日平均降雨时间长度
-SnowTemperature = 0.00  # 降雪临界温度
+DailyMeanPcpTime = 2.00  # 日平均降雨时间长度
+SnowTemperature = 1.00  # 降雪临界温度
 DDF = 0.38  # 度－日系数
-DeepBaseQ = 150.00  # 深层地下基流调节量
+DeepBaseQ = 30.00  # 深层地下基流调节量
 
 # PyESSI Forcing Parameters
 # [Forcing]
@@ -84,8 +84,8 @@ petdata = 1  # 潜在蒸散发数据
 
 # PyESSI Model MidGridOut Parameters
 # [MidGridOut]
-strOutBDate = '19960101'  # 中间结果输出起始日期
-strOutEDate = '20001231'  # 中间结果输出结束日期
+strOutBDate = '20080101'  # 中间结果输出起始日期
+strOutEDate = '20161231'  # 中间结果输出结束日期
 iPcp = 0  # 降雨量
 iTempMax = 0  # 最高气温
 iTempMin = 0  # 最低气温
@@ -94,14 +94,14 @@ iSlr = 0  # 太阳辐射
 iHmd = 0  # 相对湿度
 iWnd = 0  # 平均风速
 iPET = 0  # 潜在蒸散量
-iAET = 0  # 实际蒸散量
+iAET = 1  # 实际蒸散量
 iCI = 0  # 冠层截留
 iSnowWater = 0  # 雪水当量
 iAI = 0  # 干旱指数
 iRouteOut = 0  # 栅格汇流演算结果
-iSurfQ = 0  # 时段地表径流
-iLatQ = 0  # 时段壤中径流
-iBaseQ = 0  # 时段地下径流
+iSurfQ = 1  # 时段地表径流
+iLatQ = 1  # 时段壤中径流
+iBaseQ = 1  # 时段地下径流
 iInfilRate = 0  # 时段土壤下渗率
 iWaterYieldType = 0  # 栅格产流类型
 iProfileSoilWater = 0  # 土层剖面含水量

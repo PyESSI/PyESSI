@@ -5,8 +5,7 @@ Created Jan 2018
 @author: Hao Chen
 
 Functions:
-    class: SoilInfo
-    GetSoilTypeName(SoilTypeID)
+    runpyESSI()
 
 
 """

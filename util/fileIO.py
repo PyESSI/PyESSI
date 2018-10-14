@@ -48,7 +48,7 @@ class Raster:
         self.xMin = geoTransform[0]
         self.xMax = self.xMin + nCols * self.xRes
         self.yMax = geoTransform[3]
-        self.yMin = self.yMax + nRows * self.yRes
+        self.yMin = self.yMax - nRows * self.yRes
 
 
 def readRaster(rasterFilename):
@@ -153,14 +153,14 @@ def GetRasterStat(rasterFile):
     dataset = None
 
 
-def CreateForld(forldPath):
+def CreateDir(dirPath):
     '''
     Create forld
     :param forldPath:
     :return:
     '''
-    if not os.path.isdir(forldPath):
-        os.makedirs(forldPath)
+    if not os.path.isdir(dirPath):
+        os.makedirs(dirPath)
 
 def getFileList(dataDir, ftype):
     '''
